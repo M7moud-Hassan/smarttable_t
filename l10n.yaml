@@ -1,0 +1,41 @@
+# Options used by the localizations tool
+
+## The directory where locale-specific ".arb" message catalog files can
+## be found. The output directory will match the input directory if the
+#W# `output-directory` option is not specified.
+arb-dir: assets/lang
+##The directory where the generated localization classes will be written if the synthetic-package
+##flag is set to false.
+
+output-dir: lib/generated/l10n
+# output-dir: lib/generated
+## Names the template arb file that will be used to check and validate the
+## remaining arb files when generating `outut-class` and its supporting
+## classes.
+template-arb-file: en.arb
+
+## The name of the localizations class your application will use to lookup
+## localized message strings.
+output-class: AppLocalizations
+## The name of the generated file which will contain the
+## class named `output-class`. The file will appear in `arb-dir`
+## and the application must import it.
+output-localization-file: app_localizations.dart
+
+  # The location of a file that describes the localization
+  # messages have not been translated yet. Using this option will create
+  # a JSON file at the target location, in the following format:
+  # "locale": ["message_1", "message_2" ... "message_n"]
+  # If this option is not specified, a summary of the messages that
+  # have not been translated will be printed on the command line.
+untranslated-messages-file: assets/lang/untranslated.json
+
+
+# To make .of(context) not nallable (no need for !).
+nullable-getter: false
+
+
+#  Determines whether or not the generated output files will be generated as a synthetic package or
+#  at a specified directory in the Flutter project.
+#  This flag is set to true by default.
+synthetic-package: false

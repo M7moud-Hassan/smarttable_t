@@ -1,0 +1,76 @@
+workflows:
+  ios-workflow:
+    name: iOS TestFlight Deployment
+    integrations:
+      app_store_connect: ABDULAZIZ ALZAHRANI
+
+    environment:
+      groups:
+        - teacher_credentials
+      vars:
+        BUNDLE_ID: "com.optimalsoft.samrtable"
+
+      ios_signing:
+        distribution_type: app_store # or: ad_hoc | development | enterprise
+        bundle_identifier: com.optimalsoft.samrtable
+        # certificates:
+        #   - chat_app_distrubutes
+        # provisioning_profiles:
+        #   - profile_chat_distrubutes_2
+
+      xcode: latest
+      flutter: "3.38.0"
+
+    scripts:
+        - name: Prepare Flutter
+          script: |
+            flutter clean
+            flutter pub get
+
+        - name: Initialize Codemagic keychain
+          script: keychain initialize
+
+        - name: Import signing certificate into keychain
+          script: keychain add-certificates
+
+        - name: Apply provisioning profiles to Xcode project
+          script: xcode-project use-profiles
+
+        - name: Install provisioning profiles manually
+          script: |
+            echo "Installing provisioning profiles"
+            mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+            for profile in $CM_PROVISIONING_PROFILE_PATH; do
+              cp "$profile" ~/Library/MobileDevice/Provisioning\ Profiles/
+            done
+
+        - name: Configure Xcode project
+          script: |
+            cd ios
+            xcode-project use-targets
+            xcode-project set-development-team "MV78XVH867"
+            xcode-project update-build-settings --product-bundle-identifier "$BUNDLE_ID"
+            cd ..
+
+        - name: Update CocoaPods Repo
+          script: |
+            cd ios
+            pod repo update
+            pod install --repo-update
+            cd ..
+
+        - name: Build IPA for TestFlight
+          script: flutter build ipa --export-options-plist=/Users/builder/export_options.plist
+
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+      email:
+        recipients:
+          - mahmoud.hassan.ahmed3@gmail.com
