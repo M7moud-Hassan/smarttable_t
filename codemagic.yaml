@@ -2,7 +2,7 @@ workflows:
   ios-workflow:
     name: iOS TestFlight Deployment
     integrations:
-      app_store_connect: ABDULAZIZ ALZAHRANI
+      app_store_connect: smarttable
 
     environment:
       groups:
