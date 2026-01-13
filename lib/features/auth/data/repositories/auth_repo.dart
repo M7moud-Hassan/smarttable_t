@@ -67,6 +67,15 @@ class AuthRepository {
     throw ServerException(response.message);
   }
 
+  Future<ResponseModel> verifyOtp(String phone, String otp) async {
+    final response = await _apiService
+        .post(Endpoints.verifyPhone, {'phone_number': phone, 'otp': otp});
+    if (response.statusCode == 200) {
+      return response;
+    }
+    throw ServerException(response.message);
+  }
+
   Future<ResponseModel> teacherLogin(
     String username,
     String password,

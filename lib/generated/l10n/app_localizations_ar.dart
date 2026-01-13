@@ -352,4 +352,24 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get signUpTitleId =>
       'لا يوجد اسم المستخدم وكلمة المرور للرمز التعريفي';
+
+  @override
+  String get verifyPhone => 'تأكيد رقم الهاتف';
+
+  @override
+  String get enterOtpSentTo => 'أدخل رمز التحقق المكوّن من 4 أرقام المرسل إلى';
+
+  @override
+  String get verify => 'تأكيد';
+
+  @override
+  String get invalidOtp => 'رمز التحقق غير صحيح';
+
+  @override
+  String get resend => 'إعادة الإرسال';
+
+  @override
+  String resendInSeconds(Object seconds) {
+    return 'إعادة الإرسال بعد $seconds ث';
+  }
 }

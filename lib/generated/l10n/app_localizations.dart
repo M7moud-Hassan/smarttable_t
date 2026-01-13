@@ -757,6 +757,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No username and password found for the ID code'**
   String get signUpTitleId;
+
+  /// No description provided for @verifyPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify phone number'**
+  String get verifyPhone;
+
+  /// No description provided for @enterOtpSentTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 4-digit code sent to'**
+  String get enterOtpSentTo;
+
+  /// No description provided for @verify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get verify;
+
+  /// No description provided for @invalidOtp.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid verification code'**
+  String get invalidOtp;
+
+  /// No description provided for @resend.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend'**
+  String get resend;
+
+  /// Countdown label for the resend button
+  ///
+  /// In en, this message translates to:
+  /// **'Resend in {seconds}s'**
+  String resendInSeconds(Object seconds);
 }
 
 class _AppLocalizationsDelegate

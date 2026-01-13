@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:smart_table_app/core/constants/layout_constants.dart';
 import 'package:smart_table_app/core/extensions/extensions.dart';
 import 'package:smart_table_app/features/auth/presentation/views/reset_password_sucess_view.dart';
 import 'package:smart_table_app/features/auth/providers/auth_provider.dart';
 
 import '../../../../core/constants/constants.dart';
-import '../../../../core/models/models.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../../core/widgets/app_text_field.dart';
 

@@ -4,7 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/extensions/extensions.dart';
 import 'package:smart_table_app/core/utils/utils.dart';
 import 'package:smart_table_app/core/widgets/phone_filed.dart';
-import 'package:smart_table_app/features/auth/presentation/views/signup_view.dart';
+import 'package:smart_table_app/features/auth/presentation/views/verify_phone_code_view.dart';
 import 'package:smart_table_app/features/auth/providers/auth_provider.dart';
 
 import '../../../../core/constants/constants.dart';
@@ -24,13 +24,10 @@ class PhoneRegisterView extends HookConsumerWidget with ValidationMixin {
       requestResponseProvider,
       (_, state) {
         if (state.state == RequestResponseState.success &&
-            state.actionOnDone == ActionOnDone.goRegisterData) {
+            state.actionOnDone == ActionOnDone.goOtp) {
           context.showSnackbarSuccess(context.locale.sucessMessage);
           final fullPhone = "${countryCode.value}${phoneParsed.value}";
-          context.push(SignupView(
-            phone: fullPhone,
-            usercode: null,
-          ));
+          context.push(PhoneOtpVerifyView(phone: fullPhone));
         }
       },
     );

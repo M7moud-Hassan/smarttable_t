@@ -109,8 +109,20 @@
 "phoneValidation":"Please enter a valid phone number starting with + followed by digits",
   "confirmDeleteAccount": "Are you sure you want to delete your account? This action is permanent and cannot be undone.",
   "signUpTitlePhone": "No username and password found for the phone number",
-  "signUpTitleId": "No username and password found for the ID code"
+  "signUpTitleId": "No username and password found for the ID code",
+    "verifyPhone": "Verify phone number",
+  "enterOtpSentTo": "Enter the 4-digit code sent to",
+  "verify": "Verify",
+  "invalidOtp": "Invalid verification code",
 
+  "resend": "Resend",
+  "resendInSeconds": "Resend in {seconds}s",
+  "@resendInSeconds": {
+    "description": "Countdown label for the resend button",
+    "placeholders": {
+      "seconds": {}
+    }
+  }
 
        
 

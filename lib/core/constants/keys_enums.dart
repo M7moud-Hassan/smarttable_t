@@ -13,6 +13,7 @@ enum ActionOnDone {
   none,
   unAuth,
   goRegisterData,
+  goOtp,
   registerSucess,
   loginSucess,
   showSucessMessage,

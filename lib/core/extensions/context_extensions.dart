@@ -78,9 +78,10 @@ extension ContextExtensions<T> on BuildContext {
   void popToFirst() => Navigator.of(this).popUntil((route) => route.isFirst);
   void closeDrawer() => Scaffold.of(this).closeDrawer();
 
-  void showLoadingOverlay() async {
+  Future<void> showLoadingOverlay() async {
     await showDialog(
       context: this,
+      useRootNavigator: true,
       builder: (context) {
         return const LoadingWidget();
       },

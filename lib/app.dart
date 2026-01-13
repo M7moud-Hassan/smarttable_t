@@ -16,21 +16,49 @@ import 'features/profile/providers/locale_notifiers.dart';
 
 class App extends ConsumerWidget {
   const App({super.key});
+
+  /// Tracks whether we've actually shown the loading dialog to avoid race
+  /// conditions where the state flips before the dialog is mounted.
+  static bool _isLoadingDialogVisible = false;
+
   void _listenToRequestResponse(WidgetRef ref, BuildContext constext) async {
     ref.listen(
       requestResponseProvider,
-      (_, state) {
+      (previous, state) {
         final cuurentContext = ref.watch(navigatorKeyProvider).context;
 
+        // If we came from a dialog-type loading state and the current state
+        // is not an active loading, dismiss the dialog. This covers cases
+        // where the state transitions directly from loading -> error/success.
+        final wasShowingDialog = previous != null &&
+            previous.state == RequestResponseState.loading &&
+            previous.isLoading &&
+            previous.loadingType == LoadingTypes.dialog;
+
+        if ((wasShowingDialog || App._isLoadingDialogVisible) &&
+            !(state.state == RequestResponseState.loading && state.isLoading) &&
+            cuurentContext != null) {
+          Navigator.of(cuurentContext, rootNavigator: true).maybePop();
+          App._isLoadingDialogVisible = false;
+        }
+
         if (state.state == RequestResponseState.loading) {
+          // Show loading overlay when we start a dialog-type loading
           if (state.isLoading && state.loadingType == LoadingTypes.dialog) {
-            cuurentContext?.showLoadingOverlay();
+            if (cuurentContext != null && !App._isLoadingDialogVisible) {
+              // Mark as visible immediately and track when it completes so we
+              // can avoid race conditions with quick state transitions.
+              App._isLoadingDialogVisible = true;
+              cuurentContext.showLoadingOverlay().whenComplete(() {
+                App._isLoadingDialogVisible = false;
+              });
+            }
+
+            // When loading finishes, only dismiss the dialog if it was shown
           } else if (!state.isLoading &&
               state.loadingType == LoadingTypes.dialog) {
-            if (cuurentContext != null &&
-                Navigator.of(cuurentContext).canPop()) {
-              cuurentContext.pop();
-            }
+            // already handled above for both direct transitions and explicit
+            // loading=false updates
           }
           // error
         } else if (state.state == RequestResponseState.error) {

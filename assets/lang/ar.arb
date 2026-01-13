@@ -109,5 +109,17 @@
   "cancel": "إلغاء",
   "enterPhoneConnectedWithAccounr": "قم بإدخال رقم الهاتف المرتبط بحسابك.",
   "phoneValidation": "يرجى إدخال رقم هاتف صالح يبدأ بـ + متبوعًا بالأرقام",
-  "confirmDeleteAccount": "هل أنت متأكد أنك تريد حذف حسابك؟ هذا الإجراء دائم ولا يمكن التراجع عنه."
+  "confirmDeleteAccount": "هل أنت متأكد أنك تريد حذف حسابك؟ هذا الإجراء دائم ولا يمكن التراجع عنه.",
+    "verifyPhone": "تأكيد رقم الهاتف",
+  "enterOtpSentTo": "أدخل رمز التحقق المكوّن من 4 أرقام المرسل إلى",
+  "verify": "تأكيد",
+  "invalidOtp": "رمز التحقق غير صحيح",
+  "resend": "إعادة الإرسال",
+  "resendInSeconds": "إعادة الإرسال بعد {seconds} ث",
+  "@resendInSeconds": {
+    "description": "نص العد التنازلي لزر إعادة الإرسال",
+    "placeholders": {
+      "seconds": {}
+    }
+  }
 }

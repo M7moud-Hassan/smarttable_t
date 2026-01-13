@@ -119,27 +119,34 @@ class LoginView extends HookConsumerWidget with ValidationMixin {
                   height: 30,
                 ),
                 Center(
-                  child: TextButton(
+                  child: OutlinedButton.icon(
                     onPressed: () {
                       context.push(const IdCodeRegisterView());
                     },
-                    child: Text(
-                      context.locale.loginFirstTime,
-                      style: const TextStyle(
-                        decoration: TextDecoration.underline,
+                    icon: const Icon(Icons.badge_outlined),
+                    label: Text(context.locale.loginFirstTime),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                   ),
                 ),
+                const SizedBox(height: 12),
                 Center(
-                  child: TextButton(
+                  child: OutlinedButton.icon(
                     onPressed: () {
                       context.push(const PhoneRegisterView());
                     },
-                    child: Text(
-                      context.locale.loginFirstTimePhone,
-                      style: const TextStyle(
-                        decoration: TextDecoration.underline,
+                    icon: const Icon(Icons.phone_outlined),
+                    label: Text(context.locale.loginFirstTimePhone),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                   ),

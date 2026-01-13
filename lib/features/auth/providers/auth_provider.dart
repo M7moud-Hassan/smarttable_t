@@ -134,9 +134,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> phoneRegisterTeacher(
-    String phone,
-  ) async {
+  Future<void> phoneRegisterTeacher(String phone, {bool resend = false}) async {
     try {
       _ref
           .read(requestResponseProvider.notifier)
@@ -144,6 +142,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
       await _ref.read(authRepoProvider).teacherRegisterPhone(
             phone,
           );
+
+      _ref.read(requestResponseProvider.notifier).update((state) =>
+          RequestResponseModel.success(
+              actionOnDone: resend ? ActionOnDone.none : ActionOnDone.goOtp));
+    } on Exception catch (e) {
+      _ref
+          .read(requestResponseProvider.notifier)
+          .update((state) => RequestResponseModel.error(exception: e));
+    } finally {
+      _ref
+          .read(requestResponseProvider.notifier)
+          .update((state) => RequestResponseModel.loading(loading: false));
+    }
+  }
+
+  Future<void> verifyOtp(String phone, String otp) async {
+    try {
+      _ref
+          .read(requestResponseProvider.notifier)
+          .update((state) => RequestResponseModel.loading());
+      await _ref.read(authRepoProvider).verifyOtp(phone, otp);
 
       _ref.read(requestResponseProvider.notifier).update((state) =>
           RequestResponseModel.success(

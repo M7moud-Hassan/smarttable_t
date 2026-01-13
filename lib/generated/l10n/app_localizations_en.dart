@@ -354,4 +354,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get signUpTitleId => 'No username and password found for the ID code';
+
+  @override
+  String get verifyPhone => 'Verify phone number';
+
+  @override
+  String get enterOtpSentTo => 'Enter the 4-digit code sent to';
+
+  @override
+  String get verify => 'Verify';
+
+  @override
+  String get invalidOtp => 'Invalid verification code';
+
+  @override
+  String get resend => 'Resend';
+
+  @override
+  String resendInSeconds(Object seconds) {
+    return 'Resend in ${seconds}s';
+  }
 }
