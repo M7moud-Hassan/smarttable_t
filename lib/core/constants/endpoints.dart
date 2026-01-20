@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 
 class Endpoints {
   static const String baseUrl = kDebugMode
-      ? 'https://test.smartble.net/teacher-mobile/v2/'
-      : 'https://test.smartble.net/teacher-mobile/v2/';
+      ? 'https://www.smartble.net/teacher-mobile/v2/'
+      : 'https://www.smartble.net/teacher-mobile/v2/';
 
   static const String login = 'auth/login/';
   static const String logout = 'auth/logout/';
@@ -29,7 +29,7 @@ class Endpoints {
   static const String dailyTasks = 'daily-tasks/';
   static const String socialCases = 'followers/social-status/';
   static const String aboutUs =
-      'https://test.smartble.net/api/about-page-content/';
+      'https://www.smartble.net/api/about-page-content/';
   static const String weekPlan = 'followers/week-plan/';
   static const String weekInfo = 'followers/week-info/';
   static const String contactUs = 'contact-us/';
