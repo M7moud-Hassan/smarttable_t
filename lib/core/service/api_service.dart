@@ -95,26 +95,20 @@ class ApiService {
   }
 
   Future<ResponseModel> multipartRequest(
-      String endPoint, Map<String, String> body,
-      [Map<String, File?>? fileMap]) async {
+    String endPoint,
+    Map<String, String> body, [
+    Map<String, File?>? fileMap,
+  ]) async {
     final uri = await getUri(endPoint);
-    final request = MultipartRequest(
-      'POST',
-      uri,
-    );
+    final request = MultipartRequest('POST', uri);
 
     if (fileMap != null) {
       for (final entry in fileMap.entries) {
-        final fieldName = entry.key;
         final file = entry.value;
-
         if (file != null) {
-          final path = await MultipartFile.fromPath(
-            fieldName,
-            file.path,
+          request.files.add(
+            await MultipartFile.fromPath(entry.key, file.path),
           );
-
-          request.files.add(path);
         }
       }
     }
@@ -124,7 +118,14 @@ class ApiService {
 
     final streamResponse = await _http.send(request);
     final response = await Response.fromStream(streamResponse);
-    final data = json.decode(response.body);
+
+    Map<String, dynamic> data = {};
+    if (response.body.isNotEmpty) {
+      data = json.decode(response.body);
+    }
+
+    /// inject HTTP status manually
+    data['status_code'] = response.statusCode;
 
     return ResponseModel.fromJson(data);
   }

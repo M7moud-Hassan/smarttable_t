@@ -101,6 +101,7 @@ class UploadWeekPlanSheet extends ConsumerWidget {
           AppButton(
             onPressed: isPicked
                 ? () {
+                    context.pop();
                     ref
                         .read(weeklyPlanNotififerProvider.notifier)
                         .uploadFile(selectedWeek.id);

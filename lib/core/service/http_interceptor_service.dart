@@ -76,8 +76,11 @@ class InterceptorClientService extends InterceptorContract {
       _log('Response body: ${response.body}');
     }
     if (response.statusCode == 400 || response.statusCode == 403) {
-      _ref.read(requestResponseProvider.notifier).update((state) =>
-          RequestResponseModel.error(actionOnDone: ActionOnDone.unAuth));
+      final token = await _ref.read(tokenStorageProvider).getToken();
+      if (token != null) {
+        _ref.read(requestResponseProvider.notifier).update((state) =>
+            RequestResponseModel.error(actionOnDone: ActionOnDone.unAuth));
+      }
     }
     return response;
   }

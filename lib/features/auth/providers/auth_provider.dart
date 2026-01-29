@@ -23,7 +23,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final response = await _ref
           .read(authRepoProvider)
           .teacherRegisterData(usercode, username, password, email);
-      _ref.read(tokenStorageProvider).saveToken(response.token!);
+      await _ref.read(tokenStorageProvider).saveToken(response.token!);
 
       await _ref.read(authRepoProvider).updateFcm();
       _ref.read(profileProvider);
@@ -67,7 +67,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final response = await _ref
           .read(authRepoProvider)
           .teacherRegisterDataByPhone(phone, username, password, email);
-      _ref.read(tokenStorageProvider).saveToken(response.token!);
+      await _ref.read(tokenStorageProvider).saveToken(response.token!);
 
       await _ref.read(authRepoProvider).updateFcm();
       _ref.read(profileProvider);
@@ -186,7 +186,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       final response =
           await _ref.read(authRepoProvider).teacherLogin(username, password);
-      _ref.read(tokenStorageProvider).saveToken(response.token!);
+      await _ref.read(tokenStorageProvider).saveToken(response.token!);
 
       _ref.read(profileProvider);
 

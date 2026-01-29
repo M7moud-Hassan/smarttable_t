@@ -23,24 +23,24 @@ class LoginView extends HookConsumerWidget with ValidationMixin {
     final usernameController = useTextEditingController();
     final passwordController = useTextEditingController();
     final formKey = useMemoized(GlobalKey<FormState>.new, const []);
+
     ref.listen(
       requestResponseProvider,
       (_, state) async {
         if (state.state == RequestResponseState.success) {
           if (state.actionOnDone == ActionOnDone.loginSucess) {
-            {
-              context.showSnackbarSuccess(context.locale.sucessMessage);
-              ref.invalidate(homeMenuProvider);
-              ref.invalidate(profileProvider);
-              //
-              context.pushAndRemoveOthers(const MainLayoutView(
-                requestFcm: true,
-              ));
-            }
+            context.showSnackbarSuccess(context.locale.sucessMessage);
+            ref.invalidate(homeMenuProvider);
+            ref.invalidate(profileProvider);
+
+            context.pushAndRemoveOthers(
+              const MainLayoutView(requestFcm: true),
+            );
           }
         }
       },
     );
+
     return Scaffold(
       body: SingleChildScrollView(
         child: Padding(
@@ -50,44 +50,44 @@ class LoginView extends HookConsumerWidget with ValidationMixin {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(
-                  height: 10,
-                ),
+                const SizedBox(height: 10),
                 Center(
                   child: Image.asset(
                     PngAssets.splashLogo,
-                    width: 300,
+                    width: 260,
                   ),
                 ),
                 Text(
                   context.locale.wellcome,
-                  style: context.textTheme.titleLarge!
-                      .copyWith(fontWeight: FontWeight.bold),
+                  style: context.textTheme.titleLarge!.copyWith(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 Text(
                   context.locale.loginDesc,
-                  style: context.textTheme.bodyLarge!
-                      .copyWith(color: AppColors.textGrayColor),
+                  style: context.textTheme.bodyLarge!.copyWith(
+                    fontSize: 14,
+                    color: AppColors.textGrayColor,
+                  ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
                 Text(
                   context.locale.teacherLogin,
-                  style: context.textTheme.titleLarge!
-                      .copyWith(fontWeight: FontWeight.bold),
+                  style: context.textTheme.titleLarge!.copyWith(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                const SizedBox(
-                  height: 20,
-                ),
+                const SizedBox(height: 18),
                 AppTextField(
                   controller: usernameController,
                   hintText: context.locale.username,
                   icon: SvgAssets.user,
                   validator: (username) => emptyValidation(username, context),
                 ),
-                const SizedBox(
-                  height: 15,
-                ),
+                const SizedBox(height: 14),
                 AppTextField(
                   controller: passwordController,
                   hintText: context.locale.passwordCode,
@@ -96,38 +96,45 @@ class LoginView extends HookConsumerWidget with ValidationMixin {
                       passwordValidation(password, context),
                   obscureText: true,
                 ),
-                const SizedBox(
-                  height: 30,
-                ),
+                const SizedBox(height: 26),
                 Text(
                   context.locale.termsConditionsText,
-                  style: context.textTheme.bodyLarge!
-                      .copyWith(color: AppColors.textGrayColor),
+                  style: context.textTheme.bodyLarge!.copyWith(
+                    fontSize: 13,
+                    color: AppColors.textGrayColor,
+                  ),
                 ),
-                const SizedBox(
-                  height: 10,
-                ),
+                const SizedBox(height: 10),
                 ElevatedButton(
-                    onPressed: () {
-                      if (formKey.currentState!.validate()) {
-                        ref.read(authProvider.notifier).loginTeacher(
-                            usernameController.text, passwordController.text);
-                      }
-                    },
-                    child: Text(context.locale.login)),
-                const SizedBox(
-                  height: 30,
+                  onPressed: () {
+                    if (formKey.currentState!.validate()) {
+                      ref.read(authProvider.notifier).loginTeacher(
+                            usernameController.text,
+                            passwordController.text,
+                          );
+                    }
+                  },
+                  child: Text(
+                    context.locale.login,
+                    style: const TextStyle(fontSize: 18),
+                  ),
                 ),
+                const SizedBox(height: 26),
                 Center(
                   child: OutlinedButton.icon(
                     onPressed: () {
                       context.push(const IdCodeRegisterView());
                     },
-                    icon: const Icon(Icons.badge_outlined),
-                    label: Text(context.locale.loginFirstTime),
+                    icon: const Icon(Icons.badge_outlined, size: 18),
+                    label: Text(
+                      context.locale.loginFirstTime,
+                      style: const TextStyle(fontSize: 14),
+                    ),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
+                        horizontal: 22,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -140,20 +147,23 @@ class LoginView extends HookConsumerWidget with ValidationMixin {
                     onPressed: () {
                       context.push(const PhoneRegisterView());
                     },
-                    icon: const Icon(Icons.phone_outlined),
-                    label: Text(context.locale.loginFirstTimePhone),
+                    icon: const Icon(Icons.phone_outlined, size: 18),
+                    label: Text(
+                      context.locale.loginFirstTimePhone,
+                      style: const TextStyle(fontSize: 14),
+                    ),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
+                        horizontal: 22,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(
-                  height: 20,
-                ),
+                const SizedBox(height: 18),
                 Center(
                   child: TextButton(
                     onPressed: () {
@@ -162,14 +172,13 @@ class LoginView extends HookConsumerWidget with ValidationMixin {
                     child: Text(
                       context.locale.forgetPassword,
                       style: const TextStyle(
+                        fontSize: 16,
                         decoration: TextDecoration.underline,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(
-                  height: 28,
-                ),
+                const SizedBox(height: 26),
               ],
             ),
           ),
