@@ -19,7 +19,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'قم بتسجيل الدخول في تطبيق الجدول الذكي الخاص بالمعلمين, ';
 
   @override
-  String get teacherLogin => 'تسجيل الدخول للمعلم';
+  String get teacherLogin => 'تسجيل الدخول';
 
   @override
   String get username => 'اسم المستخدم';
@@ -372,4 +372,56 @@ class AppLocalizationsAr extends AppLocalizations {
   String resendInSeconds(Object seconds) {
     return 'إعادة الإرسال بعد $seconds ث';
   }
+
+  @override
+  String get rememberMe => 'تذكرني؟';
+
+  @override
+  String get forgotPasswordQuestion => 'نسيت كلمة المرور؟';
+
+  @override
+  String get or => 'او';
+
+  @override
+  String get teacherApp => 'تطبيق المعلم';
+
+  @override
+  String get enterIdCodeDesc => 'قم بإدخال الرمز التعريفي المرتبط بحسابك';
+
+  @override
+  String get loginWithId => 'الدخول بالرمز التعريفي';
+
+  @override
+  String get loginWithPhone => 'الدخول برقم الهاتف';
+
+  @override
+  String get enterEmail => 'الرجاء إدخال بريدك الإلكتروني';
+
+  @override
+  String get resetPasswordLinkDesc => 'سيتم إرسال رابط إلى بريدك الإلكتروني،';
+
+  @override
+  String get checkInboxDesc =>
+      'يرجى التحقق من صندوق الوارد وإدخال كلمة مرور جديدة.';
+
+  @override
+  String get sentSuccessfully => 'تم الإرسال إلى بريدك الإلكتروني بنجاح';
+
+  @override
+  String get splashSlogan => 'نحو إدارة مدرسية ذكية';
+
+  @override
+  String get splashSafeEnv => 'بيئة تعليمية آمنة و منظمة';
+
+  @override
+  String get editPicture => 'تعديل الصورة';
+
+  @override
+  String get changePassword => 'تغيير كلمة المرور';
+
+  @override
+  String get faq => 'الأسئلة الشائعة';
+
+  @override
+  String get language => 'اللغة';
 }

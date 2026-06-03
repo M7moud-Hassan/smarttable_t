@@ -1,5 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/constants/constants.dart';
@@ -19,231 +17,378 @@ import '../../../scheduled_tasks/presentation/scheduled_tasks_view.dart';
 import '../../../social_cases/presentation/views/social_cases_view.dart';
 import '../../../teacher_notes/presentation/views/teacher_notes_view.dart';
 import '../../providers/home_menu_provider.dart';
+import '../../../performance_evidence/presentation/views/performance_evidence_view.dart';
 
-class HomeView extends ConsumerWidget {
+import 'package:svg_flutter/svg_flutter.dart';
+
+class HomeView extends ConsumerStatefulWidget {
   const HomeView({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ConsumerStatefulWidget> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends ConsumerState<HomeView> {
+  int activeTab = 0;
+
+  @override
+  Widget build(BuildContext context) {
     final homeAsync = ref.watch(homeMenuProvider);
     return homeAsync.when(
-        data: (data) => Column(
-              children: [
-                const SizedBox(
-                  height: 20,
+        data: (data) {
+          final smartScheduleIds = [1, 2, 3, 10]; // Smart schedule items
+          final filteredMenus = activeTab == 0
+              ? data.menus
+                  .where((m) => smartScheduleIds.contains(m.id))
+                  .toList()
+              : data.menus
+                  .where((m) => !smartScheduleIds.contains(m.id))
+                  .toList();
+
+          return Scaffold(
+            appBar: AppBar(
+              backgroundColor: AppColors.primaryColor,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: DottedBorder(
-                    borderType: BorderType.RRect,
-                    radius: const Radius.circular(10),
-                    dashPattern: const [3, 3],
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                          color: AppColors.grayColor,
-                          borderRadius: BorderRadius.circular(10)),
-                      child: Row(
+              ),
+              leading: const Padding(
+                padding: EdgeInsets.all(10.0),
+                child: CircleAvatar(
+                  backgroundImage: AssetImage(PngAssets.teacher),
+                  backgroundColor: Colors.white,
+                ),
+              ),
+              title: Text(
+                context.locale.home,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold),
+              ),
+              centerTitle: true,
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(70),
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                      left: 20.0, right: 30.0, bottom: 20.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Image.asset(
-                            PngAssets.welcomeHand,
-                            width: 50,
+                          Text(
+                            '${data.welcome.welcomeLabel} ${data.welcome.teacherName}',
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 16),
                           ),
-                          const SizedBox(
-                            width: 5,
+                          Text(
+                            data.welcome.schoolName,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold),
                           ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    context.locale.wellcome,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleLarge!
-                                        .copyWith(
-                                            color: AppColors.primaryColor,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 19),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    data.welcome.teacherName,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineSmall!
-                                        .copyWith(fontSize: 19),
-                                  ),
-                                ],
-                              ),
-                              Text(
-                                data.welcome.schoolName,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineSmall!
-                                    .copyWith(fontSize: 15),
-                              ),
-                            ],
-                          )
                         ],
                       ),
-                    ),
+                    ],
                   ),
                 ),
-                const SizedBox(
-                  height: 20,
+              ),
+            ),
+            body: Column(
+              children: [
+                const SizedBox(height: 25),
+                Container(
+                  height: 50,
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: AppColors.primaryColor),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => activeTab = 0),
+                          child: Container(
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: activeTab == 0
+                                  ? AppColors.primaryColor
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: Text('الجدول الذكي',
+                                style: TextStyle(
+                                    color: activeTab == 0
+                                        ? Colors.white
+                                        : Colors.black,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => activeTab = 1),
+                          child: Container(
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: activeTab == 1
+                                  ? AppColors.primaryColor
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: Text('المتابع الإداري',
+                                style: TextStyle(
+                                    color: activeTab == 1
+                                        ? Colors.white
+                                        : Colors.black,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(height: 25),
                 Expanded(
-                    child: GridView.builder(
-                        padding: pgHorizontalPadding18,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                childAspectRatio: 0.7,
-                                mainAxisSpacing: 10,
-                                crossAxisSpacing: 10),
-                        itemCount: data.menus.length,
-                        itemBuilder: (context, index) {
-                          final item = data.menus[index];
-                          return GestureDetector(
-                            onTap: !item.isActive
-                                ? () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (_) => AlertDialog(
-                                        backgroundColor: context
-                                            .theme.scaffoldBackgroundColor,
-                                        content: Container(
-                                          alignment: Alignment.center,
-                                          width: 100,
-                                          height: 100,
-                                          child: Column(
-                                            children: [
-                                              Text(
-                                                context
-                                                    .locale.serviceNotAvailable,
-                                                style: context
-                                                    .textTheme.titleLarge!
-                                                    .copyWith(),
-                                              ),
-                                              const SizedBox(
-                                                height: 20,
-                                              ),
-                                              Expanded(
-                                                child: AppButton(
-                                                  onPressed: () {
-                                                    context.pop();
-                                                  },
-                                                  child:
-                                                      Text(context.locale.back),
-                                                ),
-                                              )
-                                            ],
+                  child: GridView.builder(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 1.45,
+                      mainAxisSpacing: 15,
+                      crossAxisSpacing: 15,
+                    ),
+                    itemCount: filteredMenus.length,
+                    itemBuilder: (context, index) {
+                      final item = filteredMenus[index];
+                      return GestureDetector(
+                        onTap: !item.isActive
+                            ? () {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                    backgroundColor:
+                                        context.theme.scaffoldBackgroundColor,
+                                    content: Container(
+                                      alignment: Alignment.center,
+                                      width: 100,
+                                      height: 100,
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            context.locale.serviceNotAvailable,
+                                            style: context.textTheme.titleLarge!
+                                                .copyWith(),
                                           ),
-                                        ),
+                                          const SizedBox(height: 20),
+                                          Expanded(
+                                            child: AppButton(
+                                              onPressed: () {
+                                                context.pop();
+                                              },
+                                              child: Text(context.locale.back),
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+                            : () {
+                                switch (item.id) {
+                                  case 1:
+                                    context.push(const MasterTableView());
+                                    break;
+                                  case 2:
+                                    context.push(WaitingClassesView(
+                                      title: item.title,
+                                    ));
+                                    break;
+                                  case 3:
+                                    context.push(ScheduledTasksView(
+                                      title: item.title,
+                                    ));
+                                    break;
+                                  case 4:
+                                    context.push(TeacherNotesView(
+                                      title: item.title,
+                                    ));
+                                    break;
+                                  case 5:
+                                    context.push(CircularsView(
+                                      title: item.title,
+                                    ));
+                                    break;
+                                  case 6:
+                                    context.push(HealthCasesView(
+                                      title: item.title,
+                                    ));
+                                    break;
+                                  case 7:
+                                    context.push(ClassVisitsView(
+                                      title: item.title,
+                                    ));
+                                    break;
+                                  case 8:
+                                    context.push(SocialCaseView(
+                                      title: item.title,
+                                    ));
+                                    break;
+                                  case 9:
+                                    context.push(
+                                      WeeklyPlanView(
+                                        title: item.title,
                                       ),
                                     );
-                                  }
-                                : () {
-                                    switch (item.id) {
-                                      case 1:
-                                        context.push(const MasterTableView());
-                                        break;
-                                      case 2:
-                                        context.push(WaitingClassesView(
-                                          title: item.title,
-                                        ));
-                                        break;
-                                      case 3:
-                                        context.push(ScheduledTasksView(
-                                          title: item.title,
-                                        ));
-                                      case 4:
-                                        context.push(TeacherNotesView(
-                                          title: item.title,
-                                        ));
-                                      case 5:
-                                        context.push(CircularsView(
-                                          title: item.title,
-                                        ));
-                                        break;
-                                      case 6:
-                                        context.push(HealthCasesView(
-                                          title: item.title,
-                                        ));
-                                        break;
-                                      case 7:
-                                        context.push(ClassVisitsView(
-                                          title: item.title,
-                                        ));
-                                        break;
-                                      case 8:
-                                        context.push(SocialCaseView(
-                                          title: item.title,
-                                        ));
-                                        break;
-                                      case 9:
-                                        context.push(
-                                          WeeklyPlanView(
-                                            title: item.title,
-                                          ),
-                                        );
-                                        break;
-                                      case 10:
-                                        context.push(
-                                          ExamHallsView(
-                                            title: item.title,
-                                          ),
-                                        );
-                                        break;
-                                      default:
-                                    }
-                                  },
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(20),
+                                    break;
+                                  case 10:
+                                    context.push(
+                                      ExamHallsView(
+                                        title: item.title,
+                                      ),
+                                    );
+                                    break;
+                                  case 11:
+                                    context.push(
+                                      PerformanceEvidenceView(
+                                        title: item.title,
+                                      ),
+                                    );
+                                    break;
+                                }
+                              },
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 7,
+                              )
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Builder(builder: (_) {
+                                String iconPath;
+                                Color bgColor;
+                                bool isPng = false;
+
+                                switch (item.id) {
+                                  case 1:
+                                    iconPath = SvgAssets.table;
+                                    bgColor = const Color(0xFFFFF2E8);
+                                    break;
+                                  case 2:
+                                    iconPath = SvgAssets.stopwatch02;
+                                    bgColor = const Color(0xFFEFF3FE);
+                                    break;
+                                  case 3:
+                                    iconPath = SvgAssets.file06;
+                                    bgColor = const Color(0xFFE6FAFA);
+                                    break;
+                                  case 10:
+                                    iconPath = SvgAssets.groupds;
+                                    bgColor = const Color(0xFFFFF2E8);
+                                    break;
+                                  case 4:
+                                    iconPath = SvgAssets.group;
+                                    bgColor = const Color(0xFFEFF3FE);
+                                    break;
+                                  case 5:
+                                    iconPath = SvgAssets.groupw;
+                                    bgColor = const Color(0xFFE6FAFA);
+                                    break;
+                                  case 6:
+                                    iconPath = SvgAssets.group82;
+                                    bgColor = const Color(0xFFFFF2E8);
+                                    break;
+                                  case 7:
+                                    iconPath = SvgAssets.groupee;
+                                    bgColor = const Color(0xFFF4EBFF);
+                                    break;
+                                  case 8:
+                                    iconPath = SvgAssets.group81;
+                                    bgColor = const Color(0xFFFFF2E8);
+                                    break;
+                                  case 9:
+                                    iconPath = SvgAssets.groeup;
+                                    bgColor = const Color(0xFFEFF3FE);
+                                    break;
+                                  case 11:
+                                    iconPath = SvgAssets.perform21;
+                                    bgColor = const Color(0xFFE6FAFA);
+                                    break;
+                                  default:
+                                    iconPath = SvgAssets.table;
+                                    bgColor = AppColors.grayColor;
+                                    break;
+                                }
+
+                                return Container(
+                                  padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: AppColors.grayColor,
+                                    color: bgColor,
                                     borderRadius: BorderRadius.circular(10),
                                   ),
-                                  child: CachedNetworkImage(
-                                    imageUrl: item.image,
-                                    width: 64,
-                                    height: 64,
+                                  child: SvgPicture.asset(
+                                    iconPath,
+                                    width: 30,
+                                    height: 30,
                                   ),
-                                ),
-                                const SizedBox(
-                                  height: 8,
-                                ),
+                                );
+                              }),
+                              const Spacer(),
+                              Text(
+                                item.title,
+                                style: context.textTheme.titleMedium!.copyWith(
+                                    fontSize: 14, fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (item.description.isNotEmpty)
                                 Text(
-                                  item.title,
-                                  style: context.textTheme.titleMedium!
-                                      .copyWith(fontSize: 14),
+                                  item.description,
                                   textAlign: TextAlign.center,
-                                ),
-                                if (item.description.isNotEmpty)
-                                  Text(
-                                    item.description,
-                                    textAlign: TextAlign.center,
-                                    maxLines: 2,
-                                    style: context.textTheme.titleMedium!
-                                        .copyWith(
-                                            fontSize: 12,
-                                            color: AppColors.pinkColor),
-                                  )
-                              ],
-                            ),
-                          );
-                        }))
+                                  maxLines: 1,
+                                  style: context.textTheme.titleMedium!
+                                      .copyWith(
+                                          fontSize: 12,
+                                          color: AppColors.pinkColor),
+                                )
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                )
               ],
             ),
-        error: (error, stackTrace) => CustomErrorWidget(onTap: () {
-              ref.invalidate(homeMenuProvider);
-            }),
-        loading: () => const LoadingWidget());
+          );
+        },
+        error: (error, stackTrace) => Scaffold(
+              body: CustomErrorWidget(onTap: () {
+                ref.invalidate(homeMenuProvider);
+              }),
+            ),
+        loading: () => const Scaffold(body: LoadingWidget()));
   }
 }

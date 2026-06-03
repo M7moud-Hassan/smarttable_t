@@ -9,6 +9,7 @@ import 'package:smart_table_app/features/exams/providers/exam_halls_provider.dar
 
 import '../../../../core/widgets/custom_error_widget.dart';
 import '../../../../core/widgets/custom_expansion_widget.dart';
+import '../widgets/exam_hall_item.dart';
 
 class ExamHallsView extends ConsumerWidget {
   const ExamHallsView({super.key, required this.title});
@@ -55,100 +56,13 @@ class ExamHallsView extends ConsumerWidget {
                                       context.locale.noData,
                                     ),
                                   )
-                                : ListView.separated(
+                                : ListView.builder(
                                     shrinkWrap: true,
                                     physics:
                                         const NeverScrollableScrollPhysics(),
                                     itemCount: data.length,
-                                    separatorBuilder: (context, index) =>
-                                        const Divider(
-                                      thickness: 0.5,
-                                    ),
-                                    itemBuilder: (context, index) => Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          data[index].name,
-                                          style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w500),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 8),
-                                          child: Row(
-                                            children: [
-                                              const Icon(
-                                                Icons.access_time_filled,
-                                                color: AppColors.primaryColor,
-                                              ),
-                                              const SizedBox(
-                                                width: 10,
-                                              ),
-                                              Expanded(
-                                                child: Text(
-                                                  '${data[index].period} ( ${data[index].startTime} - ${data[index].endTime} )',
-                                                  style: context
-                                                      .textTheme.titleLarge!
-                                                      .copyWith(
-                                                    fontSize: 16,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        if (data[index].courses.isNotEmpty)
-                                          Row(
-                                            children: [
-                                              const Icon(
-                                                Icons.library_books,
-                                                color: AppColors.primaryColor,
-                                              ),
-                                              const SizedBox(
-                                                width: 10,
-                                              ),
-                                              Expanded(
-                                                child: Text(
-                                                  data[index]
-                                                      .courses
-                                                      .join(' , '),
-                                                  style: context
-                                                      .textTheme.titleLarge!
-                                                      .copyWith(
-                                                    fontSize: 16,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 8),
-                                          child: Row(
-                                            children: [
-                                              const Icon(
-                                                Icons.today,
-                                                color: AppColors.primaryColor,
-                                              ),
-                                              const SizedBox(
-                                                width: 10,
-                                              ),
-                                              Expanded(
-                                                child: Text(
-                                                  '${data[index].day} ( ${data[index].date} )',
-                                                  style: context
-                                                      .textTheme.titleLarge!
-                                                      .copyWith(
-                                                    fontSize: 16,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
+                                    itemBuilder: (context, index) => ExamHallItem(
+                                      examHall: data[index],
                                     ),
                                   );
                           },

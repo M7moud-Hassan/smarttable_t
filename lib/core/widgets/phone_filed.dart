@@ -54,7 +54,7 @@ class _PhoneFieldState extends State<PhoneField> {
         initialValue: number,
         textFieldController: widget.controller,
         inputDecoration: InputDecoration(
-          fillColor: AppColors.grayColor,
+          fillColor: Colors.white,
           filled: true,
           contentPadding: const EdgeInsetsDirectional.only(
             top: 15,
@@ -63,10 +63,10 @@ class _PhoneFieldState extends State<PhoneField> {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: AppColors.grayBordredColor),
+            borderSide: const BorderSide(color: AppColors.primaryColor),
           ),
           border: OutlineInputBorder(
-            borderSide: const BorderSide(color: AppColors.grayBordredColor),
+            borderSide: const BorderSide(color: AppColors.primaryColor),
             borderRadius: BorderRadius.circular(10),
           ),
           focusedBorder: OutlineInputBorder(

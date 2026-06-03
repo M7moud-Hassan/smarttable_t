@@ -7,7 +7,6 @@ import 'package:smart_table_app/core/widgets/app_button.dart';
 import 'package:smart_table_app/core/widgets/loading_widget.dart';
 import 'package:smart_table_app/features/auth/providers/auth_provider.dart';
 import 'package:smart_table_app/features/profile/presentation/views/aboutus_view.dart';
-import 'package:svg_flutter/svg.dart';
 
 import '../../../../core/widgets/confirm_dialog_widget.dart';
 import '../../../../core/widgets/custom_error_widget.dart';
@@ -34,6 +33,7 @@ class ProfileView extends ConsumerWidget {
               ),
               CircleAvatar(
                 radius: 50,
+                // In a real app we would load profile.imageUrl, but using the initials for now
                 backgroundColor: AppColors.pinkColor,
                 child: Text(
                   profile.teacherName[0],
@@ -44,55 +44,79 @@ class ProfileView extends ConsumerWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
+                padding: const EdgeInsets.only(top: 15, bottom: 5),
                 child: Text(
                   '${profile.teacherNameLabel} / ${profile.teacherName} ',
-                  style: context.textTheme.titleLarge,
+                  style: context.textTheme.titleLarge!.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-              Text(profile.schoolName),
+              Text('@${profile.schoolName}',
+                  style:
+                      const TextStyle(color: Color(0xFF8D8D8D), fontSize: 13)),
               const SizedBox(
-                height: 50,
+                height: 15,
               ),
-              Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text(
-                    context.locale.settings,
-                    style: context.textTheme.titleMedium!.copyWith(
-                        fontSize: 17,
-                        color: AppColors.primaryColor,
-                        fontWeight: FontWeight.bold),
-                  )),
+              ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  fixedSize: const Size(130, 36),
+                  backgroundColor:
+                      const Color(0xFF4AC2C5), // Teal primary color
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 0,
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                ),
+                child: Text(
+                  context.locale.editPicture,
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+              ),
               const SizedBox(
-                height: 10,
+                height: 30,
               ),
+              const LanguageSwitch(),
               ProfileItemWidget(
                 title: context.locale.classTiming,
+                icon: SvgAssets.timing,
                 onTap: () {
                   context.push(const ClassTimingView());
                 },
               ),
-              const SizedBox(
-                height: 10,
+              ProfileItemWidget(
+                title: context.locale.changePassword,
+                icon: SvgAssets.lock3,
+                onTap: () {},
               ),
-              const LanguageSwitch(),
-              const SizedBox(
-                height: 50,
+              ProfileItemWidget(
+                title: context.locale.aboutUs,
+                icon: SvgAssets.mdiAbout,
+                onTap: () {
+                  context.push(const AboutUsView());
+                },
               ),
-              Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text(
-                    context.locale.infoData,
-                    style: context.textTheme.titleMedium!.copyWith(
-                        fontSize: 17,
-                        color: AppColors.primaryColor,
-                        fontWeight: FontWeight.bold),
-                  )),
-              const SizedBox(
-                height: 10,
+              ProfileItemWidget(
+                title: context.locale.faq,
+                icon: SvgAssets.faQuestion,
+                onTap: () {},
+              ),
+              ProfileItemWidget(
+                title: context.locale.contactUs,
+                icon: SvgAssets.riCustomerServiceFill,
+                onTap: () {
+                  context.push(const ContactUsView());
+                },
               ),
               ProfileItemWidget(
                 title: context.locale.privacyPolicy,
+                icon: SvgAssets.iconamoonShieldYesFill,
                 onTap: () {
                   final currentLocale = context.locale.localeName;
                   openLink(
@@ -100,53 +124,16 @@ class ProfileView extends ConsumerWidget {
                   );
                 },
               ),
-              // ProfileItemWidget(
-              //   title: context.locale.termsConditions,
-              //   onTap: () {
-              //       openLink(
-              //       '${AppConstants.}',
-              //     );
-              //   }
-              // ),
               ProfileItemWidget(
-                  title: context.locale.deleteAccount,
-                  onTap: () {
-                    showDialog(
-                        context: context,
-                        builder: (context) {
-                          return ConfirmDialogWidget(
-                              title: context.locale.confirmDeleteAccount,
-                              onConfirm: () {
-                                ref.read(authProvider.notifier).deleteAccount();
-                              });
-                        });
-                  }),
+                title: context.locale.termsConditions,
+                icon: SvgAssets.epList,
+                onTap: () {},
+              ),
               ProfileItemWidget(
-                title: context.locale.aboutUs,
+                title: context.locale.shareWithFrieds,
+                icon: SvgAssets.solarShareBold,
                 onTap: () {
-                  context.push(const AboutUsView());
-                },
-              ),
-              ProfileItemWidget(
-                title: context.locale.contactUs,
-                onTap: () {
-                  context.push(const ContactUsView());
-                },
-              ),
-              ProfileItemWidget(
-                title: context.locale.logout,
-                color: Colors.red,
-                onTap: () {
-                  ref.read(authProvider.notifier).logout();
-                },
-              ),
-              const SizedBox(
-                height: 30,
-              ),
-              Center(
-                child: TextButton(
-                  onPressed: () {
-                    shareText('''
+                  shareText('''
                       **اكتشف تطبيق Smartble P – مساعدك الذكي في إدارة العملية التعليمية**  
                       
                       صُمم تطبيق **Smartble P** خصيصًا للمعلمين لمساعدتهم على إدارة مهامهم وتنظيم جداولهم بكل سهولة وفعالية. الآن يمكنك التركيز على التعليم بينما يقوم التطبيق بالباقي!  
@@ -157,29 +144,33 @@ class ProfileView extends ConsumerWidget {
                       
                       ابدأ باستخدام **Smartble P** اليوم، واجعل إدارة فصولك الدراسية أكثر سهولة وتنظيمًا! ✨  
                       ''');
-                  },
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SvgPicture.asset(SvgAssets.share),
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      Text(
-                        context.locale.shareWithFrieds,
-                        style: context.textTheme.titleMedium!.copyWith(
-                            fontSize: 17,
-                            color: const Color(0xFFA5910B),
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ),
+                },
               ),
-              Image.asset(
-                PngAssets.whiteBlackLogo,
-                color: Colors.grey,
-              )
+              ProfileItemWidget(
+                title: context.locale.deleteAccount,
+                icon: SvgAssets.icomoonFreeBin,
+                onTap: () {
+                  showDialog(
+                      context: context,
+                      builder: (context) {
+                        return ConfirmDialogWidget(
+                            title: context.locale.confirmDeleteAccount,
+                            onConfirm: () {
+                              ref.read(authProvider.notifier).deleteAccount();
+                            });
+                      });
+                },
+              ),
+              ProfileItemWidget(
+                title: context.locale.logout,
+                icon: SvgAssets.materialSymbolsLogoutSharp,
+                onTap: () {
+                  ref.read(authProvider.notifier).logout();
+                },
+              ),
+              const SizedBox(
+                height: 30,
+              ),
             ],
           ),
         ),

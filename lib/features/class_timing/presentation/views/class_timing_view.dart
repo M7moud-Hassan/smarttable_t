@@ -117,18 +117,47 @@ class ClassTimingView extends ConsumerWidget {
                                     final item =
                                         classTiming.classesTiming[index];
                                     return CustomExpansionWidget(
-                                        titleWidget: Text(
-                                          translateWeekday(
-                                                  context, item.dayen) ??
-                                              '',
-                                          style: const TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.bold),
+                                        titleWidget: Row(
+                                          children: [
+                                            const Icon(Icons.calendar_today,
+                                                color: AppColors.primaryColor,
+                                                size: 20),
+                                            const SizedBox(width: 10),
+                                            Text(
+                                              translateWeekday(
+                                                      context, item.dayen) ??
+                                                  '',
+                                              style: context
+                                                  .textTheme.titleMedium!
+                                                  .copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                         contentWidget: [
-                                          ListTile(
-                                            title: Text(
-                                              item.cellText,
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 8),
+                                            child: Row(
+                                              children: [
+                                                const Icon(Icons.class_outlined,
+                                                    color: AppColors.pinkColor,
+                                                    size: 18),
+                                                const SizedBox(width: 10),
+                                                Expanded(
+                                                  child: Text(
+                                                    item.cellText,
+                                                    style: context
+                                                        .textTheme.bodyMedium!
+                                                        .copyWith(
+                                                      color: Colors.black87,
+                                                      fontSize: 15,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           )
                                         ]);

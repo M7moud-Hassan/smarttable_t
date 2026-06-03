@@ -122,9 +122,22 @@
     "placeholders": {
       "seconds": {}
     }
-  }
-
-       
-
-
+  },
+  "rememberMe": "Remember me?",
+  "forgotPasswordQuestion": "Forgot Password?",
+  "or": "OR",
+  "teacherApp": "Teacher App",
+  "enterIdCodeDesc": "Enter the ID code associated with your account",
+  "loginWithId": "Login with ID code",
+  "loginWithPhone": "Login with phone number",
+  "enterEmail": "Please enter your email",
+  "resetPasswordLinkDesc": "A link will be sent to your email,",
+  "checkInboxDesc": "please check your inbox and enter a new password.",
+  "sentSuccessfully": "Successfully sent to your email",
+  "splashSlogan": "Towards smart school management",
+  "splashSafeEnv": "A safe and organized educational environment",
+  "editPicture": "Edit Picture",
+  "changePassword": "Change Password",
+  "faq": "FAQ",
+  "language": "Language"
 }

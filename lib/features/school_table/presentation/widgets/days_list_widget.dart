@@ -9,73 +9,60 @@ import '../../providers/days_provider.dart';
 class DaysListWidget extends ConsumerWidget {
   const DaysListWidget({super.key, required this.days});
   final List<DayModel> days;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedDay = ref.watch(selectedDayProvider);
-    return SizedBox(
-      height: 125,
-      child: ListView.separated(
-          padding: pgHorizontalPadding18,
-          separatorBuilder: (context, index) => const SizedBox(
-                width: 10,
-              ),
-          itemCount: days.length,
-          scrollDirection: Axis.horizontal,
-          itemBuilder: (context, index) {
-            final day = days[index];
-            final isSelected = day.dayId == selectedDay;
-            return GestureDetector(
-              onTap: () {
-                ref.read(selectedDayProvider.notifier).state = day.dayId;
-              },
-              child: Container(
-                alignment: Alignment.topCenter,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color:
-                      day.isCurrent ? AppColors.pinkColor : Colors.transparent,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: days.map((day) {
+          final isSelected = day.dayId == selectedDay;
+          return GestureDetector(
+            onTap: () {
+              ref.read(selectedDayProvider.notifier).state = day.dayId;
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  day.dayName,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.w500,
+                    color: isSelected
+                        ? AppColors.primaryColor
+                        : const Color(0xFF1E3A5F),
+                  ),
                 ),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 13),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: isSelected
-                            ? AppColors.primaryColor
-                            : AppColors.secondryColor,
-                      ),
-                      child: Column(mainAxisSize: MainAxisSize.min, children: [
-                        Text(
-                          day.dayName,
-                          style: TextStyle(
-                              fontSize: 15,
-                              color: isSelected ? Colors.white : Colors.black),
-                        ),
-                        Text(day.dayNumber.toString(),
-                            style: TextStyle(
-                                fontSize: 28,
-                                color:
-                                    isSelected ? Colors.white : Colors.black))
-                      ]),
-                    ),
-                    if (day.isCurrent)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 3),
-                        child: Text(
-                          context.locale.today,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500),
-                        ),
-                      )
-                  ],
+                const SizedBox(height: 10),
+                Text(
+                  day.dayNumber.toString(),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.w500,
+                    color: isSelected
+                        ? AppColors.primaryColor
+                        : const Color(0xFF1E3A5F),
+                  ),
                 ),
-              ),
-            );
-          }),
+                const SizedBox(height: 6),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primaryColor : Colors.transparent,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 }

@@ -34,7 +34,7 @@ class PhoneRegisterView extends HookConsumerWidget with ValidationMixin {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.locale.back),
+        title: Text(context.locale.loginWithPhone),
       ),
       body: Padding(
         padding: pgHorizontalPadding18,
@@ -48,15 +48,11 @@ class PhoneRegisterView extends HookConsumerWidget with ValidationMixin {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Spacer(),
                       const SizedBox(height: 40),
-                      Text(context.locale.phoneNumber,
-                          style: context.textTheme.titleLarge),
-                      const SizedBox(height: 10),
                       Text(
                         context.locale.enterPhoneConnectedWithAccounr,
-                        style: context.textTheme.bodyLarge!
-                            .copyWith(color: AppColors.textGrayColor),
+                        style: context.textTheme.bodyMedium!
+                            .copyWith(color: AppColors.secondryColor),
                       ),
                       const SizedBox(height: 30),
                       Directionality(

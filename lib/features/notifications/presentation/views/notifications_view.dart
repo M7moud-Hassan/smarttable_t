@@ -13,9 +13,10 @@ class NotificationsView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-        body: PaginationListView(
-      controller:
-          ref.watch(notificationsMangeProvider.notifier).pagingController,
+      body: PaginationListView(
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        controller:
+            ref.watch(notificationsMangeProvider.notifier).pagingController,
       getList: (page) => ref.read(notificationsProvider(page).future),
       itemBuilder: (notification, index) => NotificationCard(
         notfificaionModel: notification.notification,

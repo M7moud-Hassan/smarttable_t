@@ -793,6 +793,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Resend in {seconds}s'**
   String resendInSeconds(Object seconds);
+
+  /// No description provided for @rememberMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember me?'**
+  String get rememberMe;
+
+  /// No description provided for @forgotPasswordQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot Password?'**
+  String get forgotPasswordQuestion;
+
+  /// No description provided for @or.
+  ///
+  /// In en, this message translates to:
+  /// **'OR'**
+  String get or;
+
+  /// No description provided for @teacherApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Teacher App'**
+  String get teacherApp;
+
+  /// No description provided for @enterIdCodeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the ID code associated with your account'**
+  String get enterIdCodeDesc;
+
+  /// No description provided for @loginWithId.
+  ///
+  /// In en, this message translates to:
+  /// **'Login with ID code'**
+  String get loginWithId;
+
+  /// No description provided for @loginWithPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Login with phone number'**
+  String get loginWithPhone;
+
+  /// No description provided for @enterEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your email'**
+  String get enterEmail;
+
+  /// No description provided for @resetPasswordLinkDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'A link will be sent to your email,'**
+  String get resetPasswordLinkDesc;
+
+  /// No description provided for @checkInboxDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'please check your inbox and enter a new password.'**
+  String get checkInboxDesc;
+
+  /// No description provided for @sentSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully sent to your email'**
+  String get sentSuccessfully;
+
+  /// No description provided for @splashSlogan.
+  ///
+  /// In en, this message translates to:
+  /// **'Towards smart school management'**
+  String get splashSlogan;
+
+  /// No description provided for @splashSafeEnv.
+  ///
+  /// In en, this message translates to:
+  /// **'A safe and organized educational environment'**
+  String get splashSafeEnv;
+
+  /// No description provided for @editPicture.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Picture'**
+  String get editPicture;
+
+  /// No description provided for @changePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Password'**
+  String get changePassword;
+
+  /// No description provided for @faq.
+  ///
+  /// In en, this message translates to:
+  /// **'FAQ'**
+  String get faq;
+
+  /// No description provided for @language.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get language;
 }
 
 class _AppLocalizationsDelegate

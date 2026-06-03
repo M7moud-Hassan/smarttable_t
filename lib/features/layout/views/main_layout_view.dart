@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/constants/constants.dart';
 import 'package:smart_table_app/core/extensions/extensions.dart';
-import 'package:smart_table_app/core/service/class_reminder_service.dart';
+
 import 'package:smart_table_app/features/class_timing/providers/class_timing_notifer.dart';
 import 'package:smart_table_app/features/home/presentation/views/home_view.dart';
 import 'package:svg_flutter/svg.dart';
@@ -57,89 +57,45 @@ class _MainLayoutViewState extends ConsumerState<MainLayoutView> {
     await ref.read(authRepoProvider).updateFcm();
   }
 
-  // Future<void> _addReminder() async {
-  //   log('Setting up test class reminder...');
-
-  //   // Clear any existing reminders
-  //   await _scheduleManager.clearAllReminders();
-
-  //   // Get current time
-  //   final now = DateTime.now();
-  //   // Create a time 3 minutes from now
-  //   final reminderTime = TimeOfDay(
-  //       hour: now.hour,
-  //       minute: (now.minute + 3) % 60 // Add 3 minutes, wrap around if needed
-  //       );
-
-  //   // If we crossed an hour boundary
-  //   final adjustedHour =
-  //       (now.minute + 3) >= 60 ? (now.hour + 1) % 24 : now.hour;
-  //   final adjustedTime =
-  //       TimeOfDay(hour: adjustedHour, minute: (now.minute + 3) % 60);
-
-  //   // Schedule for today
-  //   await _scheduleManager.addClassReminder(
-  //     dayOfWeek: now.weekday,
-  //     time: adjustedTime,
-  //     className: "Test Class",
-  //     location: "Room 101",
-  //     reminderMinutesBefore: 1, // 1 minute before
-  //   );
-
-  //   log('Test class reminder added for today at ${adjustedTime.hour}:${adjustedTime.minute}');
-  // }
-
   @override
   void didChangeDependencies() {
     bottomTabs = [
       LayoutModel(
-          title: context.locale.home,
-          activeIcon: SvgAssets.homeBold,
-          inActiveIcon: SvgAssets.homeOutline,
-          page: const HomeView(),
-          pageTitle: context.locale.home),
-      LayoutModel(
           title: context.locale.notifications,
-          activeIcon: SvgAssets.notificationBold,
-          inActiveIcon: SvgAssets.notificationOutline,
+          activeIcon: SvgAssets.bell,
+          inActiveIcon: SvgAssets.bell,
           page: const NotificationsView(),
           pageTitle: context.locale.notifications),
       LayoutModel(
+          title: context.locale.home,
+          activeIcon: SvgAssets.home,
+          inActiveIcon: SvgAssets.home,
+          page: const HomeView(),
+          pageTitle: context.locale.home),
+      LayoutModel(
           title: context.locale.myProfile,
-          activeIcon: SvgAssets.userBold,
-          inActiveIcon: SvgAssets.userOutline,
+          activeIcon: SvgAssets.profile,
+          inActiveIcon: SvgAssets.profile,
           page: const ProfileView(),
           pageTitle: context.locale.myProfile),
     ];
     super.didChangeDependencies();
   }
 
-  int currentIndex = 0;
+  int currentIndex = 1;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        shadowColor: Colors.black54,
-        surfaceTintColor: Colors.transparent,
-        elevation: 3,
-        backgroundColor: Colors.white,
-        title: Row(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 0),
-              child: Image.asset(
-                PngAssets.appLogoSmall,
-                width: 40,
-              ),
+      appBar: currentIndex == 1
+          ? null
+          : AppBar(
+              centerTitle: true,
+              backgroundColor: Colors.white,
+              title: Text(bottomTabs[currentIndex].title),
             ),
-            const SizedBox(width: 10),
-            Text(bottomTabs[currentIndex].title),
-          ],
-        ),
-      ),
       body: bottomTabs[currentIndex].page,
       bottomNavigationBar: SizedBox(
-        height: 82,
+        height: 85,
         child: BottomNavigationBar(
             currentIndex: currentIndex,
             onTap: (index) {
@@ -147,16 +103,35 @@ class _MainLayoutViewState extends ConsumerState<MainLayoutView> {
                 currentIndex = index;
               });
             },
+            selectedItemColor: AppColors.primaryColor,
+            unselectedItemColor: AppColors.textGrayColor,
+            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
             items: [
               ...bottomTabs.map(
                 (item) => BottomNavigationBarItem(
                   icon: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: SvgPicture.asset(item.inActiveIcon),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: SvgPicture.asset(item.inActiveIcon,
+                        colorFilter: const ColorFilter.mode(
+                            AppColors.textGrayColor, BlendMode.srcIn)),
                   ),
-                  activeIcon: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: SvgPicture.asset(item.activeIcon),
+                  activeIcon: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        height: 5,
+                        width: 40,
+                        decoration: const BoxDecoration(
+                          color: AppColors.primaryColor,
+                          borderRadius: BorderRadius.vertical(
+                              bottom: Radius.circular(10)),
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      SvgPicture.asset(item.activeIcon,
+                          colorFilter: const ColorFilter.mode(
+                              AppColors.primaryColor, BlendMode.srcIn)),
+                    ],
                   ),
                   label: item.title,
                 ),

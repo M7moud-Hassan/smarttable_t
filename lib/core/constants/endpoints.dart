@@ -5,34 +5,42 @@ class Endpoints {
       ? 'https://www.smartble.net/teacher-mobile/v2/'
       : 'https://www.smartble.net/teacher-mobile/v2/';
 
-  static const String login = 'auth/login/';
-  static const String logout = 'auth/logout/';
-  static const String register = 'auth/register/';
-  static const String registerByPhone = 'register-by-phone/';
-  static const String checkPhone = 'check-phone/';
-  static const String verifyPhone = 'verify-phone-code/';
-  static const String resetPassword = 'auth/reset-password/';
-  static const String updateFcmToken = 'auth/update-fcm-token/';
-  static const String deleteMyAccount = 'auth/delete-my-account/';
-  static const String homeMenus = 'app_features/menus/';
-  static const String masterTable = 'master-table/';
-  static const String teacherTable = 'teacher-table/';
-  static const String waitingClasses = 'waiting-classes/';
-  static const String days = 'days/';
-  static const String notifications = 'notifications/';
-  static const String deleteNotifications = 'delete-notification/';
-  static const String teacherNotes = 'followers/notes/';
-  static const String profile = 'auth/me/';
-  static const String circulars = 'followers/circulars/';
-  static const String classVisits = 'followers/class-visits/';
-  static const String healthCases = 'followers/health-conditions/';
-  static const String dailyTasks = 'daily-tasks/';
-  static const String socialCases = 'followers/social-status/';
+  static const String login = 'teacher-mobile/v2/auth/login/';
+  static const String logout = 'teacher-mobile/v2/auth/logout/';
+  static const String register = 'teacher-mobile/v2/auth/register/';
+  static const String registerByPhone = 'teacher-mobile/v2/register-by-phone/';
+  static const String checkPhone = 'teacher-mobile/v2/check-phone/';
+  static const String verifyPhone = 'teacher-mobile/v2/verify-phone-code/';
+  static const String resetPassword = 'teacher-mobile/v2/auth/reset-password/';
+  static const String updateFcmToken =
+      'teacher-mobile/v2/auth/update-fcm-token/';
+  static const String deleteMyAccount =
+      'teacher-mobile/v2/auth/delete-my-account/';
+  static const String homeMenus = 'teacher-mobile/v2/app_features/menus/';
+  static const String masterTable = 'teacher-mobile/v2/master-table/';
+  static const String teacherTable = 'teacher-mobile/v2/teacher-table/';
+  static const String waitingClasses = 'teacher-mobile/v2/waiting-classes/';
+  static const String days = 'teacher-mobile/v2/days/';
+  static const String notifications = 'teacher-mobile/v2/notifications/';
+  static const String deleteNotifications =
+      'teacher-mobile/v2/delete-notification/';
+  static const String teacherNotes = 'teacher-mobile/v2/followers/notes/';
+  static const String profile = 'teacher-mobile/v2/auth/me/';
+  static const String circulars = 'teacher-mobile/v2/followers/circulars/';
+  static const String classVisits = 'teacher-mobile/v2/followers/class-visits/';
+  static const String healthCases =
+      'teacher-mobile/v2/followers/health-conditions/';
+  static const String dailyTasks = 'teacher-mobile/v2/daily-tasks/';
+  static const String socialCases =
+      'teacher-mobile/v2/followers/social-status/';
   static const String aboutUs =
       'https://www.smartble.net/api/about-page-content/';
-  static const String weekPlan = 'followers/week-plan/';
-  static const String weekInfo = 'followers/week-info/';
-  static const String contactUs = 'contact-us/';
-  static const String examHalls = 'exam-hall-groups/';
-  static const String classTiming = 'classes-timing/';
+  static const String weekPlan = 'teacher-mobile/v2/followers/week-plan/';
+  static const String weekInfo = 'teacher-mobile/v2/followers/week-info/';
+  static const String contactUs = 'teacher-mobile/v2/contact-us/';
+  static const String examHalls = 'teacher-mobile/v2/exam-hall-groups/';
+  static const String classTiming = 'teacher-mobile/v2/classes-timing/';
+  static const String performanceEvidence = 'api/notes/evidence/';
+  static const String performanceEvidenceCategories =
+      'api/notes/evidence-categories/';
 }

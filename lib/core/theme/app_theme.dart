@@ -22,12 +22,13 @@ class AppThemes {
     return baseTheme.copyWith(
       textTheme: textTheme,
       appBarTheme: const AppBarTheme(
-        iconTheme: IconThemeData(color: Colors.black),
+        iconTheme: IconThemeData(color: AppColors.secondryColor),
         color: Colors.transparent,
         elevation: 0,
+        centerTitle: true,
         titleTextStyle: TextStyle(
-            color: AppColors.appbarTextColor,
-            fontSize: 24,
+            color: AppColors.secondryColor,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
             fontFamily: AppAssets.arFont),
       ),
@@ -42,9 +43,9 @@ class AppThemes {
         style: ElevatedButton.styleFrom(
           fixedSize: const Size(500, 54),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(25),
           ),
-          backgroundColor: Colors.black,
+          backgroundColor: AppColors.primaryColor,
           foregroundColor: Colors.white,
           elevation: 0,
           textStyle: ThemeData.light()
@@ -66,7 +67,7 @@ class AppThemes {
         style: OutlinedButton.styleFrom(
           fixedSize: const Size(500, 50),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(25),
           ),
           side: const BorderSide(color: Colors.black, width: 0.5),
           elevation: 0,

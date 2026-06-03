@@ -374,4 +374,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String resendInSeconds(Object seconds) {
     return 'Resend in ${seconds}s';
   }
+
+  @override
+  String get rememberMe => 'Remember me?';
+
+  @override
+  String get forgotPasswordQuestion => 'Forgot Password?';
+
+  @override
+  String get or => 'OR';
+
+  @override
+  String get teacherApp => 'Teacher App';
+
+  @override
+  String get enterIdCodeDesc =>
+      'Enter the ID code associated with your account';
+
+  @override
+  String get loginWithId => 'Login with ID code';
+
+  @override
+  String get loginWithPhone => 'Login with phone number';
+
+  @override
+  String get enterEmail => 'Please enter your email';
+
+  @override
+  String get resetPasswordLinkDesc => 'A link will be sent to your email,';
+
+  @override
+  String get checkInboxDesc =>
+      'please check your inbox and enter a new password.';
+
+  @override
+  String get sentSuccessfully => 'Successfully sent to your email';
+
+  @override
+  String get splashSlogan => 'Towards smart school management';
+
+  @override
+  String get splashSafeEnv => 'A safe and organized educational environment';
+
+  @override
+  String get editPicture => 'Edit Picture';
+
+  @override
+  String get changePassword => 'Change Password';
+
+  @override
+  String get faq => 'FAQ';
+
+  @override
+  String get language => 'Language';
 }

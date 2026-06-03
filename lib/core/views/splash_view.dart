@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:svg_flutter/svg.dart';
 import 'package:smart_table_app/core/constants/constants.dart';
 import 'package:smart_table_app/core/extensions/extensions.dart';
 import 'package:smart_table_app/core/service/firebase_messaging_service.dart';
@@ -46,13 +47,92 @@ class SplashView extends ConsumerWidget {
     });
 
     return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Image.asset(
-            PngAssets.splashLogo,
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Spacer(flex: 3),
+              // Top Text "الجدول الذكي" using AppAssets.arFont
+              Text(
+                context.locale.appTitle,
+                style: const TextStyle(
+                  color: AppColors.primaryColor,
+                  fontSize: 40,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: AppAssets.arFont,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Main Logo
+              Image.asset(
+                PngAssets.appLogoSmall,
+                width: 250,
+              ),
+              const SizedBox(height: 16),
+              // "Smartble" Text
+              const Text(
+                'Smartble',
+                style: TextStyle(
+                  color: AppColors.primaryColor,
+                  fontSize: 45,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: AppAssets.agencyFont,
+                ),
+              ),
+              const Spacer(flex: 1),
+              // "نحو إدارة مدرسية ذكية" with horizontal lines
+              Row(
+                children: [
+                  const Expanded(
+                      child:
+                          Divider(color: AppColors.primaryColor, thickness: 1)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      context.locale.splashSlogan,
+                      style: const TextStyle(
+                        color: AppColors.primaryColor,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: AppAssets.arFont,
+                      ),
+                    ),
+                  ),
+                  const Expanded(
+                      child:
+                          Divider(color: AppColors.primaryColor, thickness: 1)),
+                ],
+              ),
+              const Spacer(flex: 2),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 40),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SvgPicture.asset(
+                      SvgAssets.shieldCheck,
+                      colorFilter: const ColorFilter.mode(
+                          AppColors.secondryColor, BlendMode.srcIn),
+                      width: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      context.locale.splashSafeEnv,
+                      style: const TextStyle(
+                        color: AppColors.secondryColor,
+                        fontSize: 14,
+                        fontFamily: AppAssets.arFont,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

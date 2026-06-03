@@ -65,7 +65,9 @@ class _AppTextFieldState extends State<AppTextField> {
               children: [
                 Text(
                   widget.label!,
-                  style: const TextStyle(fontWeight: FontWeight.w500),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.primaryColor),
                 ),
                 // if (widget.optional)
                 //   Text(
@@ -92,11 +94,11 @@ class _AppTextFieldState extends State<AppTextField> {
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: widget.suffix,
             ),
-            fillColor: AppColors.grayColor,
+            fillColor: Colors.white,
             filled: true,
             hintText: widget.hintText,
             hintStyle:
-                const TextStyle(fontSize: 15, color: AppColors.textGrayColor),
+                const TextStyle(fontSize: 13, color: AppColors.textGrayColor),
             contentPadding: const EdgeInsetsDirectional.only(
                 top: 15, start: 10, bottom: 15),
             prefixIcon: widget.icon == null
@@ -127,10 +129,10 @@ class _AppTextFieldState extends State<AppTextField> {
                 : widget.suffixIcon,
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.grayBordredColor),
+              borderSide: const BorderSide(color: AppColors.primaryColor),
             ),
             border: OutlineInputBorder(
-              borderSide: const BorderSide(color: AppColors.grayBordredColor),
+              borderSide: const BorderSide(color: AppColors.primaryColor),
               borderRadius: BorderRadius.circular(10),
             ),
             focusedBorder: OutlineInputBorder(

@@ -9,6 +9,7 @@ import 'package:smart_table_app/features/auth/presentation/views/phone_register_
 import 'package:smart_table_app/features/auth/presentation/views/reset_password_view.dart';
 import 'package:smart_table_app/features/auth/providers/auth_provider.dart';
 import 'package:smart_table_app/features/layout/views/main_layout_view.dart';
+import 'package:svg_flutter/svg_flutter.dart';
 
 import '../../../../core/constants/constants.dart';
 import '../../../../core/providers/providers.dart';
@@ -22,6 +23,7 @@ class LoginView extends HookConsumerWidget with ValidationMixin {
   Widget build(BuildContext context, WidgetRef ref) {
     final usernameController = useTextEditingController();
     final passwordController = useTextEditingController();
+    final rememberMe = useState(false);
     final formKey = useMemoized(GlobalKey<FormState>.new, const []);
 
     ref.listen(
@@ -42,6 +44,19 @@ class LoginView extends HookConsumerWidget with ValidationMixin {
     );
 
     return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leadingWidth: 200,
+        leading: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Image.asset(
+            PngAssets.logoText,
+            height: 40,
+          ),
+        ),
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: pgHorizontalPadding18,
@@ -50,61 +65,93 @@ class LoginView extends HookConsumerWidget with ValidationMixin {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 10),
+                const SizedBox(height: 20),
                 Center(
                   child: Image.asset(
-                    PngAssets.splashLogo,
-                    width: 260,
+                    PngAssets.teacher,
+                    height: 80,
                   ),
                 ),
-                Text(
-                  context.locale.wellcome,
-                  style: context.textTheme.titleLarge!.copyWith(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                const SizedBox(height: 16),
+                Center(
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryColor,
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Text(
+                      context.locale.teacherApp,
+                      style: context.textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  context.locale.loginDesc,
-                  style: context.textTheme.bodyLarge!.copyWith(
-                    fontSize: 14,
-                    color: AppColors.textGrayColor,
-                  ),
-                ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 24),
                 Text(
                   context.locale.teacherLogin,
-                  style: context.textTheme.titleLarge!.copyWith(
-                    fontSize: 18,
+                  style: context.textTheme.headlineSmall?.copyWith(
+                    color: AppColors.secondryColor,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 24),
                 AppTextField(
+                  label: context.locale.username,
+                  hintText: "ادخل اسم المستخدم",
                   controller: usernameController,
-                  hintText: context.locale.username,
-                  icon: SvgAssets.user,
-                  validator: (username) => emptyValidation(username, context),
+                  validator: (v) => emptyValidation(v, context),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
                 AppTextField(
+                  label: context.locale.password,
+                  hintText: "ادخل كلمة المرور الخاصة بك",
                   controller: passwordController,
-                  hintText: context.locale.passwordCode,
-                  icon: SvgAssets.lock,
-                  validator: (password) =>
-                      passwordValidation(password, context),
                   obscureText: true,
+                  validator: (v) => passwordValidation(v, context),
                 ),
-                const SizedBox(height: 26),
-                Text(
-                  context.locale.termsConditionsText,
-                  style: context.textTheme.bodyLarge!.copyWith(
-                    fontSize: 13,
-                    color: AppColors.textGrayColor,
-                  ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Transform.scale(
+                          scale: 0.9,
+                          child: Checkbox(
+                            value: rememberMe.value,
+                            activeColor: AppColors.primaryColor,
+                            onChanged: (v) => rememberMe.value = v ?? false,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                        ),
+                        Text(
+                          context.locale.rememberMe,
+                          style: context.textTheme.bodyMedium?.copyWith(
+                            color: AppColors.secondryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        context.push(const ResetPasswordView());
+                      },
+                      child: Text(
+                        context.locale.forgotPasswordQuestion,
+                        style: context.textTheme.bodyMedium?.copyWith(
+                          color: AppColors.secondryColor,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
                     if (formKey.currentState!.validate()) {
@@ -114,71 +161,114 @@ class LoginView extends HookConsumerWidget with ValidationMixin {
                           );
                     }
                   },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    minimumSize: const Size(double.infinity, 56),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
                   child: Text(
-                    context.locale.login,
-                    style: const TextStyle(fontSize: 18),
+                    context.locale.teacherLogin,
+                    style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
                 ),
-                const SizedBox(height: 26),
-                Center(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      context.push(const IdCodeRegisterView());
-                    },
-                    icon: const Icon(Icons.badge_outlined, size: 18),
-                    label: Text(
-                      context.locale.loginFirstTime,
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 22,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        context.locale.or,
+                        style: context.textTheme.bodyLarge?.copyWith(
+                          color: AppColors.secondryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
+                    const Expanded(child: Divider()),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                Center(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      context.push(const PhoneRegisterView());
-                    },
-                    icon: const Icon(Icons.phone_outlined, size: 18),
-                    label: Text(
-                      context.locale.loginFirstTimePhone,
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 22,
-                        vertical: 12,
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () {
+                          context.push(const PhoneRegisterView());
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryColor,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.primaryColor),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SvgPicture.asset(SvgAssets.phone02),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  context.locale.loginFirstTimePhone,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () {
+                          context.push(const IdCodeRegisterView());
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.primaryColor),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SvgPicture.asset(SvgAssets.key02,
+                                  width: 24, color: AppColors.primaryColor),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  context.locale.loginFirstTime,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.primaryColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 18),
-                Center(
-                  child: TextButton(
-                    onPressed: () {
-                      context.push(const ResetPasswordView());
-                    },
-                    child: Text(
-                      context.locale.forgetPassword,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 26),
+                const SizedBox(height: 32),
               ],
             ),
           ),

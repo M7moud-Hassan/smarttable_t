@@ -51,7 +51,7 @@ class AuthRepository {
   Future<ResponseModel> teacherRegisterIdCode(String usercode) async {
     final response = await _apiService.post(Endpoints.register,
         {'user_code': usercode, "username": "", "password": "", "email": ""});
-    if (response.success!) {
+    if (response.statusCode == 400 || response.success!) {
       // special case for idcode register
       return response;
     }

@@ -6,6 +6,8 @@ class ClassVisitsModel {
   String className;
   String date;
   String dateHijri;
+  String? rate;
+  String? fileUrl;
 
   ClassVisitsModel({
     required this.id,
@@ -15,16 +17,20 @@ class ClassVisitsModel {
     required this.className,
     required this.date,
     required this.dateHijri,
+    this.rate,
+    this.fileUrl,
   });
 
   factory ClassVisitsModel.fromJson(Map<String, dynamic> json) =>
       ClassVisitsModel(
         id: json["id"],
-        teacherName: json["teacher_name"],
-        visitorName: json["visitor_name"],
-        session: json["session"],
-        className: json["class_name"],
-        date: json["date"],
-        dateHijri: json["date_hijri"],
+        teacherName: json["teacher_name"] ?? '',
+        visitorName: json["visitor_name"] ?? '',
+        session: json["session"] ?? '',
+        className: json["class_name"] ?? '',
+        date: json["date"] ?? '',
+        dateHijri: json["date_hijri"] ?? '',
+        rate: json["rate"], // Assuming 'rate' is the JSON key
+        fileUrl: json["file_url"] ?? json["file"], // Adding fallback
       );
 }

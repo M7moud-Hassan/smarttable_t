@@ -19,84 +19,96 @@ class TeacherTableView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final teacherTableAsyncValue = ref.watch(teacherTableProvider);
     return Scaffold(
-        appBar: AppBar(
-          title: Text(context.locale.showFullScheduleAppBar),
+      appBar: AppBar(
+        title: Text(
+          context.locale.schoolSchedule,
+          style: context.textTheme.titleLarge!.copyWith(
+            color: AppColors.secondryColor,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        body: teacherTableAsyncValue.when(
-          data: (data) {
-            final headerClasess =
-                getHeaderClassesList(data.tableInfo.first.lessons);
-            final lessonsData = prepareLessonsData(data.tableInfo.first.lessons,
-                data.tableInfo.first.daysOfWeek, headerClasess.length);
-            return SingleChildScrollView(
-              child: Column(
-                children: [
-                  const SizedBox(
-                    height: 30,
-                  ),
-                  Padding(
-                    padding: pgHorizontalPadding18,
-                    child: Row(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primaryColor),
+          onPressed: () => context.pop(),
+        ),
+      ),
+      body: teacherTableAsyncValue.when(
+        data: (data) {
+          final headerClasess =
+              getHeaderClassesList(data.tableInfo.first.lessons);
+          final lessonsData = prepareLessonsData(data.tableInfo.first.lessons,
+              data.tableInfo.first.daysOfWeek, headerClasess.length);
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+                // Header Card
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryColor,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (!teacherTableAsyncValue.isReloading) ...[
+                          Center(
+                            child: GestureDetector(
+                              onTap: () => context
+                                  .push(const LandscabeTeacherTableView()),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border:
+                                      Border.all(color: Colors.white, width: 1),
+                                ),
+                                child: Text(
+                                  context.locale.showFullScheduleAppBar,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 12),
                         Text(
-                          data.currentLesson,
-                          style: context.textTheme.titleLarge!.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.secondryColor),
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        Text(
-                          data.remainingTimeForNextLesson,
-                          style: context.textTheme.titleLarge!.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primaryColor),
+                          'المعلم : ${data.tableInfo.first.teacherName}',
+                          style: const TextStyle(
+                            color: AppColors.secondryColor,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  DashedBorderTable(
-                    headerClasess: headerClasess,
-                    daysOfWeek: data.tableInfo.first.daysOfWeek,
-                    lessonsData: lessonsData,
-                  ),
-                  if (!teacherTableAsyncValue.isReloading) ...[
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Center(
-                        child: TextButton(
-                            onPressed: () {
-                              context.push(const LandscabeTeacherTableView());
-                            },
-                            child: Text(
-                              context.locale.showFullScheduleVertical,
-                              style: context.textTheme.titleLarge!.copyWith(
-                                color: Colors.black,
-                                decoration: TextDecoration.underline,
-                              ),
-                            )),
-                      ),
-                    )
-                  ]
-                ],
-              ),
-            );
-          },
-          loading: () {
-            return const LoadingWidget();
-          },
-          error: (error, stackTrace) {
-            return CustomErrorWidget(
-              onTap: () => ref.invalidate(teacherTableProvider),
-            );
-          },
-        ));
+                ),
+                const SizedBox(height: 10),
+                DashedBorderTable(
+                  headerClasess: headerClasess,
+                  daysOfWeek: data.tableInfo.first.daysOfWeek,
+                  lessonsData: lessonsData,
+                ),
+              ],
+            ),
+          );
+        },
+        loading: () => const LoadingWidget(),
+        error: (error, stackTrace) => CustomErrorWidget(
+          onTap: () => ref.invalidate(teacherTableProvider),
+        ),
+      ),
+    );
   }
 }

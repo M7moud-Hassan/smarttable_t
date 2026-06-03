@@ -1,4 +1,3 @@
-
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:smart_table_app/core/constants/constants.dart';
@@ -19,10 +18,25 @@ class WeeklyPlanNotififer
   final Ref _ref;
   final PagingController<int, WeeklyPlanModel> pagingController =
       PagingController(firstPageKey: 1);
+
+  List<WeeklyPlanModel> _allPlans = [];
+
   Future<PaginationModel<WeeklyPlanModel>> getWeeklyPlanList() async {
     final response =
         await _ref.read(weeklyPlanRepoProvider).getWeeklyPlanList();
+    _allPlans = response.list;
     return response;
+  }
+
+  void filterPlans(String query) {
+    if (query.isEmpty) {
+      pagingController.itemList = _allPlans;
+    } else {
+      pagingController.itemList = _allPlans
+          .where((plan) =>
+              plan.fileName.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    }
   }
 
   void deleteWeeklyPlan(int id) async {
@@ -31,6 +45,7 @@ class WeeklyPlanNotififer
           .read(requestResponseProvider.notifier)
           .update((state) => RequestResponseModel.loading());
       await _ref.read(weeklyPlanRepoProvider).deleteWeeklyPlan(id);
+      _allPlans.removeWhere((e) => e.id == id);
       pagingController.itemList =
           pagingController.itemList?.where((e) => e.id != id).toList();
       _ref.read(requestResponseProvider.notifier).update((state) =>
@@ -69,6 +84,8 @@ class WeeklyPlanNotififer
     }
   }
 }
+
+final weeklyPlanSearchQueryProvider = StateProvider<String>((ref) => '');
 
 final weeklyPlanNotififerProvider = StateNotifierProvider<WeeklyPlanNotififer,
     AsyncValue<List<WeeklyPlanModel>>>((ref) => WeeklyPlanNotififer(ref));

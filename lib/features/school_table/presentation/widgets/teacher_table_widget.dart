@@ -22,134 +22,218 @@ class DashedBorderTable extends ConsumerWidget {
   final List<DaysOfWeekModel> daysOfWeek;
   final Map<int, List<LessonModel>> lessonsData;
   final bool isLandscape;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final highLightedDay = daysOfWeek.firstWhere(
-      (element) => (element.highlighted),
-      orElse: () => DaysOfWeekModel(id: -1, name: '', highlighted: false),
-    );
     return Padding(
-      padding:
-          const EdgeInsetsDirectional.only(start: 16.0, top: 16, bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
         children: [
-          Column(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                height: isLandscape ? context.screenSize.height * 0.1 : 65,
-              ),
-              for (int index = 0; index < daysOfWeek.length; index++)
-                Container(
-                  height: isLandscape ? context.screenSize.height * 0.115 : 60,
-                  width: isLandscape ? context.screenSize.width * 0.12 : 80,
-                  margin: const EdgeInsets.symmetric(vertical: 2),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: daysOfWeek[index].highlighted
-                        ? AppColors.primaryColor
-                        : AppColors.secondryColor,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: AutoSizeText(
-                    daysOfWeek[index].name,
-                    maxFontSize: 18,
-                    style: context.textTheme.titleLarge!.copyWith(
-                        fontSize: isLandscape ? null : 20,
-                        color: daysOfWeek[index].highlighted
-                            ? Colors.white
-                            : Colors.black),
-                  ),
-                )
-            ],
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Table(
-                defaultColumnWidth: FixedColumnWidth(isLandscape
-                    ? context.screenSize.width * 0.111
-                    : 120), // Adjust column width as needed
+              // Days Column
+              Column(
                 children: [
-                  _buildTableRow(
-                    [
-                      for (int row = 0; row < headerClasess.length; row++)
-                        (headerClasess[row], null),
-                    ],
-                    ref,
-                    context,
-                    isHeader: true,
-                  ),
-                  for (int row = 0; row < lessonsData.length; row++)
-                    _buildTableRow([
-                      for (int col = 0; col < lessonsData[row]!.length; col++)
-                        (
-                          lessonsData[row]![col].cellText.subject,
-                          lessonsData[row]![col]
+                  // Diagonal Header Cell
+                  _buildDiagonalHeader(context),
+                  for (int index = 0; index < daysOfWeek.length; index++)
+                    Container(
+                      height:
+                          isLandscape ? context.screenSize.height * 0.145 : 80,
+                      width:
+                          isLandscape ? context.screenSize.width * 0.12 : 100,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: daysOfWeek[index].highlighted
+                            ? AppColors.primaryColor
+                            : Colors.white,
+                        border: Border.all(
+                            color: AppColors.primaryColor.withOpacity(0.3)),
+                        borderRadius: index == daysOfWeek.length - 1
+                            ? const BorderRadius.only(
+                                bottomRight: Radius.circular(10))
+                            : null,
+                      ),
+                      child: Text(
+                        daysOfWeek[index].name,
+                        style: context.textTheme.titleMedium!.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: daysOfWeek[index].highlighted
+                              ? Colors.white
+                              : AppColors.primaryColor,
                         ),
-                    ], ref, context,
-                        isHighlighted: highLightedDay.id ==
-                            lessonsData.entries.toList()[row].key),
+                      ),
+                    )
                 ],
               ),
-            ),
+              // Sessions Table
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Table(
+                    defaultColumnWidth: FixedColumnWidth(
+                        isLandscape ? context.screenSize.width * 0.120 : 120),
+                    children: [
+                      // Header Row (Sessions)
+                      TableRow(
+                        children: headerClasess.map((title) {
+                          return Container(
+                            height: 80,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(
+                                  color:
+                                      AppColors.primaryColor.withOpacity(0.3)),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  title,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                const Text(
+                                  "8:15 ص - 9:00 ص", // Generic example or from model if available
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: AppColors.primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      // Data Rows
+                      for (int row = 0; row < daysOfWeek.length; row++)
+                        TableRow(
+                          children: [
+                            for (int col = 0;
+                                col <
+                                    (lessonsData[daysOfWeek[row].id]?.length ??
+                                        0);
+                                col++)
+                              _buildDataCell(
+                                  context,
+                                  ref,
+                                  lessonsData[daysOfWeek[row].id]![col],
+                                  daysOfWeek[row].highlighted,
+                                  isLandscape: isLandscape),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  TableRow _buildTableRow(
-      List<(String, LessonModel?)> cells, WidgetRef ref, BuildContext context,
-      {bool isHeader = false, bool isHighlighted = false}) {
-    return TableRow(
-      children: cells.map((cell) {
-        final waitingClass = cell.$2?.isWaiting ?? false;
-        final clickable =
-            waitingClass && ((cell.$2?.confirmed == false) ?? false ?? false);
-        final acceptedWaiting = waitingClass && (cell.$2?.confirmed ?? false);
-
-        return CustomPaint(
-          painter: isHeader ? null : DashedBorderPainter(),
-          child: GestureDetector(
-            onTap: clickable
-                ? () {
-                    ref
-                        .read(waitingClassNotifierProvider.notifier)
-                        .acceptWaitingClass(cell.$2!.confirmLink,
-                            fromTeacherTable: true);
-                  }
-                : null,
-            child: Container(
-              height: isLandscape ? context.screenSize.height * 0.12 : 65,
-              color: acceptedWaiting
-                  ? AppColors.greenColor.withOpacity(0.4)
-                  : waitingClass
-                      ? AppColors.pinkColor.withOpacity(0.4)
-                      : isHighlighted
-                          ? AppColors.yellowColor
-                          : Colors.white,
-              padding: const EdgeInsets.all(8.0),
-              alignment: Alignment.center,
-              child: AutoSizeText(
-                cell.$1,
-                minFontSize: isLandscape ? 8 : 10,
+  Widget _buildDiagonalHeader(BuildContext context) {
+    return Container(
+      height: 80,
+      width: 100,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.primaryColor.withOpacity(0.3)),
+        borderRadius: const BorderRadius.only(topRight: Radius.circular(10)),
+      ),
+      child: CustomPaint(
+        painter:
+            DiagonalLinePainter(color: AppColors.primaryColor.withOpacity(0.3)),
+        child: const Stack(
+          children: [
+            Positioned(
+              right: 10,
+              bottom: 10,
+              child: Text(
+                "الحصة",
                 style: TextStyle(
-                  fontSize: isLandscape
-                      ? null
-                      : isHeader
-                          ? 13
-                          : 18,
-                ),
-                textAlign: TextAlign.center,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryColor),
               ),
             ),
-          ),
-        );
-      }).toList(),
+            Positioned(
+              left: 10,
+              top: 10,
+              child: Text(
+                "اليوم",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryColor),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
+
+  Widget _buildDataCell(BuildContext context, WidgetRef ref, LessonModel lesson,
+      bool isHighlighted,
+      {bool isLandscape = false}) {
+    final bool isWaiting = lesson.isWaiting;
+    final bool isConfirmed = lesson.confirmed;
+    // Split subject by newline to handle cases where class name is appended
+    final subjectParts = lesson.cellText.subject.split('\n');
+    final String subjectText = subjectParts.first;
+    final String classText =
+        subjectParts.length > 2 ? subjectParts[1] : subjectParts.last;
+
+    return Container(
+      height: isLandscape ? context.screenSize.height * 0.145 : 80,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: isHighlighted
+            ? AppColors.primaryColor.withOpacity(0.1)
+            : Colors.white,
+        border: Border.all(color: AppColors.primaryColor.withOpacity(0.3)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          AutoSizeText(
+            '$classText \n $subjectText',
+            maxLines: 2,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: isWaiting && !isConfirmed
+                  ? const Color(0xFFC25B49)
+                  : Colors.black,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class DiagonalLinePainter extends CustomPainter {
+  final Color color;
+  DiagonalLinePainter({required this.color});
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.2;
+    canvas.drawLine(Offset(size.width, 0), Offset(0, size.height), paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
 class DashedBorderPainter extends CustomPainter {

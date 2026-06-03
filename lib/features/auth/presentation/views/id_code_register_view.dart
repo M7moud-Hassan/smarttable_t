@@ -32,7 +32,7 @@ class IdCodeRegisterView extends HookConsumerWidget {
     );
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.locale.back),
+        title: Text(context.locale.loginWithId),
       ),
       body: Padding(
         padding: pgHorizontalPadding18,
@@ -46,19 +46,13 @@ class IdCodeRegisterView extends HookConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Spacer(),
                       const SizedBox(
                         height: 40,
                       ),
-                      Text(context.locale.idCode,
-                          style: context.textTheme.titleLarge),
-                      const SizedBox(
-                        height: 10,
-                      ),
                       Text(
-                        context.locale.resetPasswordDesc,
-                        style: context.textTheme.bodyLarge!
-                            .copyWith(color: AppColors.textGrayColor),
+                        context.locale.enterIdCodeDesc,
+                        style: context.textTheme.bodyMedium!
+                            .copyWith(color: AppColors.secondryColor),
                       ),
                       const SizedBox(
                         height: 30,
@@ -66,7 +60,7 @@ class IdCodeRegisterView extends HookConsumerWidget {
                       AppTextField(
                         controller: idCodeController,
                         hintText: context.locale.idCode,
-                        icon: SvgAssets.user,
+                        icon: SvgAssets.key02,
                       ),
                       const Spacer(),
                       Padding(

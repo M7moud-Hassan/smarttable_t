@@ -25,9 +25,7 @@ class ResetPasswordView extends HookConsumerWidget {
       },
     );
     return Scaffold(
-      appBar: AppBar(
-        title: Text(context.locale.back),
-      ),
+      appBar: AppBar(),
       body: Padding(
         padding: pgHorizontalPadding18,
         child: LayoutBuilder(builder: (context, constraints) {
@@ -38,21 +36,32 @@ class ResetPasswordView extends HookConsumerWidget {
                 child: Form(
                   key: formKey,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       const Spacer(),
                       const SizedBox(
                         height: 40,
                       ),
-                      Text(context.locale.resetPasswordTitle,
-                          style: context.textTheme.titleLarge),
+                      Text(
+                        context.locale.enterEmail,
+                        style: context.textTheme.titleLarge!
+                            .copyWith(color: AppColors.secondryColor),
+                        textAlign: TextAlign.center,
+                      ),
                       const SizedBox(
                         height: 10,
                       ),
                       Text(
-                        context.locale.resetPasswordDesc,
-                        style: context.textTheme.bodyLarge!
-                            .copyWith(color: AppColors.textGrayColor),
+                        context.locale.resetPasswordLinkDesc,
+                        style: context.textTheme.bodyMedium!
+                            .copyWith(color: AppColors.secondryColor),
+                        textAlign: TextAlign.center,
+                      ),
+                      Text(
+                        context.locale.checkInboxDesc,
+                        style: context.textTheme.bodyMedium!
+                            .copyWith(color: AppColors.secondryColor),
+                        textAlign: TextAlign.center,
                       ),
                       const SizedBox(
                         height: 30,

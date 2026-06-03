@@ -3,7 +3,7 @@
   "appTitle": "الجدول الذكي",
   "wellcome": "مرحبا بك",
   "loginDesc": "قم بتسجيل الدخول في تطبيق الجدول الذكي الخاص بالمعلمين, ",
-  "teacherLogin": "تسجيل الدخول للمعلم",
+  "teacherLogin": "تسجيل الدخول",
   "username": "اسم المستخدم",
   "passwordCode": "الرقم السري",
   "termsConditionsText": "بتسجيل الدخول, انت توافق على الشروط والاحكام الخاصة بتطبيق الجدول الذكي",
@@ -121,5 +121,22 @@
     "placeholders": {
       "seconds": {}
     }
-  }
+  },
+  "rememberMe": "تذكرني؟",
+  "forgotPasswordQuestion": "نسيت كلمة المرور؟",
+  "or": "او",
+  "teacherApp": "تطبيق المعلم",
+  "enterIdCodeDesc": "قم بإدخال الرمز التعريفي المرتبط بحسابك",
+  "loginWithId": "الدخول بالرمز التعريفي",
+  "loginWithPhone": "الدخول برقم الهاتف",
+  "enterEmail": "الرجاء إدخال بريدك الإلكتروني",
+  "resetPasswordLinkDesc": "سيتم إرسال رابط إلى بريدك الإلكتروني،",
+  "checkInboxDesc": "يرجى التحقق من صندوق الوارد وإدخال كلمة مرور جديدة.",
+  "sentSuccessfully": "تم الإرسال إلى بريدك الإلكتروني بنجاح",
+  "splashSlogan": "نحو إدارة مدرسية ذكية",
+  "splashSafeEnv": "بيئة تعليمية آمنة و منظمة",
+  "editPicture": "تعديل الصورة",
+  "changePassword": "تغيير كلمة المرور",
+  "faq": "الأسئلة الشائعة",
+  "language": "اللغة"
 }

@@ -25,44 +25,50 @@ class _CustomExpansionWidgetState extends State<CustomExpansionWidget>
     return InkWell(
       onTap: () => setState(() => expanded = !expanded),
       splashColor: Colors.transparent,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
         decoration: BoxDecoration(
-          color: expanded ? AppColors.yellowColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: AppColors.primaryColor, width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        padding: const EdgeInsets.all(15.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(child: widget.titleWidget),
-                Container(
-                  decoration: BoxDecoration(
-                    color: expanded
-                        ? AppColors.primaryColor
-                        : AppColors.grayBordredColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    expanded
-                        ? Icons.keyboard_arrow_up_outlined
-                        : Icons.keyboard_arrow_down_outlined,
-                    color: expanded ? Colors.white : Colors.black,
-                  ),
+                Icon(
+                  expanded
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                  color: AppColors.primaryColor,
+                  size: 28,
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-            // Use AnimatedSize to animate the height change of content widgets
             AnimatedSize(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
               child: expanded
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: widget.contentWidget,
+                      children: [
+                        const Divider(
+                          color: AppColors.primaryColor,
+                          height: 20,
+                          thickness: 0.5,
+                        ),
+                        ...widget.contentWidget,
+                      ],
                     )
                   : const SizedBox.shrink(),
             ),

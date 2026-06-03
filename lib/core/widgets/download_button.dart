@@ -9,10 +9,12 @@ class DownloadButtonWidget extends ConsumerStatefulWidget {
     super.key,
     required this.link,
     this.fileName,
+    this.child,
   });
 
   final String? link;
   final String? fileName;
+  final Widget? child;
   @override
   ConsumerState<DownloadButtonWidget> createState() =>
       _DownloadButtonWidgetState();
@@ -73,12 +75,12 @@ class _DownloadButtonWidgetState extends ConsumerState<DownloadButtonWidget> {
   @override
   Widget build(BuildContext context) {
     return downloadAndOpenInProgress
-        ? const CircularProgressIndicator()
+        ? const Center(child: CircularProgressIndicator())
         : GestureDetector(
             onTap: () async {
               await processDownloadAndOpen();
             },
-            child: Text(
+            child: widget.child ?? Text(
               context.locale.downloading,
               style: context.textTheme.titleLarge!
                   .copyWith(fontSize: 18, fontWeight: FontWeight.w500),
@@ -87,3 +89,4 @@ class _DownloadButtonWidgetState extends ConsumerState<DownloadButtonWidget> {
           );
   }
 }
+
