@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/extensions/context_extensions.dart';
 
+import 'package:smart_table_app/features/waiting_classes/presentation/views/secure_class_view.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../school_table/data/models/lesson_model.dart';
 import '../../../school_table/presentation/widgets/teacher_table_widget.dart';
-import '../../providers/waiting_class_notifier.dart';
 
 class WaitingClassesTable extends ConsumerWidget {
   const WaitingClassesTable({
@@ -57,6 +57,7 @@ class WaitingClassesTable extends ConsumerWidget {
                     150.0), // Adjust column width as needed
                 children: [
                   _buildTableRow(
+                    context,
                     [
                       for (int row = 0; row < headerClasess.length; row++)
                         (headerClasess[row], null),
@@ -65,14 +66,18 @@ class WaitingClassesTable extends ConsumerWidget {
                     isHeader: true,
                   ),
                   for (int row = 0; row < lessons.length; row++)
-                    _buildTableRow([
-                      (lessons[row].cellText.subject, lessons[row]),
-                      (
-                        lessons[row].classNumberText,
-                        lessons[row]
-                            .copyWith(isWaiting: false, confirmed: false)
-                      ),
-                    ], ref)
+                    _buildTableRow(
+                      context,
+                      [
+                        (lessons[row].cellText.subject, lessons[row]),
+                        (
+                          lessons[row].classNumberText,
+                          lessons[row]
+                              .copyWith(isWaiting: false, confirmed: false)
+                        ),
+                      ],
+                      ref,
+                    )
                 ],
               ),
             ),
@@ -82,7 +87,7 @@ class WaitingClassesTable extends ConsumerWidget {
     );
   }
 
-  TableRow _buildTableRow(List<(String, LessonModel?)> cells, WidgetRef ref,
+  TableRow _buildTableRow(BuildContext context, List<(String, LessonModel?)> cells, WidgetRef ref,
       {bool isHeader = false, bool isHighlighted = false}) {
     return TableRow(
       children: cells.map((cell) {
@@ -95,9 +100,10 @@ class WaitingClassesTable extends ConsumerWidget {
           child: GestureDetector(
             onTap: clickable
                 ? () {
-                    ref
-                        .read(waitingClassNotifierProvider.notifier)
-                        .acceptWaitingClass(cell.$2!.confirmLink);
+                    context.push(SecureClassView(
+                      lesson: cell.$2!,
+                      fromTeacherTable: false,
+                    ));
                   }
                 : null,
             child: Container(

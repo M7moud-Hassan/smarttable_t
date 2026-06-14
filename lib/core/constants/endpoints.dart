@@ -1,9 +1,8 @@
 import 'package:flutter/foundation.dart';
 
 class Endpoints {
-  static const String baseUrl = kDebugMode
-      ? 'https://www.smartble.net/teacher-mobile/v2/'
-      : 'https://www.smartble.net/teacher-mobile/v2/';
+  static const String baseUrl =
+      kDebugMode ? 'https://smartble.net/' : 'https://smartble.net/';
 
   static const String login = 'teacher-mobile/v2/auth/login/';
   static const String logout = 'teacher-mobile/v2/auth/logout/';
@@ -20,6 +19,10 @@ class Endpoints {
   static const String masterTable = 'teacher-mobile/v2/master-table/';
   static const String teacherTable = 'teacher-mobile/v2/teacher-table/';
   static const String waitingClasses = 'teacher-mobile/v2/waiting-classes/';
+  static String secureClassSubstitutes(int cellNumber) =>
+      'teacher-mobile/v2/secure-class/lessons/$cellNumber/substitutes/';
+  static const String secureClassRequests =
+      'teacher-mobile/v2/secure-class/requests/';
   static const String days = 'teacher-mobile/v2/days/';
   static const String notifications = 'teacher-mobile/v2/notifications/';
   static const String deleteNotifications =
@@ -33,8 +36,7 @@ class Endpoints {
   static const String dailyTasks = 'teacher-mobile/v2/daily-tasks/';
   static const String socialCases =
       'teacher-mobile/v2/followers/social-status/';
-  static const String aboutUs =
-      'https://www.smartble.net/api/about-page-content/';
+  static const String aboutUs = 'https://smartble.net/api/about-page-content/';
   static const String weekPlan = 'teacher-mobile/v2/followers/week-plan/';
   static const String weekInfo = 'teacher-mobile/v2/followers/week-info/';
   static const String contactUs = 'teacher-mobile/v2/contact-us/';

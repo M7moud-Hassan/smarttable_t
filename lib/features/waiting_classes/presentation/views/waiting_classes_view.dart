@@ -6,12 +6,11 @@ import 'package:smart_table_app/features/school_table/data/models/lesson_model.d
 import 'package:smart_table_app/features/school_table/presentation/widgets/lesson_actions_bottom_sheet.dart';
 import 'package:smart_table_app/features/home/providers/home_menu_provider.dart';
 
+import 'package:smart_table_app/features/waiting_classes/presentation/views/secure_class_view.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/fixed_assets.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../school_table/presentation/widgets/days_list_widget.dart';
 import '../../../school_table/providers/days_provider.dart';
-import '../../providers/waiting_class_notifier.dart';
 import '../../providers/waiting_class_provider.dart';
 
 class WaitingClassesView extends ConsumerWidget {
@@ -284,7 +283,7 @@ class WaitingClassCard extends ConsumerWidget {
                             Text(
                               lesson.classNumberText,
                               style: TextStyle(
-                                fontSize: 14,
+                                  fontSize: 14,
                                 color: mainColor,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -340,9 +339,10 @@ class WaitingClassCard extends ConsumerWidget {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        ref
-                            .read(waitingClassNotifierProvider.notifier)
-                            .acceptWaitingClass(lesson.confirmLink);
+                        context.push(SecureClassView(
+                          lesson: lesson,
+                          fromTeacherTable: false,
+                        ));
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryColor,

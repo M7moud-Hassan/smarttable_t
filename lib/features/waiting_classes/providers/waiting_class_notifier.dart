@@ -6,6 +6,7 @@ import '../../../core/models/models.dart';
 import '../../../core/providers/providers.dart';
 import '../../home/providers/home_menu_provider.dart';
 import '../../school_table/providers/teacher_table_provider.dart';
+import '../data/repositories/waiting_class_repo.dart';
 
 class WaitingClassNotifier extends StateNotifier<bool> {
   WaitingClassNotifier(this._ref) : super(false);
@@ -31,6 +32,40 @@ class WaitingClassNotifier extends StateNotifier<bool> {
       _ref
           .read(requestResponseProvider.notifier)
           .update((state) => RequestResponseModel.error(exception: e));
+    } finally {
+      _ref
+          .read(requestResponseProvider.notifier)
+          .update((state) => RequestResponseModel.loading(loading: false));
+    }
+  }
+
+  Future<bool> secureClassWithSubstitute(
+    int cellNumber,
+    int substituteId,
+    String? note, {
+    bool fromTeacherTable = false,
+  }) async {
+    final repo = _ref.read(waitingClasessRepoProvider);
+    try {
+      _ref
+          .read(requestResponseProvider.notifier)
+          .update((state) => RequestResponseModel.loading());
+      await repo.createSecureClassRequest(cellNumber, substituteId, note);
+      if (fromTeacherTable) {
+        _ref.invalidate(teacherTableProvider);
+      } else {
+        _ref.invalidate(waitingClassProvider);
+      }
+      _ref.invalidate(homeMenuProvider);
+      _ref
+          .read(requestResponseProvider.notifier)
+          .update((state) => RequestResponseModel.success());
+      return true;
+    } on Exception catch (e) {
+      _ref
+          .read(requestResponseProvider.notifier)
+          .update((state) => RequestResponseModel.error(exception: e));
+      return false;
     } finally {
       _ref
           .read(requestResponseProvider.notifier)

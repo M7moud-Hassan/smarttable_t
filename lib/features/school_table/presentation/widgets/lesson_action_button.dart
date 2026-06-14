@@ -3,7 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/extensions/extensions.dart';
 import 'package:smart_table_app/features/school_table/data/models/lesson_model.dart';
 import 'package:smart_table_app/features/school_table/presentation/widgets/lesson_actions_bottom_sheet.dart';
-import 'package:smart_table_app/features/waiting_classes/providers/waiting_class_notifier.dart';
+import 'package:smart_table_app/features/waiting_classes/presentation/views/secure_class_view.dart';
 import '../../../../core/constants/constants.dart';
 
 class LessonActionButton extends ConsumerWidget {
@@ -32,9 +32,10 @@ class LessonActionButton extends ConsumerWidget {
 
       onSelected: (value) {
         if (value == 'secure') {
-          ref
-              .read(waitingClassNotifierProvider.notifier)
-              .acceptWaitingClass(lesson.confirmLink);
+          context.push(SecureClassView(
+            lesson: lesson,
+            fromTeacherTable: true,
+          ));
         } else if (value == 'details') {
           showLessonDetailsBottomSheet(context, ref, lesson, teacherName);
         }

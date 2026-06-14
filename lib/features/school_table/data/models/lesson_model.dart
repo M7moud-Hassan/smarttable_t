@@ -76,6 +76,21 @@ class LessonModel {
       cellText: cellText ?? this.cellText,
     );
   }
+
+  int? get cellNumber {
+    if (confirmLink.isEmpty) return null;
+    try {
+      final uri = Uri.tryParse(confirmLink);
+      if (uri != null) {
+        for (final segment in uri.pathSegments) {
+          if (RegExp(r'^\d+$').hasMatch(segment)) {
+            return int.parse(segment);
+          }
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
 }
 
 class CellText {

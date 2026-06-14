@@ -3,8 +3,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/extensions/extensions.dart';
 import 'package:smart_table_app/features/school_table/data/models/lesson_model.dart';
 import 'package:smart_table_app/features/school_table/providers/days_provider.dart';
+import 'package:smart_table_app/features/waiting_classes/presentation/views/secure_class_view.dart';
 import '../../../../core/constants/constants.dart';
-import '../../../waiting_classes/providers/waiting_class_notifier.dart';
 
 void showLessonDetailsBottomSheet(BuildContext context, WidgetRef ref,
     LessonModel lesson, String teacherName) {
@@ -176,10 +176,11 @@ void showLessonDetailsBottomSheet(BuildContext context, WidgetRef ref,
               height: 58,
               child: ElevatedButton(
                 onPressed: () {
-                  ref
-                      .read(waitingClassNotifierProvider.notifier)
-                      .acceptWaitingClass(lesson.confirmLink);
                   Navigator.pop(context);
+                  context.push(SecureClassView(
+                    lesson: lesson,
+                    fromTeacherTable: true,
+                  ));
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryColor,
