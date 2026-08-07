@@ -34,12 +34,14 @@ class MasterTable {
   int teacherId;
   String teacherNameLabel;
   String teacherName;
+  String? teacherImageUrl;
   List<LessonModel> lessons;
 
   MasterTable({
     required this.teacherId,
     required this.teacherNameLabel,
     required this.teacherName,
+    this.teacherImageUrl,
     required this.lessons,
   });
 
@@ -47,6 +49,7 @@ class MasterTable {
         teacherId: json["teacher_id"],
         teacherNameLabel: json["teacher_name_label"],
         teacherName: json["teacher_name"],
+        teacherImageUrl: _teacherImageUrl(json),
         lessons: List<LessonModel>.from(
             json["lessons"].map((x) => LessonModel.fromJson(x))),
       );
@@ -55,6 +58,20 @@ class MasterTable {
         "teacher_id": teacherId,
         "teacher_name_label": teacherNameLabel,
         "teacher_name": teacherName,
+        if (teacherImageUrl != null) "teacher_image_url": teacherImageUrl,
         "lessons": List<dynamic>.from(lessons.map((x) => x.toJson())),
       };
+}
+
+String? _teacherImageUrl(Map<String, dynamic> json) {
+  for (final key in const [
+    "teacher_image_url",
+    "teacher_image",
+    "image_url",
+    "avatar",
+  ]) {
+    final value = json[key]?.toString().trim();
+    if (value != null && value.isNotEmpty) return value;
+  }
+  return null;
 }

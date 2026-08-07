@@ -34,12 +34,14 @@ class TeacherTableModel {
 class TableInfoModel {
   String teacherName;
   String teacherNameLabel;
+  String? teacherImageUrl;
   List<DaysOfWeekModel> daysOfWeek;
   List<LessonModel> lessons;
 
   TableInfoModel({
     required this.teacherName,
     required this.teacherNameLabel,
+    this.teacherImageUrl,
     required this.daysOfWeek,
     required this.lessons,
   });
@@ -48,6 +50,7 @@ class TableInfoModel {
     return TableInfoModel(
       teacherName: json['teacher_name'],
       teacherNameLabel: json['teacher_name_label'],
+      teacherImageUrl: _teacherImageUrl(json),
       daysOfWeek: List<DaysOfWeekModel>.from(
           json['days_of_week'].map((x) => DaysOfWeekModel.fromJson(x))),
       lessons: List<LessonModel>.from(
@@ -59,8 +62,22 @@ class TableInfoModel {
     return {
       'teacher_name': teacherName,
       'teacher_name_label': teacherNameLabel,
+      if (teacherImageUrl != null) 'teacher_image_url': teacherImageUrl,
       'days_of_week': List<dynamic>.from(daysOfWeek.map((x) => x.toJson())),
       'lessons': List<dynamic>.from(lessons.map((x) => x.toJson())),
     };
   }
+}
+
+String? _teacherImageUrl(Map<String, dynamic> json) {
+  for (final key in const [
+    'teacher_image_url',
+    'teacher_image',
+    'image_url',
+    'avatar',
+  ]) {
+    final value = json[key]?.toString().trim();
+    if (value != null && value.isNotEmpty) return value;
+  }
+  return null;
 }

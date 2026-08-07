@@ -1,3 +1,4 @@
+import 'dart:convert' show jsonDecode, jsonEncode;
 import 'dart:io' show HttpHeaders;
 
 import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
@@ -25,6 +26,21 @@ class InterceptorClientService extends InterceptorContract {
   void _log(String message) {
     if (kDebugMode) {
       dev.log(message, name: 'HttpInterceptor');
+    }
+  }
+
+  String _redactSensitiveBody(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is! Map<String, dynamic>) return body;
+
+      final safeBody = Map<String, dynamic>.from(decoded);
+      for (final key in const ['password', 'token', 'access', 'refresh']) {
+        if (safeBody.containsKey(key)) safeBody[key] = '***';
+      }
+      return jsonEncode(safeBody);
+    } catch (_) {
+      return body;
     }
   }
 
@@ -57,7 +73,7 @@ class InterceptorClientService extends InterceptorContract {
     );
     // Fix: Check if request is a specific type that has body
     if (request is Request && request.body.isNotEmpty) {
-      _log('📦 Body: ${request.body}');
+      _log('📦 Body: ${_redactSensitiveBody(request.body)}');
     } else if (request is MultipartRequest) {
       _log(
         '📦 Multipart request with ${request.files.length} files and ${request.fields.length} fields',

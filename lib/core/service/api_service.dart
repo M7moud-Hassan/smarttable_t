@@ -1,3 +1,5 @@
+import 'package:http_parser/http_parser.dart' show MediaType;
+
 import 'dart:convert' show json, utf8;
 
 import 'dart:io' show File;
@@ -135,8 +137,20 @@ class ApiService {
         if (file != null) {
           print(
               'Adding file: ${file.path}, size: ${await file.length()} bytes');
+          final ext = file.path.split('.').last.toLowerCase();
+          final contentType = ext == 'png'
+              ? MediaType('image', 'png')
+              : ext == 'jpg' || ext == 'jpeg'
+                  ? MediaType('image', 'jpeg')
+                  : ext == 'pdf'
+                      ? MediaType('application', 'pdf')
+                      : MediaType('application', 'octet-stream');
           request.files.add(
-            await MultipartFile.fromPath(entry.key, file.path),
+            await MultipartFile.fromPath(
+              entry.key,
+              file.path,
+              contentType: contentType,
+            ),
           );
         }
       }

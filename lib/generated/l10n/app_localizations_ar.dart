@@ -424,4 +424,38 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get language => 'اللغة';
+
+  @override
+  String get teacherSignature => 'توقيع المعلم';
+
+  @override
+  String get signInApp => 'رسم التوقيع';
+
+  @override
+  String get pickSignatureImage => 'اختيار صورة التوقيع';
+
+  @override
+  String get saveSignature => 'حفظ التوقيع';
+
+  @override
+  String get clearSignature => 'مسح التوقيع';
+
+  @override
+  String get noSignatureSaved => 'لا يوجد توقيع محفوظ حالياً';
+
+  @override
+  String get drawSignatureHere => 'ارسم توقيعك هنا';
+
+  @override
+  String get signatureSavedSuccessfully => 'تم حفظ التوقيع بنجاح';
+
+  @override
+  String get signatureClearedSuccessfully => 'تم مسح التوقيع بنجاح';
+
+  @override
+  String get pleaseDrawOrPickSignature =>
+      'يرجى رسم التوقيع أو اختيار صورة أولاً';
+
+  @override
+  String get signaturePreview => 'معاينة التوقيع';
 }

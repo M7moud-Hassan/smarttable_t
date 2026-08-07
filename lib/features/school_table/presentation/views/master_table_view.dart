@@ -1,4 +1,4 @@
-import 'package:dotted_border/dotted_border.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/extensions/extensions.dart';
@@ -6,9 +6,7 @@ import 'package:smart_table_app/core/widgets/loading_widget.dart';
 import 'package:smart_table_app/features/school_table/data/models/lesson_model.dart';
 import 'package:smart_table_app/features/school_table/presentation/widgets/days_list_widget.dart';
 import 'package:smart_table_app/features/school_table/presentation/widgets/lesson_action_button.dart';
-
-
-
+import 'package:smart_table_app/features/school_table/presentation/widgets/lesson_actions_bottom_sheet.dart';
 
 import '../../../../core/constants/constants.dart';
 import '../../../../core/widgets/custom_error_widget.dart';
@@ -54,24 +52,39 @@ class MasterTableView extends ConsumerWidget {
                       const SizedBox(height: 24),
                       // Date and Full Schedule Link
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'اليوم : ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
-                            style: context.textTheme.titleMedium!.copyWith(
-                              color: AppColors.secondryColor,
-                              fontWeight: FontWeight.bold,
+                          Expanded(
+                            flex: 5,
+                            child: AutoSizeText(
+                              'اليوم : ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
+                              maxLines: 1,
+                              minFontSize: 11,
+                              stepGranularity: 0.5,
+                              style: context.textTheme.titleMedium!.copyWith(
+                                color: AppColors.secondryColor,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                          TextButton(
-                            onPressed: () =>
-                                context.push(const TeacherTableView()),
-                            child: Text(
-                              context.locale.showFullSchedule,
-                              style: context.textTheme.titleMedium!.copyWith(
-                                color: AppColors.primaryColor,
-                                fontWeight: FontWeight.bold,
-                                decoration: TextDecoration.underline,
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 4,
+                            child: TextButton(
+                              onPressed: () =>
+                                  context.push(const TeacherTableView()),
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                              ),
+                              child: AutoSizeText(
+                                context.locale.showFullSchedule,
+                                maxLines: 1,
+                                minFontSize: 11,
+                                stepGranularity: 0.5,
+                                style: context.textTheme.titleMedium!.copyWith(
+                                  color: AppColors.primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
                               ),
                             ),
                           ),
@@ -86,8 +99,12 @@ class MasterTableView extends ConsumerWidget {
                         const Center(child: LoadingWidget())
                       else
                         ...data.masterTable.first.lessons.map((lesson) {
-                          return _buildLessonCard(context, ref, lesson,
-                              data.masterTable.first.teacherName);
+                          return _buildLessonCard(
+                              context,
+                              ref,
+                              lesson,
+                              data.masterTable.first.teacherName,
+                              data.masterTable.first.teacherImageUrl);
                         }),
                       const SizedBox(height: 30),
                     ],
@@ -118,63 +135,78 @@ class MasterTableView extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Remaining Time
-
-          // Current Class Details
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white, width: 1),
-                ),
-                child: const Text(
-                  'الحصة الحالية',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+          Expanded(
+            flex: 5,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white, width: 1),
+                  ),
+                  child: const AutoSizeText(
+                    'الحصة الحالية',
+                    maxLines: 1,
+                    minFontSize: 11,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                '${data.currentClassLabel} : ${data.currentClass}',
-                style: const TextStyle(
-                  color: AppColors.secondryColor,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white, width: 1),
-            ),
-            child: Column(
-              children: [
-                const Text(
-                  'متبقي',
-                  style: TextStyle(color: Colors.white, fontSize: 14),
-                ),
-                Text(
-                  data.remainingTimeForNextLesson,
+                const SizedBox(height: 12),
+                AutoSizeText(
+                  '${data.currentClassLabel} : ${data.currentClass}',
+                  maxLines: 2,
+                  minFontSize: 11,
+                  stepGranularity: 0.5,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
+                    color: AppColors.secondryColor,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 3,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white, width: 1),
+              ),
+              child: Column(
+                children: [
+                  const AutoSizeText(
+                    'متبقي',
+                    maxLines: 1,
+                    minFontSize: 10,
+                    style: TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                  AutoSizeText(
+                    data.remainingTimeForNextLesson,
+                    maxLines: 1,
+                    minFontSize: 11,
+                    stepGranularity: 0.5,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -183,85 +215,127 @@ class MasterTableView extends ConsumerWidget {
   }
 
   Widget _buildLessonCard(BuildContext context, WidgetRef ref,
-      LessonModel lesson, String teacherName) {
-    final bool isWaiting = lesson.isWaiting;
-    final bool isConfirmed = lesson.confirmed;
-    final Color statusColor = isWaiting && !isConfirmed
-        ? const Color(0xFFC25B49) // Orange/Coral from design
-        : AppColors.primaryColor;
+      LessonModel lesson, String teacherName, String? teacherImageUrl) {
+    const assignedWaitingColor = Color(0xFFC44738);
+    const availableWaitingColor = Color(0xFFB7791F);
+    final isAssignedWaiting = lesson.isWaiting;
+    final isAvailableWaiting = lesson.isWaitingSlot && !lesson.isWaiting;
+    final statusColor = isAssignedWaiting
+        ? assignedWaitingColor
+        : isAvailableWaiting
+            ? availableWaitingColor
+            : AppColors.primaryColor;
+    final backgroundColor = isAssignedWaiting
+        ? const Color(0xFFFFECE8)
+        : isAvailableWaiting
+            ? const Color(0xFFFFF3D6)
+            : Colors.white;
 
-    // Split subject logic
-    final subjectParts = lesson.cellText.subject.split('\n');
-    final String subjectText = subjectParts.first;
-    final String? classText =
-        subjectParts.length > 1 ? subjectParts.last : null;
-
-    return Container(
+    final card = Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: statusColor.withOpacity(0.5), width: 1.5),
+        border:
+            Border.all(color: statusColor.withValues(alpha: 0.55), width: 1.5),
       ),
       child: Row(
         children: [
-          // Lesson Name
-          Text(
-            lesson.classNumberText,
-            style: TextStyle(
-              color: statusColor,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(width: 24),
-
-          // Status
-          if (isWaiting && !isConfirmed)
-            Text(
-              context.locale.waitingClass,
-              style: const TextStyle(
-                color: Color(0xFFC25B49),
-                fontSize: 13,
+          Expanded(
+            flex: 5,
+            child: AutoSizeText(
+              lesson.classNumberText,
+              maxLines: 2,
+              minFontSize: 12,
+              stepGranularity: 0.5,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: statusColor,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
-          const SizedBox(width: 20),
-          // Subject and Class
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                subjectText,
-                style: TextStyle(
-                  color: statusColor,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              if (classText != null)
-                Text(
-                  classText,
-                  style: const TextStyle(
-                    color: AppColors.secondryColor,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            flex: 4,
+            child: lesson.isWaitingSlot
+                ? AutoSizeText(
+                    LessonModel.waitingLabel,
+                    maxLines: 1,
+                    minFontSize: 12,
+                    stepGranularity: 0.5,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: statusColor,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      AutoSizeText(
+                        lesson.classroomName,
+                        maxLines: 1,
+                        minFontSize: 11,
+                        stepGranularity: 0.5,
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.primaryColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      AutoSizeText(
+                        lesson.compactTitle,
+                        maxLines: 1,
+                        minFontSize: 11,
+                        stepGranularity: 0.5,
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.secondryColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-            ],
           ),
-
-          const Spacer(),
-          LessonActionButton(
-            lesson: lesson,
-            teacherName: teacherName,
+          const SizedBox(width: 2),
+          SizedBox(
+            width: 44,
+            child: LessonActionButton(
+              lesson: lesson,
+              teacherName: teacherName,
+              teacherImageUrl: teacherImageUrl,
+            ),
           ),
-
         ],
       ),
     );
+
+    if (!isAssignedWaiting) return card;
+
+    return Semantics(
+      button: true,
+      label: "تفاصيل حصة الانتظار",
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => showLessonDetailsBottomSheet(
+          context,
+          ref,
+          lesson,
+          teacherName,
+          teacherImageUrl: teacherImageUrl,
+        ),
+        child: card,
+      ),
+    );
   }
-
 }
-

@@ -15,6 +15,7 @@ import '../../../contact_us/presentation/views/contact_us_view.dart';
 import '../../providers/profile_provider.dart';
 import '../widgets/language_switch.dart';
 import '../widgets/profile_item_widget.dart';
+import 'teacher_signature_view.dart';
 
 class ProfileView extends ConsumerWidget {
   const ProfileView({super.key});
@@ -94,6 +95,13 @@ class ProfileView extends ConsumerWidget {
                 title: context.locale.changePassword,
                 icon: SvgAssets.lock3,
                 onTap: () {},
+              ),
+              ProfileItemWidget(
+                title: context.locale.teacherSignature,
+                icon: SvgAssets.signature,
+                onTap: () {
+                  context.push(const TeacherSignatureView());
+                },
               ),
               ProfileItemWidget(
                 title: context.locale.aboutUs,

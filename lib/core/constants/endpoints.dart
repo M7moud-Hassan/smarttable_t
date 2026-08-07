@@ -29,6 +29,9 @@ class Endpoints {
       'teacher-mobile/v2/delete-notification/';
   static const String teacherNotes = 'teacher-mobile/v2/followers/notes/';
   static const String profile = 'teacher-mobile/v2/auth/me/';
+  static const String signature = 'teacher-mobile/v2/signature/';
+  static const String deleteSignature = 'teacher-mobile/v2/signature/delete/';
+  static const String getSignature = 'teacher-mobile/v2/signature/me/';
   static const String circulars = 'teacher-mobile/v2/followers/circulars/';
   static const String classVisits = 'teacher-mobile/v2/followers/class-visits/';
   static const String healthCases =

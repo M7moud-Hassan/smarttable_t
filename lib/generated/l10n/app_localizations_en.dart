@@ -427,4 +427,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get language => 'Language';
+
+  @override
+  String get teacherSignature => 'Teacher Signature';
+
+  @override
+  String get signInApp => 'Draw Signature';
+
+  @override
+  String get pickSignatureImage => 'Pick Signature Image';
+
+  @override
+  String get saveSignature => 'Save Signature';
+
+  @override
+  String get clearSignature => 'Clear Signature';
+
+  @override
+  String get noSignatureSaved => 'No signature saved currently';
+
+  @override
+  String get drawSignatureHere => 'Draw your signature here';
+
+  @override
+  String get signatureSavedSuccessfully => 'Signature saved successfully';
+
+  @override
+  String get signatureClearedSuccessfully => 'Signature cleared successfully';
+
+  @override
+  String get pleaseDrawOrPickSignature =>
+      'Please draw a signature or pick an image first';
+
+  @override
+  String get signaturePreview => 'Signature Preview';
 }

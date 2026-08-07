@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/extensions/extensions.dart';
 import 'package:smart_table_app/features/school_table/data/models/lesson_model.dart';
-import 'package:smart_table_app/features/waiting_classes/providers/waiting_class_notifier.dart';
+import 'package:smart_table_app/features/school_table/presentation/widgets/lesson_actions_bottom_sheet.dart';
 
 import '../../../../core/constants/constants.dart';
 import '../../data/models/day_model.dart';
@@ -16,140 +16,209 @@ class DashedBorderTable extends ConsumerWidget {
     required this.headerClasess,
     required this.daysOfWeek,
     required this.lessonsData,
+    required this.teacherName,
+    this.teacherImageUrl,
     this.isLandscape = false,
   });
   final List<String> headerClasess;
   final List<DaysOfWeekModel> daysOfWeek;
   final Map<int, List<LessonModel>> lessonsData;
+  final String teacherName;
+  final String? teacherImageUrl;
   final bool isLandscape;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Days Column
-              Column(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const padding = 16.0;
+        final canFitHeight = isLandscape &&
+            constraints.maxHeight.isFinite &&
+            daysOfWeek.isNotEmpty;
+        final rowHeight = canFitHeight
+            ? ((constraints.maxHeight - (padding * 2)) /
+                    (daysOfWeek.length + 1))
+                .clamp(40.0, 80.0)
+                .toDouble()
+            : 80.0;
+
+        final sessionsTable = Table(
+          defaultColumnWidth: isLandscape
+              ? const FlexColumnWidth()
+              : const FixedColumnWidth(120),
+          children: [
+            TableRow(
+              children: headerClasess
+                  .map((title) => _buildPeriodHeader(title, rowHeight))
+                  .toList(),
+            ),
+            for (int row = 0; row < daysOfWeek.length; row++)
+              TableRow(
                 children: [
-                  // Diagonal Header Cell
-                  _buildDiagonalHeader(context),
-                  for (int index = 0; index < daysOfWeek.length; index++)
-                    Container(
-                      height:
-                          isLandscape ? context.screenSize.height * 0.145 : 80,
-                      width:
-                          isLandscape ? context.screenSize.width * 0.12 : 100,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: daysOfWeek[index].highlighted
-                            ? AppColors.primaryColor
-                            : Colors.white,
-                        border: Border.all(
-                            color: AppColors.primaryColor.withOpacity(0.3)),
-                        borderRadius: index == daysOfWeek.length - 1
-                            ? const BorderRadius.only(
-                                bottomRight: Radius.circular(10))
-                            : null,
-                      ),
-                      child: Text(
-                        daysOfWeek[index].name,
-                        style: context.textTheme.titleMedium!.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: daysOfWeek[index].highlighted
-                              ? Colors.white
-                              : AppColors.primaryColor,
-                        ),
-                      ),
-                    )
+                  for (final lesson in lessonsData[daysOfWeek[row].id] ??
+                      const <LessonModel>[])
+                    _buildDataCell(
+                      context,
+                      ref,
+                      lesson,
+                      daysOfWeek[row].highlighted,
+                      height: rowHeight,
+                    ),
                 ],
               ),
-              // Sessions Table
+          ],
+        );
+
+        final daysColumn = Column(
+          children: [
+            _buildDiagonalHeader(
+              context,
+              width: double.infinity,
+              height: rowHeight,
+            ),
+            for (int index = 0; index < daysOfWeek.length; index++)
+              _buildDayCell(
+                context,
+                daysOfWeek[index],
+                index == daysOfWeek.length - 1,
+                width: double.infinity,
+                height: rowHeight,
+              ),
+          ],
+        );
+
+        final tableContent = Padding(
+          padding: const EdgeInsets.all(padding),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isLandscape)
+                Expanded(child: daysColumn)
+              else
+                SizedBox(width: 100, child: daysColumn),
               Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Table(
-                    defaultColumnWidth: FixedColumnWidth(
-                        isLandscape ? context.screenSize.width * 0.120 : 120),
-                    children: [
-                      // Header Row (Sessions)
-                      TableRow(
-                        children: headerClasess.map((title) {
-                          return Container(
-                            height: 80,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              border: Border.all(
-                                  color:
-                                      AppColors.primaryColor.withOpacity(0.3)),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  title,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                                const Text(
-                                  "8:15 ص - 9:00 ص", // Generic example or from model if available
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: AppColors.primaryColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
+                flex: isLandscape ? max(1, headerClasess.length) : 1,
+                child: isLandscape
+                    ? sessionsTable
+                    : SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: sessionsTable,
                       ),
-                      // Data Rows
-                      for (int row = 0; row < daysOfWeek.length; row++)
-                        TableRow(
-                          children: [
-                            for (int col = 0;
-                                col <
-                                    (lessonsData[daysOfWeek[row].id]?.length ??
-                                        0);
-                                col++)
-                              _buildDataCell(
-                                  context,
-                                  ref,
-                                  lessonsData[daysOfWeek[row].id]![col],
-                                  daysOfWeek[row].highlighted,
-                                  isLandscape: isLandscape),
-                          ],
-                        ),
-                    ],
-                  ),
-                ),
               ),
             ],
+          ),
+        );
+
+        final contentHeight =
+            rowHeight * (daysOfWeek.length + 1) + (padding * 2);
+        if (constraints.maxHeight.isFinite &&
+            contentHeight > constraints.maxHeight) {
+          return SingleChildScrollView(child: tableContent);
+        }
+        return tableContent;
+      },
+    );
+  }
+
+  Widget _buildPeriodHeader(String title, double height) {
+    return Container(
+      height: height,
+      padding: EdgeInsets.symmetric(
+        horizontal: 4,
+        vertical: height < 56 ? 2 : 6,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(
+          color: AppColors.primaryColor.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            flex: 3,
+            child: AutoSizeText(
+              title,
+              maxLines: 2,
+              minFontSize: 7,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          const Expanded(
+            flex: 2,
+            child: AutoSizeText(
+              "8:15 ص - 9:00 ص",
+              maxLines: 1,
+              minFontSize: 6,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 10,
+                color: AppColors.primaryColor,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDiagonalHeader(BuildContext context) {
+  Widget _buildDayCell(
+    BuildContext context,
+    DaysOfWeekModel day,
+    bool isLast, {
+    required double width,
+    required double height,
+  }) {
     return Container(
-      height: 80,
-      width: 100,
+      height: height,
+      width: width,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: day.highlighted ? AppColors.primaryColor : Colors.white,
+        border: Border.all(
+          color: AppColors.primaryColor.withValues(alpha: 0.3),
+        ),
+        borderRadius: isLast
+            ? const BorderRadius.only(bottomRight: Radius.circular(10))
+            : null,
+      ),
+      child: AutoSizeText(
+        day.name,
+        maxLines: 1,
+        minFontSize: 9,
+        style: context.textTheme.titleMedium!.copyWith(
+          fontWeight: FontWeight.bold,
+          color: day.highlighted ? Colors.white : AppColors.primaryColor,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDiagonalHeader(
+    BuildContext context, {
+    required double width,
+    required double height,
+  }) {
+    return Container(
+      height: height,
+      width: width,
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: AppColors.primaryColor.withOpacity(0.3)),
+        border: Border.all(
+          color: AppColors.primaryColor.withValues(alpha: 0.3),
+        ),
         borderRadius: const BorderRadius.only(topRight: Radius.circular(10)),
       ),
       child: CustomPaint(
-        painter:
-            DiagonalLinePainter(color: AppColors.primaryColor.withOpacity(0.3)),
+        painter: DiagonalLinePainter(
+          color: AppColors.primaryColor.withValues(alpha: 0.3),
+        ),
         child: const Stack(
           children: [
             Positioned(
@@ -180,42 +249,74 @@ class DashedBorderTable extends ConsumerWidget {
     );
   }
 
-  Widget _buildDataCell(BuildContext context, WidgetRef ref, LessonModel lesson,
-      bool isHighlighted,
-      {bool isLandscape = false}) {
-    final bool isWaiting = lesson.isWaiting;
-    final bool isConfirmed = lesson.confirmed;
-    // Split subject by newline to handle cases where class name is appended
-    final subjectParts = lesson.cellText.subject.split('\n');
-    final String subjectText = subjectParts.first;
-    final String classText =
-        subjectParts.length > 2 ? subjectParts[1] : subjectParts.last;
+  Widget _buildDataCell(
+    BuildContext context,
+    WidgetRef ref,
+    LessonModel lesson,
+    bool isHighlighted, {
+    required double height,
+  }) {
+    const assignedWaitingColor = Color(0xFFC44738);
+    const availableWaitingColor = Color(0xFFB7791F);
+    final isAssignedWaiting = lesson.isWaiting;
+    final isAvailableWaiting = lesson.isWaitingSlot && !lesson.isWaiting;
+    final foregroundColor = isAssignedWaiting
+        ? assignedWaitingColor
+        : isAvailableWaiting
+            ? availableWaitingColor
+            : Colors.black;
+    final backgroundColor = isAssignedWaiting
+        ? const Color(0xFFFFECE8)
+        : isAvailableWaiting
+            ? const Color(0xFFFFF3D6)
+            : isHighlighted
+                ? AppColors.primaryColor.withValues(alpha: 0.1)
+                : Colors.white;
+    final classroom = lesson.classroomName;
+    final displayText = lesson.isWaitingSlot
+        ? LessonModel.waitingLabel
+        : [if (classroom.isNotEmpty) classroom, lesson.compactTitle].join('\n');
 
-    return Container(
-      height: isLandscape ? context.screenSize.height * 0.145 : 80,
+    final cell = Container(
+      height: height,
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: isHighlighted
-            ? AppColors.primaryColor.withOpacity(0.1)
-            : Colors.white,
-        border: Border.all(color: AppColors.primaryColor.withOpacity(0.3)),
+        color: backgroundColor,
+        border: Border.all(
+          color: AppColors.primaryColor.withValues(alpha: 0.3),
+        ),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          AutoSizeText(
-            '$classText \n $subjectText',
-            maxLines: 2,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              color: isWaiting && !isConfirmed
-                  ? const Color(0xFFC25B49)
-                  : Colors.black,
-            ),
+      alignment: Alignment.center,
+      child: AutoSizeText(
+        displayText,
+        maxLines: 2,
+        minFontSize: 8,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 14,
+          color: foregroundColor,
+        ),
+      ),
+    );
+
+    if (!isAssignedWaiting) return cell;
+
+    return Semantics(
+      button: true,
+      label: "تفاصيل حصة الانتظار",
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => showLessonDetailsBottomSheet(
+            context,
+            ref,
+            lesson,
+            teacherName,
+            teacherImageUrl: teacherImageUrl,
           ),
-        ],
+          child: cell,
+        ),
       ),
     );
   }

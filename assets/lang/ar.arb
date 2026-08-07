@@ -138,5 +138,16 @@
   "editPicture": "تعديل الصورة",
   "changePassword": "تغيير كلمة المرور",
   "faq": "الأسئلة الشائعة",
-  "language": "اللغة"
+  "language": "اللغة",
+  "teacherSignature": "توقيع المعلم",
+  "signInApp": "رسم التوقيع",
+  "pickSignatureImage": "اختيار صورة التوقيع",
+  "saveSignature": "حفظ التوقيع",
+  "clearSignature": "مسح التوقيع",
+  "noSignatureSaved": "لا يوجد توقيع محفوظ حالياً",
+  "drawSignatureHere": "ارسم توقيعك هنا",
+  "signatureSavedSuccessfully": "تم حفظ التوقيع بنجاح",
+  "signatureClearedSuccessfully": "تم مسح التوقيع بنجاح",
+  "pleaseDrawOrPickSignature": "يرجى رسم التوقيع أو اختيار صورة أولاً",
+  "signaturePreview": "معاينة التوقيع"
 }

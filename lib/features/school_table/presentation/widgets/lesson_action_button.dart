@@ -9,11 +9,13 @@ import '../../../../core/constants/constants.dart';
 class LessonActionButton extends ConsumerWidget {
   final LessonModel lesson;
   final String teacherName;
+  final String? teacherImageUrl;
 
   const LessonActionButton({
     super.key,
     required this.lesson,
     required this.teacherName,
+    this.teacherImageUrl,
   });
 
   @override
@@ -29,7 +31,6 @@ class LessonActionButton extends ConsumerWidget {
       elevation: 4,
       color: Colors.white,
       offset: const Offset(0, 45),
-
       onSelected: (value) {
         if (value == 'secure') {
           context.push(SecureClassView(
@@ -37,11 +38,17 @@ class LessonActionButton extends ConsumerWidget {
             fromTeacherTable: true,
           ));
         } else if (value == 'details') {
-          showLessonDetailsBottomSheet(context, ref, lesson, teacherName);
+          showLessonDetailsBottomSheet(
+            context,
+            ref,
+            lesson,
+            teacherName,
+            teacherImageUrl: teacherImageUrl,
+          );
         }
       },
       itemBuilder: (context) => [
-        if (lesson.isWaiting && !lesson.confirmed) ...[
+        if (lesson.canBeSecured) ...[
           PopupMenuItem<String>(
             value: 'secure',
             height: 50,

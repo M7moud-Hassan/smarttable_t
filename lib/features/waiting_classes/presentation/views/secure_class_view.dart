@@ -95,7 +95,7 @@ class _SecureClassViewState extends ConsumerState<SecureClassView> {
                           },
                           leading: CircleAvatar(
                             backgroundColor: teacher.available
-                                ? AppColors.primaryColor.withOpacity(0.1)
+                                ? AppColors.primaryColor.withValues(alpha: 0.1)
                                 : Colors.grey[200],
                             child: Icon(
                               Icons.person_rounded,
@@ -214,11 +214,10 @@ class _SecureClassViewState extends ConsumerState<SecureClassView> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.primaryColor, width: 1.5),
-                image: const DecorationImage(
-                  image: NetworkImage(
-                      "https://img.freepik.com/free-photo/young-bearded-man-with-striped-shirt_273609-5677.jpg"),
-                  fit: BoxFit.cover,
-                ),
+              ),
+              child: const Icon(
+                Icons.person_rounded,
+                color: AppColors.secondryColor,
               ),
             ),
           ),
@@ -248,8 +247,8 @@ class _SecureClassViewState extends ConsumerState<SecureClassView> {
 
                   // Colleague Selector Card / Dropdown
                   GestureDetector(
-                    onTap: () => _showTeacherSelectionBottomSheet(
-                        context, substitutes),
+                    onTap: () =>
+                        _showTeacherSelectionBottomSheet(context, substitutes),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(
@@ -273,9 +272,8 @@ class _SecureClassViewState extends ConsumerState<SecureClassView> {
                         children: [
                           Icon(
                             Icons.keyboard_arrow_down_rounded,
-                            color: hasError
-                                ? Colors.red
-                                : AppColors.primaryColor,
+                            color:
+                                hasError ? Colors.red : AppColors.primaryColor,
                             size: 26,
                           ),
                           Expanded(

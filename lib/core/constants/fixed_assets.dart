@@ -63,6 +63,7 @@ class SvgAssets {
   static const String table = '${_svg}table.svg';
   static const String file06 = '${_svg}file-06.svg';
   static const String groupds = '${_svg}Groupds.svg';
+  static const String signature = '${_svg}signature.svg';
 }
 
 class PngAssets {

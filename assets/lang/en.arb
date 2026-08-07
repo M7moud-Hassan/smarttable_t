@@ -139,5 +139,16 @@
   "editPicture": "Edit Picture",
   "changePassword": "Change Password",
   "faq": "FAQ",
-  "language": "Language"
+  "language": "Language",
+  "teacherSignature": "Teacher Signature",
+  "signInApp": "Draw Signature",
+  "pickSignatureImage": "Pick Signature Image",
+  "saveSignature": "Save Signature",
+  "clearSignature": "Clear Signature",
+  "noSignatureSaved": "No signature saved currently",
+  "drawSignatureHere": "Draw your signature here",
+  "signatureSavedSuccessfully": "Signature saved successfully",
+  "signatureClearedSuccessfully": "Signature cleared successfully",
+  "pleaseDrawOrPickSignature": "Please draw a signature or pick an image first",
+  "signaturePreview": "Signature Preview"
 }

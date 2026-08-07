@@ -7,8 +7,6 @@ import '../../../../core/constants/constants.dart';
 import '../../../../core/utils/helpers.dart';
 import '../../../../core/widgets/custom_error_widget.dart';
 import '../../../../core/widgets/loading_widget.dart';
-import '../../data/models/day_model.dart';
-import '../../data/models/lesson_model.dart';
 import '../../providers/teacher_table_provider.dart';
 import '../widgets/teacher_table_widget.dart';
 
@@ -64,7 +62,7 @@ class TeacherTableView extends ConsumerWidget {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 16, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(12),
                                   border:
                                       Border.all(color: Colors.white, width: 1),
@@ -99,6 +97,8 @@ class TeacherTableView extends ConsumerWidget {
                   headerClasess: headerClasess,
                   daysOfWeek: data.tableInfo.first.daysOfWeek,
                   lessonsData: lessonsData,
+                  teacherName: data.tableInfo.first.teacherName,
+                  teacherImageUrl: data.tableInfo.first.teacherImageUrl,
                 ),
               ],
             ),

@@ -30,7 +30,7 @@ final homeMenuProvider = FutureProvider<HomeDataModel>((ref) async {
       MenuDataModel(
         id: 3,
         image: "",
-        title: "المهام المجدولة",
+        title: "الإشراف والمناوبة",
         key: "scheduled_tasks",
         description: "",
         isActive: true,
@@ -113,7 +113,3 @@ final homeMenuProvider = FutureProvider<HomeDataModel>((ref) async {
     ],
   );
 });
-
-
-
-

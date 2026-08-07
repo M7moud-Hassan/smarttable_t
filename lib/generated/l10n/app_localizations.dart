@@ -895,6 +895,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Language'**
   String get language;
+
+  /// No description provided for @teacherSignature.
+  ///
+  /// In en, this message translates to:
+  /// **'Teacher Signature'**
+  String get teacherSignature;
+
+  /// No description provided for @signInApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Draw Signature'**
+  String get signInApp;
+
+  /// No description provided for @pickSignatureImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick Signature Image'**
+  String get pickSignatureImage;
+
+  /// No description provided for @saveSignature.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Signature'**
+  String get saveSignature;
+
+  /// No description provided for @clearSignature.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Signature'**
+  String get clearSignature;
+
+  /// No description provided for @noSignatureSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'No signature saved currently'**
+  String get noSignatureSaved;
+
+  /// No description provided for @drawSignatureHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Draw your signature here'**
+  String get drawSignatureHere;
+
+  /// No description provided for @signatureSavedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Signature saved successfully'**
+  String get signatureSavedSuccessfully;
+
+  /// No description provided for @signatureClearedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Signature cleared successfully'**
+  String get signatureClearedSuccessfully;
+
+  /// No description provided for @pleaseDrawOrPickSignature.
+  ///
+  /// In en, this message translates to:
+  /// **'Please draw a signature or pick an image first'**
+  String get pleaseDrawOrPickSignature;
+
+  /// No description provided for @signaturePreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Signature Preview'**
+  String get signaturePreview;
 }
 
 class _AppLocalizationsDelegate
