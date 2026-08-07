@@ -55,7 +55,12 @@ workflows:
         - name: Update CocoaPods Repo
           script: |
             cd ios
-            pod repo update
+            # This repo receives file copies from the main smart_table project,
+            # which repeatedly brings in a Podfile.lock pinning newer Firebase
+            # pods than the firebase_* plugins in this repo's pubspec.lock,
+            # breaking pod install with "could not find compatible versions".
+            # pubspec.lock is the source of truth, so resolve pods from scratch.
+            rm -f Podfile.lock
             pod install --repo-update
             cd ..
 
