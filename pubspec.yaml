@@ -63,7 +63,8 @@ dependencies:
   device_preview_minus: ^1.2.0
   firebase_crashlytics: ^5.0.4
   intl_phone_number_input: ^0.7.5
-  
+  signature: ^5.5.0
+
 
 dev_dependencies:
   flutter_test:
