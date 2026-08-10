@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/extensions/context_extensions.dart';
 
-import 'package:smart_table_app/features/waiting_classes/presentation/views/secure_class_view.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../school_table/data/models/lesson_model.dart';
 import '../../../school_table/presentation/widgets/teacher_table_widget.dart';
+import '../../providers/waiting_class_notifier.dart';
 
 class WaitingClassesTable extends ConsumerWidget {
   const WaitingClassesTable({
@@ -87,31 +87,30 @@ class WaitingClassesTable extends ConsumerWidget {
     );
   }
 
-  TableRow _buildTableRow(BuildContext context, List<(String, LessonModel?)> cells, WidgetRef ref,
+  TableRow _buildTableRow(
+      BuildContext context, List<(String, LessonModel?)> cells, WidgetRef ref,
       {bool isHeader = false, bool isHighlighted = false}) {
     return TableRow(
       children: cells.map((cell) {
         final waitingClass = cell.$2?.isWaiting ?? false;
         final acceptedWaiting = waitingClass && (cell.$2?.confirmed ?? false);
-        final clickable =
-            waitingClass && ((cell.$2?.confirmed == false) ?? false ?? false);
+        final clickable = cell.$2?.canAcceptWaitingClass ?? false;
         return CustomPaint(
           painter: isHeader ? null : DashedBorderPainter(),
           child: GestureDetector(
             onTap: clickable
                 ? () {
-                    context.push(SecureClassView(
-                      lesson: cell.$2!,
-                      fromTeacherTable: false,
-                    ));
+                    ref
+                        .read(waitingClassNotifierProvider.notifier)
+                        .acceptWaitingClass(cell.$2!.confirmLink);
                   }
                 : null,
             child: Container(
               height: 96,
               color: acceptedWaiting
-                  ? AppColors.greenColor.withOpacity(0.4)
+                  ? AppColors.greenColor.withValues(alpha: 0.4)
                   : waitingClass
-                      ? AppColors.pinkColor.withOpacity(0.4)
+                      ? AppColors.pinkColor.withValues(alpha: 0.4)
                       : isHighlighted
                           ? AppColors.yellowColor
                           : Colors.white,

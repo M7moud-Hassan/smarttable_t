@@ -1,4 +1,5 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:smart_table_app/core/constants/keys_enums.dart';
 import 'package:smart_table_app/core/service/api_service.dart';
 import 'package:smart_table_app/features/waiting_classes/providers/waiting_class_provider.dart';
 
@@ -56,10 +57,38 @@ class WaitingClassNotifier extends StateNotifier<bool> {
       } else {
         _ref.invalidate(waitingClassProvider);
       }
+      _ref.invalidate(secureClassRequestsProvider);
       _ref.invalidate(homeMenuProvider);
       _ref
           .read(requestResponseProvider.notifier)
           .update((state) => RequestResponseModel.success());
+      return true;
+    } on Exception catch (e) {
+      _ref
+          .read(requestResponseProvider.notifier)
+          .update((state) => RequestResponseModel.error(exception: e));
+      return false;
+    } finally {
+      _ref
+          .read(requestResponseProvider.notifier)
+          .update((state) => RequestResponseModel.loading(loading: false));
+    }
+  }
+
+  Future<bool> cancelSecureClassRequest(int requestId) async {
+    final repo = _ref.read(waitingClasessRepoProvider);
+    try {
+      _ref
+          .read(requestResponseProvider.notifier)
+          .update((state) => RequestResponseModel.loading());
+      final message = await repo.cancelSecureClassRequest(requestId);
+      _ref.invalidate(secureClassRequestsProvider);
+      _ref.read(requestResponseProvider.notifier).update(
+            (state) => RequestResponseModel.success(
+              message: message,
+              actionOnDone: ActionOnDone.showSucessMessage,
+            ),
+          );
       return true;
     } on Exception catch (e) {
       _ref

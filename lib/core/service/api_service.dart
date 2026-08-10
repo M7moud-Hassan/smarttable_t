@@ -1,16 +1,14 @@
-import 'package:http_parser/http_parser.dart' show MediaType;
-
 import 'dart:convert' show json, utf8;
 
 import 'dart:io' show File;
 
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:hooks_riverpod/hooks_riverpod.dart' show Ref;
 import 'package:http_interceptor/http_interceptor.dart';
 import 'package:smart_table_app/core/constants/endpoints.dart';
 
 import '../constants/keys_enums.dart';
 import '../models/response_model.dart';
-import '../providers/http_provider.dart';
 import '../providers/providers.dart';
 
 class ApiService {
@@ -25,6 +23,30 @@ class ApiService {
         'Accept': 'application/json',
         if (token != null) 'Authorization': 'Bearer $token'
       };
+
+  ResponseModel _parseResponse(Response response) {
+    final decodedBody = utf8.decode(response.bodyBytes);
+    Map<String, dynamic> data;
+
+    if (decodedBody.isEmpty) {
+      data = <String, dynamic>{};
+    } else {
+      try {
+        final decodedJson = json.decode(decodedBody);
+        data = decodedJson is Map<String, dynamic>
+            ? decodedJson
+            : <String, dynamic>{'data': decodedJson};
+      } on FormatException {
+        // Some proxies and servers return an HTML error/redirect page. Keep
+        // that response out of the JSON parser and let repositories surface a
+        // normal localized server error instead of crashing.
+        data = <String, dynamic>{'data': null};
+      }
+    }
+
+    data['status_code'] = response.statusCode;
+    return ResponseModel.fromJson(data);
+  }
 
   Future<Uri> getUri(
     String endPoint, {
@@ -57,23 +79,7 @@ class ApiService {
     print(_headers);
     // Make the HTTP GET request
     final response = await _http.get(uri, headers: _headers);
-    // Ensure the response body is correctly decoded (assuming UTF-8)
-    final decodedBody = utf8.decode(response.bodyBytes);
-
-    // Decode the JSON response
-    final decodedJson = decodedBody.isNotEmpty ? json.decode(decodedBody) : {};
-    Map<String, dynamic> data;
-    if (decodedJson is Map<String, dynamic>) {
-      data = decodedJson;
-    } else {
-      data = {'data': decodedJson};
-    }
-
-    data.addAll({'status_code': response.statusCode});
-    // Parse the data into a ResponseModel
-    final result = ResponseModel.fromJson(data);
-
-    return result;
+    return _parseResponse(response);
   }
 
   Future<ResponseModel> post(String endPoint, Map<String, dynamic> body) async {
@@ -84,22 +90,7 @@ class ApiService {
       headers: _headers,
     );
 
-    final decodedBody = utf8.decode(response.bodyBytes);
-
-    // Decode the JSON response
-    final decodedJson = decodedBody.isNotEmpty ? json.decode(decodedBody) : {};
-    Map<String, dynamic> data;
-    if (decodedJson is Map<String, dynamic>) {
-      data = decodedJson;
-    } else {
-      data = {'data': decodedJson};
-    }
-
-    data.addAll({'status_code': response.statusCode});
-    // Parse the data into a ResponseModel
-    final result = ResponseModel.fromJson(data);
-
-    return result;
+    return _parseResponse(response);
   }
 
   Future<ResponseModel> delete(String endPoint) async {
@@ -109,18 +100,7 @@ class ApiService {
       headers: _headers,
     );
 
-    final decodedJson =
-        response.body.isNotEmpty ? json.decode(response.body) : {};
-    Map<String, dynamic> data;
-    if (decodedJson is Map<String, dynamic>) {
-      data = decodedJson;
-    } else {
-      data = {'data': decodedJson};
-    }
-
-    data.addAll({'status_code': response.statusCode});
-    final result = ResponseModel.fromJson(data);
-    return result;
+    return _parseResponse(response);
   }
 
   Future<ResponseModel> multipartRequest(
@@ -135,7 +115,7 @@ class ApiService {
       for (final entry in fileMap.entries) {
         final file = entry.value;
         if (file != null) {
-          print(
+          debugPrint(
               'Adding file: ${file.path}, size: ${await file.length()} bytes');
           final ext = file.path.split('.').last.toLowerCase();
           final contentType = ext == 'png'
@@ -160,25 +140,21 @@ class ApiService {
     headers.remove('Content-type');
     request.headers.addAll(headers);
     request.fields.addAll(body);
-    print('Multipart fields: ${request.fields}');
-    print('Multipart files: ${request.files.map((f) => f.field).toList()}');
+    debugPrint('Multipart fields: ${request.fields}');
+    debugPrint(
+      'Multipart files: ${request.files.map((f) => f.field).toList()}',
+    );
 
     final streamResponse = await _http.send(request);
     final response = await Response.fromStream(streamResponse);
 
-    final decodedJson =
-        response.body.isNotEmpty ? json.decode(response.body) : {};
-    Map<String, dynamic> data;
-    if (decodedJson is Map<String, dynamic>) {
-      data = decodedJson;
-    } else {
-      data = {'data': decodedJson};
+    if (kDebugMode && response.statusCode >= 400) {
+      debugPrint(
+        'Multipart response [${response.statusCode}]: ${response.body}',
+      );
     }
 
-    /// inject HTTP status manually
-    data['status_code'] = response.statusCode;
-
-    return ResponseModel.fromJson(data);
+    return _parseResponse(response);
   }
 
   Future<ResponseModel> put(String endPoint, Map<String, dynamic> body) async {
@@ -189,20 +165,7 @@ class ApiService {
       headers: _headers,
     );
 
-    final decodedBody = utf8.decode(response.bodyBytes);
-
-    final decodedJson = decodedBody.isNotEmpty ? json.decode(decodedBody) : {};
-    Map<String, dynamic> data;
-    if (decodedJson is Map<String, dynamic>) {
-      data = decodedJson;
-    } else {
-      data = {'data': decodedJson};
-    }
-
-    data.addAll({'status_code': response.statusCode});
-
-    final result = ResponseModel.fromJson(data);
-    return result;
+    return _parseResponse(response);
   }
 
   Future<dynamic> generalGet(url) async {

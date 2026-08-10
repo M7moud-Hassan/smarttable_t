@@ -63,6 +63,7 @@
   "yes": "نعم",
   "no": "لا",
   "currentFilter": "الحالية",
+  "allFilter": "الكل",
   "expiredFilter": "المنتهية",
   "upcomingFilter": "القادمة",
   "noTasks": "لا يوجد مهام",

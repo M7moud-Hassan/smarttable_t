@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:smart_table_app/core/constants/constants.dart';
 import 'package:smart_table_app/core/extensions/extensions.dart';
 import 'package:smart_table_app/core/utils/helpers.dart';
@@ -14,15 +17,120 @@ import '../../../class_timing/presentation/views/class_timing_view.dart';
 import '../../../contact_us/presentation/views/contact_us_view.dart';
 import '../../providers/profile_provider.dart';
 import '../widgets/language_switch.dart';
+import '../widgets/profile_photo_avatar.dart';
 import '../widgets/profile_item_widget.dart';
 import 'teacher_signature_view.dart';
 
 class ProfileView extends ConsumerWidget {
   const ProfileView({super.key});
 
+  Future<void> _pickAndUploadPhoto(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    try {
+      final selectedImage = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1600,
+        requestFullMetadata: false,
+      );
+      if (selectedImage == null || !context.mounted) return;
+
+      final success = await ref
+          .read(profilePhotoNotifierProvider.notifier)
+          .saveProfilePhoto(File(selectedImage.path));
+      if (success && context.mounted) {
+        context.showSnackbarSuccess(context.locale.sucessMessage);
+      }
+    } on Exception {
+      if (context.mounted) {
+        context.showSnackbarError(context.locale.errorMessage);
+      }
+    }
+  }
+
+  Future<void> _deletePhoto(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.locale.deleteFileConfirmation),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(context.locale.no),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(
+              context.locale.yes,
+              style: const TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final success = await ref
+        .read(profilePhotoNotifierProvider.notifier)
+        .deleteProfilePhoto();
+    if (success && context.mounted) {
+      context.showSnackbarSuccess(context.locale.sucessMessage);
+    }
+  }
+
+  Future<void> _showPhotoActions(
+    BuildContext context,
+    WidgetRef ref,
+    bool hasPhoto,
+  ) async {
+    final action = await showModalBottomSheet<_ProfilePhotoAction>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.add_photo_alternate_outlined),
+              title: Text(context.locale.editPicture),
+              onTap: () => Navigator.pop(
+                sheetContext,
+                _ProfilePhotoAction.change,
+              ),
+            ),
+            if (hasPhoto)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                title: Text(
+                  context.locale.delete,
+                  style: const TextStyle(color: Colors.red),
+                ),
+                onTap: () => Navigator.pop(
+                  sheetContext,
+                  _ProfilePhotoAction.delete,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+
+    if (!context.mounted) return;
+    switch (action) {
+      case _ProfilePhotoAction.change:
+        await _pickAndUploadPhoto(context, ref);
+      case _ProfilePhotoAction.delete:
+        await _deletePhoto(context, ref);
+      case null:
+        return;
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(profileProvider);
+    final currentPhoto = ref.watch(profilePhotoProvider).valueOrNull;
     return Padding(
       padding: pgHorizontalPadding18,
       child: profileAsync.when(
@@ -32,16 +140,19 @@ class ProfileView extends ConsumerWidget {
               const SizedBox(
                 height: 50,
               ),
-              CircleAvatar(
+              ProfilePhotoAvatar(
                 radius: 50,
-                // In a real app we would load profile.imageUrl, but using the initials for now
                 backgroundColor: AppColors.pinkColor,
-                child: Text(
-                  profile.teacherName[0],
-                  style: context.textTheme.titleLarge!.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 30),
+                fallback: Center(
+                  child: Text(
+                    profile.teacherName.trim().isEmpty
+                        ? '?'
+                        : profile.teacherName.trim()[0],
+                    style: context.textTheme.titleLarge!.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 30),
+                  ),
                 ),
               ),
               Padding(
@@ -60,7 +171,11 @@ class ProfileView extends ConsumerWidget {
                 height: 15,
               ),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () => _showPhotoActions(
+                  context,
+                  ref,
+                  currentPhoto != null && currentPhoto.isNotEmpty,
+                ),
                 style: ElevatedButton.styleFrom(
                   fixedSize: const Size(130, 36),
                   backgroundColor:
@@ -219,3 +334,5 @@ class ProfileView extends ConsumerWidget {
     );
   }
 }
+
+enum _ProfilePhotoAction { change, delete }

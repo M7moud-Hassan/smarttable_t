@@ -62,6 +62,7 @@ class SvgAssets {
   static const String stopwatch02 = '${_svg}stopwatch-02.svg';
   static const String table = '${_svg}table.svg';
   static const String file06 = '${_svg}file-06.svg';
+  static const String dutyRoster = '${_svg}duty_roster.svg';
   static const String groupds = '${_svg}Groupds.svg';
   static const String signature = '${_svg}signature.svg';
 }
@@ -75,4 +76,5 @@ class PngAssets {
   static const String pdf = '${_png}pdf-file.png';
   static const String logoText = '${_png}Frame 427321040.png';
   static const String teacher = '${_png}Teacher.png';
+  static const String teacherAppLogo = '${_png}teacher_app_logo.png';
 }

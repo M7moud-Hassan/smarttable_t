@@ -12,5 +12,5 @@ final scheduledTasksProvider = FutureProvider.autoDispose
 });
 
 final scheduledTaskFilterProvider = StateProvider<ScheduledTasksFilter>((ref) {
-  return ScheduledTasksFilter.current;
+  return ScheduledTasksFilter.all;
 });

@@ -196,6 +196,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get currentFilter => 'الحالية';
 
   @override
+  String get allFilter => 'الكل';
+
+  @override
   String get expiredFilter => 'المنتهية';
 
   @override

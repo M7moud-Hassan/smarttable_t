@@ -79,7 +79,8 @@ class App extends ConsumerWidget {
           }
           cuurentContext?.showSnackbarError(isUnAuth
               ? cuurentContext.locale.sessionExpired
-              : exceptionHandler(
+              : state.message ??
+                  exceptionHandler(
                       context: cuurentContext, exception: state.exception) ??
                   cuurentContext.locale.errorMessage);
           if (state.actionOnDone == ActionOnDone.unAuth) {

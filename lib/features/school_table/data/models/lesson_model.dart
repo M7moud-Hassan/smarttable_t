@@ -9,6 +9,7 @@ class LessonModel {
   CellText cellText;
   String? originalTeacherName;
   String? teacherImageUrl;
+  int? secureCellNumber;
 
   LessonModel({
     required this.dayId,
@@ -21,6 +22,7 @@ class LessonModel {
     required this.cellText,
     this.originalTeacherName,
     this.teacherImageUrl,
+    this.secureCellNumber,
   });
 
   factory LessonModel.fromJson(Map<String, dynamic> json) {
@@ -66,6 +68,7 @@ class LessonModel {
               "avatar",
             ],
           ),
+      secureCellNumber: _tryParseInt(json["cell_number"]),
     );
   }
 
@@ -81,6 +84,7 @@ class LessonModel {
         if (originalTeacherName != null)
           "original_teacher_name": originalTeacherName,
         if (teacherImageUrl != null) "teacher_image_url": teacherImageUrl,
+        if (secureCellNumber != null) "cell_number": secureCellNumber,
       };
 
   /// factory for init LessonModel
@@ -108,6 +112,7 @@ class LessonModel {
     CellText? cellText,
     String? originalTeacherName,
     String? teacherImageUrl,
+    int? secureCellNumber,
   }) {
     return LessonModel(
       dayId: dayId ?? this.dayId,
@@ -120,6 +125,7 @@ class LessonModel {
       cellText: cellText ?? this.cellText,
       originalTeacherName: originalTeacherName ?? this.originalTeacherName,
       teacherImageUrl: teacherImageUrl ?? this.teacherImageUrl,
+      secureCellNumber: secureCellNumber ?? this.secureCellNumber,
     );
   }
 
@@ -136,9 +142,15 @@ class LessonModel {
   bool get isWaitingSlot =>
       isWaiting || contentLines.any((line) => line.contains(waitingLabel));
 
-  /// Matches the waiting-class rule used by the class-timing implementation:
-  /// only a waiting lesson that has not been confirmed can be secured.
-  bool get canBeSecured => isWaiting && !confirmed;
+  /// Secure-class requests belong to the teacher's own primary lessons, not
+  /// waiting assignments. Empty timetable cells are never eligible.
+  bool get canBeSecured =>
+      !isWaitingSlot && subjectName.isNotEmpty && cellNumber != null;
+
+  /// Waiting assignments use their original confirmation flow and must not
+  /// open the secure-class substitute picker.
+  bool get canAcceptWaitingClass =>
+      isWaiting && !confirmed && confirmLink.trim().isNotEmpty;
 
   /// Text shown in the compact timetable cell/card.
   String get compactTitle =>
@@ -175,6 +187,7 @@ class LessonModel {
   }
 
   int? get cellNumber {
+    if (secureCellNumber != null) return secureCellNumber;
     if (confirmLink.isEmpty) return null;
     try {
       final uri = Uri.tryParse(confirmLink);
@@ -188,6 +201,11 @@ class LessonModel {
     } catch (_) {}
     return null;
   }
+}
+
+int? _tryParseInt(dynamic value) {
+  if (value is int) return value;
+  return int.tryParse(value?.toString() ?? '');
 }
 
 String truncateText(String value, int maxCharacters) {

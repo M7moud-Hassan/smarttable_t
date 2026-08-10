@@ -1,5 +1,5 @@
 class ProfileModel {
-  int id;
+  int? id;
   String phoneNumber;
   String teacherName;
   String teacherNickname;
@@ -18,13 +18,14 @@ class ProfileModel {
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
+    final rawId = json["id"];
     return ProfileModel(
-      id: json["id"],
-      phoneNumber: json["phone_number"],
-      teacherName: json["teacher_name"],
-      teacherNickname: json["teacher_nickname"],
-      teacherNameLabel: json["teacher_name_label"],
-      schoolName: json["school_name"],
+      id: rawId is int ? rawId : int.tryParse('$rawId'),
+      phoneNumber: json["phone_number"] ?? '',
+      teacherName: json["teacher_name"] ?? '',
+      teacherNickname: json["teacher_nickname"] ?? '',
+      teacherNameLabel: json["teacher_name_label"] ?? '',
+      schoolName: json["school_name"] ?? '',
       fcmToken: json["fcm_token"],
     );
   }

@@ -22,6 +22,7 @@ class FilterWidget extends ConsumerWidget {
         ),
         child: Row(
             children: [
+          (context.locale.allFilter, ScheduledTasksFilter.all),
           (context.locale.currentFilter, ScheduledTasksFilter.current),
           (context.locale.upcomingFilter, ScheduledTasksFilter.upcoming),
           (context.locale.expiredFilter, ScheduledTasksFilter.expired),
@@ -70,4 +71,3 @@ class FilterWidget extends ConsumerWidget {
     );
   }
 }
-

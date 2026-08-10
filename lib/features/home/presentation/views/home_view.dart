@@ -18,6 +18,7 @@ import '../../../social_cases/presentation/views/social_cases_view.dart';
 import '../../../teacher_notes/presentation/views/teacher_notes_view.dart';
 import '../../providers/home_menu_provider.dart';
 import '../../../performance_evidence/presentation/views/performance_evidence_view.dart';
+import '../../../profile/presentation/widgets/profile_photo_avatar.dart';
 
 import 'package:svg_flutter/svg_flutter.dart';
 
@@ -54,11 +55,14 @@ class _HomeViewState extends ConsumerState<HomeView> {
                   bottomRight: Radius.circular(30),
                 ),
               ),
-              leading: const Padding(
-                padding: EdgeInsets.all(10.0),
-                child: CircleAvatar(
-                  backgroundImage: AssetImage(PngAssets.teacher),
-                  backgroundColor: Colors.white,
+              leading: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: ProfilePhotoAvatar(
+                  radius: 20,
+                  fallback: Image.asset(
+                    PngAssets.teacher,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
               title: Text(
@@ -288,7 +292,6 @@ class _HomeViewState extends ConsumerState<HomeView> {
                               Builder(builder: (_) {
                                 String iconPath;
                                 Color bgColor;
-                                bool isPng = false;
 
                                 switch (item.id) {
                                   case 1:
@@ -300,7 +303,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                                     bgColor = const Color(0xFFEFF3FE);
                                     break;
                                   case 3:
-                                    iconPath = SvgAssets.file06;
+                                    iconPath = SvgAssets.dutyRoster;
                                     bgColor = const Color(0xFFE6FAFA);
                                     break;
                                   case 10:

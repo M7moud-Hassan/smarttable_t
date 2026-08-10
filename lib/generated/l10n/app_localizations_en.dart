@@ -199,6 +199,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get currentFilter => 'Current';
 
   @override
+  String get allFilter => 'All';
+
+  @override
   String get expiredFilter => 'Expired';
 
   @override

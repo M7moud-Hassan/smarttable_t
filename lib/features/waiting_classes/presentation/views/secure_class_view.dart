@@ -44,107 +44,113 @@ class _SecureClassViewState extends ConsumerState<SecureClassView> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            return Container(
-              height: context.screenSize.height * 0.75,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 25),
-              child: Column(
-                children: [
-                  // Handle bar
-                  Container(
-                    width: 50,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  // Title
-                  Text(
-                    "اختر معلماً بديلاً",
-                    style: context.textTheme.titleLarge!.copyWith(
-                      color: AppColors.primaryColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  // List
-                  Expanded(
-                    child: ListView.separated(
-                      itemCount: substitutes.length,
-                      separatorBuilder: (context, index) =>
-                          const Divider(height: 1, thickness: 0.5),
-                      itemBuilder: (context, index) {
-                        final teacher = substitutes[index];
-                        final bool isSelected =
-                            _selectedTeacher?.id == teacher.id;
+            return Material(
+              color: Colors.white,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(30)),
+              clipBehavior: Clip.antiAlias,
+              child: SizedBox(
+                height: context.screenSize.height * 0.75,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 25),
+                  child: Column(
+                    children: [
+                      // Handle bar
+                      Container(
+                        width: 50,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      // Title
+                      Text(
+                        "اختر معلماً بديلاً",
+                        style: context.textTheme.titleLarge!.copyWith(
+                          color: AppColors.primaryColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      // List
+                      Expanded(
+                        child: ListView.separated(
+                          itemCount: substitutes.length,
+                          separatorBuilder: (context, index) =>
+                              const Divider(height: 1, thickness: 0.5),
+                          itemBuilder: (context, index) {
+                            final teacher = substitutes[index];
+                            final bool isSelected =
+                                _selectedTeacher?.id == teacher.id;
 
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          onTap: () {
-                            setState(() {
-                              _selectedTeacher = teacher;
-                            });
-                            Navigator.pop(context);
-                          },
-                          leading: CircleAvatar(
-                            backgroundColor: teacher.available
-                                ? AppColors.primaryColor.withValues(alpha: 0.1)
-                                : Colors.grey[200],
-                            child: Icon(
-                              Icons.person_rounded,
-                              color: teacher.available
-                                  ? AppColors.primaryColor
-                                  : Colors.grey[500],
-                            ),
-                          ),
-                          title: Text(
-                            teacher.name,
-                            style: context.textTheme.titleMedium!.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: teacher.available
-                                  ? const Color(0xFF1E3A5F)
-                                  : Colors.grey[600],
-                            ),
-                          ),
-                          subtitle: teacher.available
-                              ? null
-                              : Text(
-                                  teacher.busyReason ??
-                                      "المعلم غير متاح في هذه الحصة",
-                                  style: const TextStyle(
-                                    color: Colors.redAccent,
-                                    fontSize: 13,
-                                  ),
+                            return ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              onTap: () {
+                                setState(() {
+                                  _selectedTeacher = teacher;
+                                });
+                                Navigator.pop(context);
+                              },
+                              leading: CircleAvatar(
+                                backgroundColor: teacher.available
+                                    ? AppColors.primaryColor
+                                        .withValues(alpha: 0.1)
+                                    : Colors.grey[200],
+                                child: Icon(
+                                  Icons.person_rounded,
+                                  color: teacher.available
+                                      ? AppColors.primaryColor
+                                      : Colors.grey[500],
                                 ),
-                          trailing: isSelected
-                              ? const Icon(
-                                  Icons.check_circle_rounded,
-                                  color: AppColors.primaryColor,
-                                  size: 26,
-                                )
-                              : Container(
-                                  width: 24,
-                                  height: 24,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.grey[300]!,
-                                      width: 2,
+                              ),
+                              title: Text(
+                                teacher.name,
+                                style: context.textTheme.titleMedium!.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: teacher.available
+                                      ? const Color(0xFF1E3A5F)
+                                      : Colors.grey[600],
+                                ),
+                              ),
+                              subtitle: teacher.available
+                                  ? null
+                                  : Text(
+                                      teacher.busyReason ??
+                                          "المعلم غير متاح في هذه الحصة",
+                                      style: const TextStyle(
+                                        color: Colors.redAccent,
+                                        fontSize: 13,
+                                      ),
                                     ),
-                                  ),
-                                ),
-                        );
-                      },
-                    ),
+                              trailing: isSelected
+                                  ? const Icon(
+                                      Icons.check_circle_rounded,
+                                      color: AppColors.primaryColor,
+                                      size: 26,
+                                    )
+                                  : Container(
+                                      width: 24,
+                                      height: 24,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.grey[300]!,
+                                          width: 2,
+                                        ),
+                                      ),
+                                    ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             );
           },
@@ -358,6 +364,7 @@ class _SecureClassViewState extends ConsumerState<SecureClassView> {
                       onPressed: isButtonActive
                           ? () async {
                               final navigator = Navigator.of(context);
+                              final selectionRoute = ModalRoute.of(context);
                               final success = await ref
                                   .read(waitingClassNotifierProvider.notifier)
                                   .secureClassWithSubstitute(
@@ -367,6 +374,15 @@ class _SecureClassViewState extends ConsumerState<SecureClassView> {
                                     fromTeacherTable: widget.fromTeacherTable,
                                   );
                               if (success && mounted) {
+                                // The global loading dialog may still be above
+                                // this page. Make the selection page the top
+                                // route first so it is the route replaced by
+                                // the success page, not the loading dialog.
+                                if (selectionRoute != null) {
+                                  navigator.popUntil(
+                                    (route) => route == selectionRoute,
+                                  );
+                                }
                                 navigator.pushReplacement(
                                   MaterialPageRoute(
                                     builder: (context) =>

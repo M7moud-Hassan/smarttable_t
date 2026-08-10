@@ -44,6 +44,27 @@ class InterceptorClientService extends InterceptorContract {
     }
   }
 
+  String _redactSensitiveResponse(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is! Map<String, dynamic>) return body;
+
+      final safeBody = Map<String, dynamic>.from(decoded);
+      for (final key in const [
+        'password',
+        'token',
+        'access',
+        'refresh',
+        'fcm_token',
+      ]) {
+        if (safeBody.containsKey(key)) safeBody[key] = '***';
+      }
+      return jsonEncode(safeBody);
+    } catch (_) {
+      return body;
+    }
+  }
+
   @override
   Future<BaseRequest> interceptRequest({required BaseRequest request}) async {
     debugPrint('request:${request.url}');
@@ -89,7 +110,7 @@ class InterceptorClientService extends InterceptorContract {
     _log('✅ Response <- [${response.statusCode}] ${response.request?.url}');
 
     if (response is Response) {
-      _log('Response body: ${response.body}');
+      _log('Response body: ${_redactSensitiveResponse(response.body)}');
     }
     if (response.statusCode == 400 || response.statusCode == 403) {
       final token = await _ref.read(tokenStorageProvider).getToken();

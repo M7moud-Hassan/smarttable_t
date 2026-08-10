@@ -23,12 +23,17 @@ class Endpoints {
       'teacher-mobile/v2/secure-class/lessons/$cellNumber/substitutes/';
   static const String secureClassRequests =
       'teacher-mobile/v2/secure-class/requests/';
+  static String secureClassRequest(int requestId) =>
+      'teacher-mobile/v2/secure-class/requests/$requestId/';
   static const String days = 'teacher-mobile/v2/days/';
   static const String notifications = 'teacher-mobile/v2/notifications/';
   static const String deleteNotifications =
       'teacher-mobile/v2/delete-notification/';
   static const String teacherNotes = 'teacher-mobile/v2/followers/notes/';
   static const String profile = 'teacher-mobile/v2/auth/me/';
+  static const String profilePhoto = 'teacher-mobile/v2/photo/';
+  static const String deleteProfilePhoto = 'teacher-mobile/v2/photo/delete/';
+  static const String getProfilePhoto = 'teacher-mobile/v2/photo/me/';
   static const String signature = 'teacher-mobile/v2/signature/';
   static const String deleteSignature = 'teacher-mobile/v2/signature/delete/';
   static const String getSignature = 'teacher-mobile/v2/signature/me/';
@@ -36,7 +41,7 @@ class Endpoints {
   static const String classVisits = 'teacher-mobile/v2/followers/class-visits/';
   static const String healthCases =
       'teacher-mobile/v2/followers/health-conditions/';
-  static const String dailyTasks = 'teacher-mobile/v2/daily-tasks/';
+  static const String dutyRoster = 'teacher-mobile/v2/duty-roster/';
   static const String socialCases =
       'teacher-mobile/v2/followers/social-status/';
   static const String aboutUs =

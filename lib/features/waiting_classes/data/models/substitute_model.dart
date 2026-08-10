@@ -13,10 +13,14 @@ class SubstituteModel {
 
   factory SubstituteModel.fromJson(Map<String, dynamic> json) {
     return SubstituteModel(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      available: json['available'] as bool? ?? false,
-      busyReason: json['busy_reason'] as String?,
+      id: _asInt(json['teacher_id'] ?? json['id']),
+      name: (json['teacher_name'] ?? json['name'] ?? '').toString(),
+      available:
+          json['is_available'] as bool? ?? json['available'] as bool? ?? false,
+      busyReason: _firstNonEmpty(
+        json['unavailable_reason'],
+        json['busy_reason'],
+      ),
     );
   }
 
@@ -28,4 +32,17 @@ class SubstituteModel {
       'busy_reason': busyReason,
     };
   }
+}
+
+int _asInt(dynamic value) {
+  if (value is int) return value;
+  return int.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+String? _firstNonEmpty(dynamic first, dynamic second) {
+  for (final value in [first, second]) {
+    final text = value?.toString().trim();
+    if (text != null && text.isNotEmpty) return text;
+  }
+  return null;
 }

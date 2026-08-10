@@ -464,6 +464,12 @@ abstract class AppLocalizations {
   /// **'Current'**
   String get currentFilter;
 
+  /// No description provided for @allFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get allFilter;
+
   /// No description provided for @expiredFilter.
   ///
   /// In en, this message translates to:

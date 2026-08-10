@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/extensions/extensions.dart';
 import 'package:smart_table_app/features/school_table/presentation/views/landscabe_teacher_table_view.dart';
+import 'package:smart_table_app/features/waiting_classes/presentation/views/secure_class_requests_view.dart';
 
 import '../../../../core/constants/constants.dart';
 import '../../../../core/utils/helpers.dart';
@@ -29,6 +30,16 @@ class TeacherTableView extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back_ios, color: AppColors.primaryColor),
           onPressed: () => context.pop(),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'طلبات تأمين الحصص',
+            onPressed: () => context.push(const SecureClassRequestsView()),
+            icon: const Icon(
+              Icons.assignment_outlined,
+              color: AppColors.primaryColor,
+            ),
+          ),
+        ],
       ),
       body: teacherTableAsyncValue.when(
         data: (data) {

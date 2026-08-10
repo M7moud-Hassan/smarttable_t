@@ -7,6 +7,7 @@ import 'package:smart_table_app/features/school_table/data/models/lesson_model.d
 import 'package:smart_table_app/features/school_table/presentation/widgets/days_list_widget.dart';
 import 'package:smart_table_app/features/school_table/presentation/widgets/lesson_action_button.dart';
 import 'package:smart_table_app/features/school_table/presentation/widgets/lesson_actions_bottom_sheet.dart';
+import 'package:smart_table_app/features/waiting_classes/presentation/views/secure_class_requests_view.dart';
 
 import '../../../../core/constants/constants.dart';
 import '../../../../core/widgets/custom_error_widget.dart';
@@ -33,6 +34,16 @@ class MasterTableView extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back_ios, color: AppColors.primaryColor),
           onPressed: () => context.pop(),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'طلبات تأمين الحصص',
+            onPressed: () => context.push(const SecureClassRequestsView()),
+            icon: const Icon(
+              Icons.assignment_outlined,
+              color: AppColors.primaryColor,
+            ),
+          ),
+        ],
       ),
       body: daysAsync.when(
         data: (days) {

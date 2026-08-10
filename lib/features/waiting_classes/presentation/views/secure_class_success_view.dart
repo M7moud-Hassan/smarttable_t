@@ -53,8 +53,8 @@ class _SecureClassSuccessViewState extends State<SecureClassSuccessView> {
                   Container(
                     width: 140,
                     height: 140,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE0F7F6), // Soft outer circle
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE0F7F6), // Soft outer circle
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -89,7 +89,8 @@ class _SecureClassSuccessViewState extends State<SecureClassSuccessView> {
 
             // Soft manual fallback button at bottom
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
               child: SizedBox(
                 width: double.infinity,
                 height: 56,

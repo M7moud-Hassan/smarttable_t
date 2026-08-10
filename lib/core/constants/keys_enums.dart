@@ -27,4 +27,4 @@ enum LoadingTypes {
 
 enum AuthState { init, auth, unAuth }
 
-enum ScheduledTasksFilter { upcoming, expired, current }
+enum ScheduledTasksFilter { all, current, upcoming, expired }

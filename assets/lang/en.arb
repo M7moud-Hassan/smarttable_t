@@ -61,6 +61,7 @@
   "yes": "Yes",
   "no": "No",
   "currentFilter": "Current",
+  "allFilter": "All",
   "expiredFilter": "Expired",
   "upcomingFilter": "Upcoming",
   "noTasks": "No tasks",

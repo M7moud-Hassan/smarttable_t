@@ -6,11 +6,11 @@ import 'package:smart_table_app/features/school_table/data/models/lesson_model.d
 import 'package:smart_table_app/features/school_table/presentation/widgets/lesson_actions_bottom_sheet.dart';
 import 'package:smart_table_app/features/home/providers/home_menu_provider.dart';
 
-import 'package:smart_table_app/features/waiting_classes/presentation/views/secure_class_view.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../school_table/presentation/widgets/days_list_widget.dart';
 import '../../../school_table/providers/days_provider.dart';
+import '../../providers/waiting_class_notifier.dart';
 import '../../providers/waiting_class_provider.dart';
 
 class WaitingClassesView extends ConsumerWidget {
@@ -100,7 +100,7 @@ class WaitingClassesView extends ConsumerWidget {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               ),
@@ -115,12 +115,12 @@ class WaitingClassesView extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 120),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 40),
           child: Text(
             "سيتم إشعارك إذا تم إضافة حصص إنتظار لجدولك",
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               color: Color(0xFF1E2F38), // Dark color from design
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -283,7 +283,7 @@ class WaitingClassCard extends ConsumerWidget {
                             Text(
                               lesson.classNumberText,
                               style: TextStyle(
-                                  fontSize: 14,
+                                fontSize: 14,
                                 color: mainColor,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -339,10 +339,9 @@ class WaitingClassCard extends ConsumerWidget {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        context.push(SecureClassView(
-                          lesson: lesson,
-                          fromTeacherTable: false,
-                        ));
+                        ref
+                            .read(waitingClassNotifierProvider.notifier)
+                            .acceptWaitingClass(lesson.confirmLink);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryColor,

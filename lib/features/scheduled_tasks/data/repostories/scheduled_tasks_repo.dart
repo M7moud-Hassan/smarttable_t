@@ -20,7 +20,7 @@ class ScheduledTasksRepository {
 
   Future<PaginationModel<ScheduledTasksModel>> getScheduledTasks(
       ScheduledTasksFilter filter, int page) async {
-    final response = await _apiService.get(Endpoints.dailyTasks, parameters: {
+    final response = await _apiService.get(Endpoints.dutyRoster, parameters: {
       'filter': filter.name,
       'page': page,
     });

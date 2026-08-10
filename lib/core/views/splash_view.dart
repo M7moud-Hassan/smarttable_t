@@ -68,8 +68,10 @@ class SplashView extends ConsumerWidget {
               const SizedBox(height: 16),
               // Main Logo
               Image.asset(
-                PngAssets.appLogoSmall,
+                PngAssets.teacherAppLogo,
                 width: 250,
+                height: 250,
+                fit: BoxFit.contain,
               ),
               const SizedBox(height: 16),
               // "Smartble" Text
