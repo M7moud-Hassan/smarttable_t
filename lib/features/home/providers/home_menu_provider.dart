@@ -45,6 +45,15 @@ final homeMenuProvider = FutureProvider<HomeDataModel>((ref) async {
         isActive: true,
         displayOrder: 3,
       ),
+      MenuDataModel(
+        id: 12,
+        image: "",
+        title: "الرغبات",
+        key: "teacher_preferences",
+        description: "",
+        isActive: true,
+        displayOrder: 5,
+      ),
 
       // Administrative Follow-up Tab (Tab 1)
       MenuDataModel(
@@ -109,6 +118,15 @@ final homeMenuProvider = FutureProvider<HomeDataModel>((ref) async {
         description: "",
         isActive: true,
         displayOrder: 11,
+      ),
+      MenuDataModel(
+        id: 13,
+        image: "",
+        title: "الإجراءات الإدارية",
+        key: "administrative_actions",
+        description: "",
+        isActive: true,
+        displayOrder: 12,
       ),
     ],
   );

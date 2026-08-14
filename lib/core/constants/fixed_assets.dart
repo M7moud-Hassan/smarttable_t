@@ -65,6 +65,9 @@ class SvgAssets {
   static const String dutyRoster = '${_svg}duty_roster.svg';
   static const String groupds = '${_svg}Groupds.svg';
   static const String signature = '${_svg}signature.svg';
+  static const String teacherPreferences = '${_svg}teacher_preferences.svg';
+  static const String administrativeActions =
+      '${_svg}administrative_actions.svg';
 }
 
 class PngAssets {

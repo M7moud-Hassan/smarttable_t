@@ -33,9 +33,14 @@ class ApiService {
     } else {
       try {
         final decodedJson = json.decode(decodedBody);
-        data = decodedJson is Map<String, dynamic>
-            ? decodedJson
-            : <String, dynamic>{'data': decodedJson};
+        if (decodedJson is Map) {
+          final decodedMap = Map<String, dynamic>.from(decodedJson);
+          data = _isResponseEnvelope(decodedMap, response.statusCode)
+              ? decodedMap
+              : <String, dynamic>{'data': decodedMap};
+        } else {
+          data = <String, dynamic>{'data': decodedJson};
+        }
       } on FormatException {
         // Some proxies and servers return an HTML error/redirect page. Keep
         // that response out of the JSON parser and let repositories surface a
@@ -46,6 +51,21 @@ class ApiService {
 
     data['status_code'] = response.statusCode;
     return ResponseModel.fromJson(data);
+  }
+
+  bool _isResponseEnvelope(Map<String, dynamic> body, int statusCode) {
+    if (statusCode >= 400) return true;
+    return const {
+      'data',
+      'success',
+      'message',
+      'error',
+      'detail',
+      'errors',
+      'token',
+      'fcm_token',
+      'non_field_errors',
+    }.any(body.containsKey);
   }
 
   Future<Uri> getUri(
@@ -150,7 +170,7 @@ class ApiService {
 
     if (kDebugMode && response.statusCode >= 400) {
       debugPrint(
-        'Multipart response [${response.statusCode}]: ${response.body}',
+        'Multipart response failed [${response.statusCode}] at ${uri.path}',
       );
     }
 
@@ -160,6 +180,18 @@ class ApiService {
   Future<ResponseModel> put(String endPoint, Map<String, dynamic> body) async {
     final uri = await getUri(endPoint);
     final response = await _http.put(
+      uri,
+      body: json.encode(body),
+      headers: _headers,
+    );
+
+    return _parseResponse(response);
+  }
+
+  Future<ResponseModel> patch(
+      String endPoint, Map<String, dynamic> body) async {
+    final uri = await getUri(endPoint);
+    final response = await _http.patch(
       uri,
       body: json.encode(body),
       headers: _headers,

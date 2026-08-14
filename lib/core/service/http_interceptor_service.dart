@@ -29,6 +29,17 @@ class InterceptorClientService extends InterceptorContract {
     }
   }
 
+  Map<String, String> _redactSensitiveHeaders(Map<String, String> headers) {
+    final safeHeaders = Map<String, String>.from(headers);
+    for (final key in safeHeaders.keys.toList(growable: false)) {
+      final normalizedKey = key.toLowerCase();
+      if (normalizedKey == 'auth-token' || normalizedKey == 'authorization') {
+        safeHeaders[key] = '***';
+      }
+    }
+    return safeHeaders;
+  }
+
   String _redactSensitiveBody(String body) {
     try {
       final decoded = jsonDecode(body);
@@ -40,7 +51,7 @@ class InterceptorClientService extends InterceptorContract {
       }
       return jsonEncode(safeBody);
     } catch (_) {
-      return body;
+      return '[non-JSON request body omitted]';
     }
   }
 
@@ -61,7 +72,7 @@ class InterceptorClientService extends InterceptorContract {
       }
       return jsonEncode(safeBody);
     } catch (_) {
-      return body;
+      return '[non-JSON response body omitted]';
     }
   }
 
@@ -90,7 +101,9 @@ class InterceptorClientService extends InterceptorContract {
       }
     }
     debugPrint(
-      'InterceptorClientService========>${request.headers}<<<=========',
+      'InterceptorClientService========>'
+      '${_redactSensitiveHeaders(request.headers)}'
+      '<<<=========',
     );
     // Fix: Check if request is a specific type that has body
     if (request is Request && request.body.isNotEmpty) {

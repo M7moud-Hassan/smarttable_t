@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 
 class Endpoints {
   static const String baseUrl =
-      kDebugMode ? 'https://www.smartble.net/' : 'https://www.smartble.net/';
+      kDebugMode ? 'https://test.smartble.net/' : 'https://test.smartble.net/';
 
   static const String login = 'teacher-mobile/v2/auth/login/';
   static const String logout = 'teacher-mobile/v2/auth/logout/';
@@ -54,4 +54,14 @@ class Endpoints {
   static const String performanceEvidence = 'api/notes/evidence/';
   static const String performanceEvidenceCategories =
       'api/notes/evidence-categories/';
+  static const String wishes = 'teacher-mobile/v2/wishes/';
+  static const String wishClassrooms = 'teacher-mobile/v2/wishes/classrooms/';
+  static String wishClassroomCourses(int classroomId) =>
+      'teacher-mobile/v2/wishes/classrooms/$classroomId/courses/';
+  static String wish(int wishId) => 'teacher-mobile/v2/wishes/$wishId/';
+  static const String administrativeProcedures =
+      'teacher-mobile/v2/followers/administrative-procedures/';
+  static String administrativeProcedure(String procedureType, int id) =>
+      'teacher-mobile/v2/followers/administrative-procedures/'
+      '$procedureType/$id/';
 }

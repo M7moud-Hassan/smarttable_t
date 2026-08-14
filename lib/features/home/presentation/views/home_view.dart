@@ -6,9 +6,11 @@ import 'package:smart_table_app/core/widgets/app_button.dart';
 import 'package:smart_table_app/core/widgets/custom_error_widget.dart';
 import 'package:smart_table_app/core/widgets/loading_widget.dart';
 import 'package:smart_table_app/features/circulars/presentation/views/circulars_view.dart';
+import 'package:smart_table_app/features/administrative_actions/presentation/views/administrative_actions_view.dart';
 import 'package:smart_table_app/features/exams/presentation/views/exam_halls_view.dart';
 import 'package:smart_table_app/features/health_cases/presentation/views/health_cases_view.dart';
 import 'package:smart_table_app/features/school_table/presentation/views/master_table_view.dart';
+import 'package:smart_table_app/features/teacher_preferences/presentation/views/teacher_preferences_view.dart';
 import 'package:smart_table_app/features/waiting_classes/presentation/views/waiting_classes_view.dart';
 import 'package:smart_table_app/features/weekly_plan/presentation/views/weekly_plan_view.dart';
 
@@ -37,7 +39,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
     final homeAsync = ref.watch(homeMenuProvider);
     return homeAsync.when(
         data: (data) {
-          final smartScheduleIds = [1, 2, 3, 10]; // Smart schedule items
+          final smartScheduleIds = [1, 2, 3, 10, 12]; // Smart schedule items
           final filteredMenus = activeTab == 0
               ? data.menus
                   .where((m) => smartScheduleIds.contains(m.id))
@@ -271,6 +273,16 @@ class _HomeViewState extends ConsumerState<HomeView> {
                                       ),
                                     );
                                     break;
+                                  case 12:
+                                    context.push(
+                                      const TeacherPreferencesView(),
+                                    );
+                                    break;
+                                  case 13:
+                                    context.push(
+                                      const AdministrativeActionsView(),
+                                    );
+                                    break;
                                 }
                               },
                         child: Container(
@@ -337,6 +349,14 @@ class _HomeViewState extends ConsumerState<HomeView> {
                                   case 11:
                                     iconPath = SvgAssets.perform21;
                                     bgColor = const Color(0xFFE6FAFA);
+                                    break;
+                                  case 12:
+                                    iconPath = SvgAssets.teacherPreferences;
+                                    bgColor = const Color(0xFFFFF8CF);
+                                    break;
+                                  case 13:
+                                    iconPath = SvgAssets.administrativeActions;
+                                    bgColor = const Color(0xFFFFF4E8);
                                     break;
                                   default:
                                     iconPath = SvgAssets.table;
