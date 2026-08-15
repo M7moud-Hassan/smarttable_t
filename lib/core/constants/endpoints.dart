@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 
 class Endpoints {
   static const String baseUrl =
-      kDebugMode ? 'https://test.smartble.net/' : 'https://test.smartble.net/';
+      kDebugMode ? 'https://wwww.smartble.net/' : 'www://test.smartble.net/';
 
   static const String login = 'teacher-mobile/v2/auth/login/';
   static const String logout = 'teacher-mobile/v2/auth/logout/';
