@@ -62,31 +62,19 @@ class App extends ConsumerWidget {
           }
           // error
         } else if (state.state == RequestResponseState.error) {
-          cuurentContext?.showSnackbarError(exceptionHandler(
-                  context: cuurentContext, exception: state.exception) ??
-              cuurentContext.locale.errorMessage);
-        } else if (state.state == RequestResponseState.error &&
-            state.actionOnDone == ActionOnDone.unAuth) {
-          const storage = FlutterSecureStorage();
-          storage.deleteAll();
-          cuurentContext?.pushAndRemoveOthers(const LoginView());
-
-          final isUnAuth = state.actionOnDone == ActionOnDone.unAuth;
-          if (isUnAuth) {
-            final storage = TokenStorage();
-            storage.deleteToken();
-            cuurentContext?.pushAndRemoveOthers(const LoginView());
-          }
-          cuurentContext?.showSnackbarError(isUnAuth
-              ? cuurentContext.locale.sessionExpired
-              : state.message ??
-                  exceptionHandler(
-                      context: cuurentContext, exception: state.exception) ??
-                  cuurentContext.locale.errorMessage);
+          // Handled before the generic message: an expired session has to end
+          // at the login screen, otherwise the stale token stays on the device
+          // and every later launch resumes a dead session.
           if (state.actionOnDone == ActionOnDone.unAuth) {
-            const storage = FlutterSecureStorage();
-            storage.deleteAll();
+            TokenStorage().deleteToken();
+            const FlutterSecureStorage().deleteAll();
             cuurentContext?.pushAndRemoveOthers(const LoginView());
+            cuurentContext
+                ?.showSnackbarError(cuurentContext.locale.sessionExpired);
+          } else {
+            cuurentContext?.showSnackbarError(exceptionHandler(
+                    context: cuurentContext, exception: state.exception) ??
+                cuurentContext.locale.errorMessage);
           }
 
           // sucess

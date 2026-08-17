@@ -1,51 +1,82 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:svg_flutter/svg.dart';
 import 'package:smart_table_app/core/constants/constants.dart';
 import 'package:smart_table_app/core/extensions/extensions.dart';
-import 'package:smart_table_app/core/service/firebase_messaging_service.dart';
 import 'package:smart_table_app/features/auth/presentation/views/login_view.dart';
 import 'package:smart_table_app/features/layout/views/main_layout_view.dart';
-import 'package:smart_table_app/features/profile/providers/profile_provider.dart';
 
-import '../../features/auth/data/repositories/auth_repo.dart';
 import '../../features/auth/providers/check_login_provider.dart';
+import '../providers/providers.dart';
 
-class SplashView extends ConsumerWidget {
+class SplashView extends ConsumerStatefulWidget {
   const SplashView({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen(checkLoginProvider, (previous, next) async {
-      final firstRun = await checkFirstRun();
-      if (next.hasValue && !firstRun) {
-        //
+  ConsumerState<SplashView> createState() => _SplashViewState();
+}
 
-        //
-        if (next.requireValue == true) {
-          Future.delayed(const Duration(milliseconds: 2000), () async {
-            await FirebaseMessagingService().initNotifications(ref);
-            await ref.read(profileProvider.future).then((value) async {
-              if (value.fcmToken == null || value.fcmToken!.isEmpty) {
-                await ref.read(authRepoProvider).updateFcm();
-              }
-            });
-            context.pushAndRemoveWithoutTransition(const MainLayoutView());
-          });
-        } else {
-          Future.delayed(const Duration(milliseconds: 2000), () {
-            context.pushAndRemoveWithoutTransition(const LoginView());
-          });
-        }
-      } else {
-        Future.delayed(const Duration(milliseconds: 2000), () {
-          context.pushAndRemoveWithoutTransition(const LoginView());
-        });
+class _SplashViewState extends ConsumerState<SplashView> {
+  /// How long the branding stays on screen. Startup work runs in parallel with
+  /// it, so this is a floor rather than a delay added on top.
+  static const _minimumSplashDuration = Duration(milliseconds: 2000);
+
+  /// Reading the token hits the iOS keychain, which can stall on the first
+  /// launch after an update. Nothing here may block forever.
+  static const _startupTimeout = Duration(seconds: 8);
+
+  @override
+  void initState() {
+    super.initState();
+    _bootstrap();
+  }
+
+  /// Decides which screen to open. Every path through this method navigates:
+  /// a failing startup check must never strand the user on the splash screen.
+  Future<void> _bootstrap() async {
+    final minimumSplash = Future<void>.delayed(_minimumSplashDuration);
+    var isLoggedIn = false;
+
+    try {
+      final isFreshInstall = await _clearCredentialsOnFreshInstall();
+      if (!isFreshInstall) {
+        isLoggedIn =
+            await ref.read(checkLoginProvider.future).timeout(_startupTimeout);
       }
-    });
+    } catch (error, stack) {
+      // Best effort: an unreadable token just means "not logged in".
+      await FirebaseCrashlytics.instance.recordError(
+        error,
+        stack,
+        reason: 'splash bootstrap failed',
+      );
+    }
 
+    await minimumSplash;
+    if (!mounted) return;
+
+    context.pushAndRemoveWithoutTransition(
+      isLoggedIn ? const MainLayoutView(requestFcm: true) : const LoginView(),
+    );
+  }
+
+  /// The iOS keychain survives app deletion but SharedPreferences does not, so
+  /// a missing `first_run` flag means any stored credentials belong to a
+  /// previous install and have to go.
+  Future<bool> _clearCredentialsOnFreshInstall() async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    if (!(prefs.getBool('first_run') ?? true)) return false;
+
+    const storage = FlutterSecureStorage();
+    await storage.deleteAll();
+    await prefs.setBool('first_run', false);
+    return true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -137,21 +168,5 @@ class SplashView extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  Future<bool> checkFirstRun() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool isFirstRun = prefs.getBool('first_run') ?? true;
-
-    if (isFirstRun) {
-      // Clear secure storage
-      const storage = FlutterSecureStorage();
-      await storage.deleteAll();
-
-      // Set flag to false
-      await prefs.setBool('first_run', false);
-      return true;
-    }
-    return false;
   }
 }

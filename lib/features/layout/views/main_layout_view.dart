@@ -1,3 +1,4 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/constants/constants.dart';
@@ -36,10 +37,21 @@ class _MainLayoutViewState extends ConsumerState<MainLayoutView> {
   }
 
   Future<void> _initializeApp() async {
-    // Initialize notifications if requested
+    // Initialize notifications if requested. Push registration is optional:
+    // when APNs or the network is unavailable the app still has to work, so a
+    // failure here is reported and swallowed rather than propagated.
     if (widget.requestFcm) {
-      await initNotifications();
+      try {
+        await initNotifications();
+      } catch (error, stack) {
+        await FirebaseCrashlytics.instance.recordError(
+          error,
+          stack,
+          reason: 'notification setup failed',
+        );
+      }
     }
+    if (!mounted) return;
     ref.read(classTimingProvider);
     // Send a test notification to verify immediate notifications work
     // await _notificationService.sendTestNotification();
