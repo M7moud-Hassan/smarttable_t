@@ -26,6 +26,18 @@ List<String> getHeaderClassesList(List<LessonModel> lessons) {
   return headerClasses;
 }
 
+Map<String, String> getHeaderClassTimes(List<LessonModel> lessons) {
+  final times = <String, String>{};
+  for (final lesson in lessons) {
+    final title = lesson.classNumberText;
+    final time = lesson.displayTimeText;
+    if (title.isNotEmpty && time.isNotEmpty && !times.containsKey(title)) {
+      times[title] = time;
+    }
+  }
+  return times;
+}
+
 Future<void> shareText(String text) async {
   await Share.share(text);
 }

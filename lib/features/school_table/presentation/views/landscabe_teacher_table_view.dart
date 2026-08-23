@@ -58,10 +58,13 @@ class _LandscabeTeacherTableViewState
           data: (data) {
             final headerClasess =
                 getHeaderClassesList(data.tableInfo.first.lessons);
+            final headerClassTimes =
+                getHeaderClassTimes(data.tableInfo.first.lessons);
             final lessonsData = prepareLessonsData(data.tableInfo.first.lessons,
                 data.tableInfo.first.daysOfWeek, headerClasess.length);
             final table = DashedBorderTable(
               headerClasess: headerClasess,
+              headerClassTimes: headerClassTimes,
               daysOfWeek: data.tableInfo.first.daysOfWeek,
               lessonsData: lessonsData,
               teacherName: data.tableInfo.first.teacherName,

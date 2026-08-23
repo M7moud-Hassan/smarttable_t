@@ -102,6 +102,16 @@ class ApiService {
     return _parseResponse(response);
   }
 
+  /// Fetches endpoints that return a file instead of the normal JSON body.
+  /// Authentication and locale headers are still added by the shared client.
+  Future<Response> getRaw(
+    String endPoint, {
+    Map<String, dynamic>? parameters,
+  }) async {
+    final uri = await getUri(endPoint, parameters: parameters);
+    return _http.get(uri, headers: _headers);
+  }
+
   Future<ResponseModel> post(String endPoint, Map<String, dynamic> body) async {
     final uri = await getUri(endPoint);
     final response = await _http.post(

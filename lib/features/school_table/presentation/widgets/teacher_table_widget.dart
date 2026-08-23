@@ -14,6 +14,7 @@ class DashedBorderTable extends ConsumerWidget {
   const DashedBorderTable({
     super.key,
     required this.headerClasess,
+    this.headerClassTimes = const {},
     required this.daysOfWeek,
     required this.lessonsData,
     required this.teacherName,
@@ -21,6 +22,7 @@ class DashedBorderTable extends ConsumerWidget {
     this.isLandscape = false,
   });
   final List<String> headerClasess;
+  final Map<String, String> headerClassTimes;
   final List<DaysOfWeekModel> daysOfWeek;
   final Map<int, List<LessonModel>> lessonsData;
   final String teacherName;
@@ -48,9 +50,14 @@ class DashedBorderTable extends ConsumerWidget {
               : const FixedColumnWidth(120),
           children: [
             TableRow(
-              children: headerClasess
-                  .map((title) => _buildPeriodHeader(title, rowHeight))
-                  .toList(),
+              children: [
+                for (final title in headerClasess)
+                  _buildPeriodHeader(
+                    title,
+                    headerClassTimes[title] ?? '',
+                    rowHeight,
+                  ),
+              ],
             ),
             for (int row = 0; row < daysOfWeek.length; row++)
               TableRow(
@@ -120,7 +127,7 @@ class DashedBorderTable extends ConsumerWidget {
     );
   }
 
-  Widget _buildPeriodHeader(String title, double height) {
+  Widget _buildPeriodHeader(String title, String time, double height) {
     return Container(
       height: height,
       padding: EdgeInsets.symmetric(
@@ -150,14 +157,14 @@ class DashedBorderTable extends ConsumerWidget {
               ),
             ),
           ),
-          const Expanded(
+          Expanded(
             flex: 2,
             child: AutoSizeText(
-              "8:15 ص - 9:00 ص",
+              time,
               maxLines: 1,
               minFontSize: 6,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 10,
                 color: AppColors.primaryColor,
               ),

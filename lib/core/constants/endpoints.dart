@@ -1,9 +1,8 @@
 import 'package:flutter/foundation.dart';
 
 class Endpoints {
-  static const String baseUrl = kDebugMode
-      ? 'https://www.smartble.net/'
-      : 'https://www.smartble.net/';
+  static const String baseUrl =
+      kDebugMode ? 'https://test.smartble.net/' : 'https://test.smartble.net/';
 
   static const String login = 'teacher-mobile/v2/auth/login/';
   static const String logout = 'teacher-mobile/v2/auth/logout/';
@@ -65,4 +64,31 @@ class Endpoints {
   static String administrativeProcedure(String procedureType, int id) =>
       'teacher-mobile/v2/followers/administrative-procedures/'
       '$procedureType/$id/';
+
+  static const String perseveranceAttendance =
+      'teacher-mobile/v2/perseverance/attendance/';
+  static String perseveranceStudentAttendance(int studentId) =>
+      'teacher-mobile/v2/perseverance/attendance/students/$studentId/';
+  static const String perseveranceBehavior =
+      'teacher-mobile/v2/perseverance/behavior/';
+  static const String perseveranceBehaviorNotes =
+      'teacher-mobile/v2/perseverance/behavior/notes/';
+  static String perseveranceBehaviorNote(int noteId) =>
+      'teacher-mobile/v2/perseverance/behavior/notes/$noteId/';
+  static String perseveranceStudentBehavior(int studentId) =>
+      'teacher-mobile/v2/perseverance/behavior/students/$studentId/';
+  static const String perseveranceFilters =
+      'teacher-mobile/v2/perseverance/filters/';
+  static const String perseveranceProcedures =
+      'teacher-mobile/v2/perseverance/procedures/';
+  static const String perseveranceProcedureTypes =
+      'teacher-mobile/v2/perseverance/procedures/types/';
+  static const String perseveranceAttendanceReport =
+      'teacher-mobile/v2/perseverance/reports/attendance/';
+  static const String perseveranceBehaviorReport =
+      'teacher-mobile/v2/perseverance/reports/behavior/';
+  static const String perseveranceReportExport =
+      'teacher-mobile/v2/perseverance/reports/export/';
+  static const String perseveranceReportOptions =
+      'teacher-mobile/v2/perseverance/reports/options/';
 }

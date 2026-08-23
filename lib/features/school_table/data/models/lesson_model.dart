@@ -2,6 +2,9 @@ class LessonModel {
   int dayId;
   String classNumber;
   String classNumberText;
+  String startTime;
+  String endTime;
+  String timeText;
   bool isWaiting;
   String confirmLink;
   String wcPriority;
@@ -15,6 +18,9 @@ class LessonModel {
     required this.dayId,
     required this.classNumber,
     required this.classNumberText,
+    this.startTime = "",
+    this.endTime = "",
+    this.timeText = "",
     required this.isWaiting,
     required this.confirmLink,
     required this.wcPriority,
@@ -32,6 +38,9 @@ class LessonModel {
       dayId: json["day_id"],
       classNumber: json["class_number"],
       classNumberText: json["class_number_text"],
+      startTime: json["start_time"]?.toString() ?? "",
+      endTime: json["end_time"]?.toString() ?? "",
+      timeText: json["time_text"]?.toString() ?? "",
       isWaiting: json["is_waiting"],
       confirmLink: json["confirm_link"],
       wcPriority: json["wc_priority"],
@@ -76,6 +85,9 @@ class LessonModel {
         "day_id": dayId,
         "class_number": classNumber,
         "class_number_text": classNumberText,
+        "start_time": startTime,
+        "end_time": endTime,
+        "time_text": timeText,
         "is_waiting": isWaiting,
         "confirm_link": confirmLink,
         "wc_priority": wcPriority,
@@ -105,6 +117,9 @@ class LessonModel {
     int? dayId,
     String? classNumber,
     String? classNumberText,
+    String? startTime,
+    String? endTime,
+    String? timeText,
     bool? isWaiting,
     String? confirmLink,
     String? wcPriority,
@@ -118,6 +133,9 @@ class LessonModel {
       dayId: dayId ?? this.dayId,
       classNumber: classNumber ?? this.classNumber,
       classNumberText: classNumberText ?? this.classNumberText,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      timeText: timeText ?? this.timeText,
       isWaiting: isWaiting ?? this.isWaiting,
       confirmLink: confirmLink ?? this.confirmLink,
       wcPriority: wcPriority ?? this.wcPriority,
@@ -131,11 +149,26 @@ class LessonModel {
 
   static const String waitingLabel = "منتظر";
 
+  String get displayTimeText {
+    final formatted = timeText.trim();
+    if (formatted.isNotEmpty) return formatted;
+
+    final start = startTime.trim();
+    final end = endTime.trim();
+    if (start.isNotEmpty && end.isNotEmpty) return '$start - $end';
+    return start.isNotEmpty ? start : end;
+  }
+
   List<String> get contentLines => cellText.subject
       .split('\n')
       .map((line) => line.trim())
-      .where((line) => line.isNotEmpty)
+      .where((line) => line.isNotEmpty && !_isTimeTextLine(line))
       .toList(growable: false);
+
+  bool _isTimeTextLine(String line) {
+    final formatted = timeText.trim();
+    return formatted.isNotEmpty && line == formatted;
+  }
 
   /// A waiting slot may arrive from the API before it is assigned, in which
   /// case [isWaiting] is false but the cell still contains the waiting label.

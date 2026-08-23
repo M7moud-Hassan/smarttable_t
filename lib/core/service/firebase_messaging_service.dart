@@ -47,29 +47,17 @@ class FirebaseMessagingService {
     // tz.setLocalLocation(tz.getLocation('Asia/Pontianak'));
     // log('Local timezone set to: ${tz.local.name}');
 
-    // Each step is isolated: on iOS the push calls throw when APNs registration
-    // has not completed yet, and that must not stop the remaining setup.
-
     // Request permission for notifications
-    await _runStep('permissions', _requestNotificationPermissions);
+    await _requestNotificationPermissions();
 
     // Initialize local notifications first (changed order)
-    await _runStep('local notifications', _initLocalNotifications);
+    await _initLocalNotifications();
 
     // Initialize push notifications
-    await _runStep('push notifications', _initPushNotifications);
+    await _initPushNotifications();
 
     // Listen for token changes
     _listenForTokenChanges(ref);
-  }
-
-  /// Runs one setup step, reporting failures instead of aborting the rest.
-  Future<void> _runStep(String name, Future<void> Function() step) async {
-    try {
-      await step();
-    } catch (e) {
-      debugPrint('Notification setup step "$name" failed: $e');
-    }
   }
 
   Future<void> _requestNotificationPermissions() async {
@@ -115,23 +103,15 @@ class FirebaseMessagingService {
   }
 
   Future<void> _initPushNotifications() async {
-    // iOS: Necessary for foreground notifications. Throws
-    // `apns-token-not-set` while APNs registration is still pending, so it is
-    // isolated from the listeners below, which must be registered regardless.
-    await _runStep('foreground presentation options', () async {
-      await _firebaseMessaging.setForegroundNotificationPresentationOptions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-    });
+    // iOS: Necessary for foreground notifications
+    await _firebaseMessaging.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
 
     // Handle notification when the app is opened from a terminated state
-    FirebaseMessaging.instance.getInitialMessage().then(
-      _handleMessage,
-      onError: (Object e) =>
-          debugPrint('Failed to read the initial message: $e'),
-    );
+    FirebaseMessaging.instance.getInitialMessage().then(_handleMessage);
 
     // Handle notification when the app is opened from background state
     FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);

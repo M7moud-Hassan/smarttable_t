@@ -7,6 +7,7 @@ import 'package:smart_table_app/core/widgets/custom_error_widget.dart';
 import 'package:smart_table_app/core/widgets/loading_widget.dart';
 import 'package:smart_table_app/features/circulars/presentation/views/circulars_view.dart';
 import 'package:smart_table_app/features/administrative_actions/presentation/views/administrative_actions_view.dart';
+import 'package:smart_table_app/features/attendance_behavior/presentation/views/attendance_behavior_view.dart';
 import 'package:smart_table_app/features/exams/presentation/views/exam_halls_view.dart';
 import 'package:smart_table_app/features/health_cases/presentation/views/health_cases_view.dart';
 import 'package:smart_table_app/features/school_table/presentation/views/master_table_view.dart';
@@ -18,6 +19,7 @@ import '../../../class_visits/presentation/views/class_visits_view.dart';
 import '../../../scheduled_tasks/presentation/scheduled_tasks_view.dart';
 import '../../../social_cases/presentation/views/social_cases_view.dart';
 import '../../../teacher_notes/presentation/views/teacher_notes_view.dart';
+import '../../data/models/menu_data_model.dart';
 import '../../providers/home_menu_provider.dart';
 import '../../../performance_evidence/presentation/views/performance_evidence_view.dart';
 import '../../../profile/presentation/widgets/profile_photo_avatar.dart';
@@ -47,6 +49,10 @@ class _HomeViewState extends ConsumerState<HomeView> {
               : data.menus
                   .where((m) => !smartScheduleIds.contains(m.id))
                   .toList();
+          final hasAttendanceBehaviorMenu =
+              data.menus.any(_isAttendanceBehaviorMenu);
+          final showAttendanceBehaviorPreview =
+              activeTab == 1 && !hasAttendanceBehaviorMenu;
 
           return Scaffold(
             appBar: AppBar(
@@ -175,8 +181,16 @@ class _HomeViewState extends ConsumerState<HomeView> {
                       mainAxisSpacing: 15,
                       crossAxisSpacing: 15,
                     ),
-                    itemCount: filteredMenus.length,
+                    itemCount: filteredMenus.length +
+                        (showAttendanceBehaviorPreview ? 1 : 0),
                     itemBuilder: (context, index) {
+                      if (index == filteredMenus.length) {
+                        return _AttendanceBehaviorHomeCard(
+                          onTap: () => context.push(
+                            const AttendanceBehaviorView(),
+                          ),
+                        );
+                      }
                       final item = filteredMenus[index];
                       return GestureDetector(
                         onTap: !item.isActive
@@ -213,6 +227,12 @@ class _HomeViewState extends ConsumerState<HomeView> {
                                 );
                               }
                             : () {
+                                if (_isAttendanceBehaviorMenu(item)) {
+                                  context.push(
+                                    const AttendanceBehaviorView(),
+                                  );
+                                  return;
+                                }
                                 switch (item.id) {
                                   case 1:
                                     context.push(const MasterTableView());
@@ -302,6 +322,20 @@ class _HomeViewState extends ConsumerState<HomeView> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Builder(builder: (_) {
+                                if (_isAttendanceBehaviorMenu(item)) {
+                                  return Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFE6FAFA),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.fact_check_outlined,
+                                      color: AppColors.secondryColor,
+                                      size: 30,
+                                    ),
+                                  );
+                                }
                                 String iconPath;
                                 Color bgColor;
 
@@ -413,5 +447,71 @@ class _HomeViewState extends ConsumerState<HomeView> {
               }),
             ),
         loading: () => const Scaffold(body: LoadingWidget()));
+  }
+
+  bool _isAttendanceBehaviorMenu(MenuDataModel item) {
+    final key = item.key.toLowerCase();
+    return key == 'attendance_behavior' ||
+        key == 'attendance-and-behavior' ||
+        (item.title.contains('المواظبة') && item.title.contains('السلوك'));
+  }
+}
+
+class _AttendanceBehaviorHomeCard extends StatelessWidget {
+  const _AttendanceBehaviorHomeCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      key: const ValueKey('attendance-behavior-home-card'),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 7,
+            ),
+          ],
+        ),
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: Color(0xFFE6FAFA),
+                borderRadius: BorderRadius.all(Radius.circular(10)),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: Icon(
+                  Icons.fact_check_outlined,
+                  color: AppColors.secondryColor,
+                  size: 30,
+                ),
+              ),
+            ),
+            Spacer(),
+            Text(
+              'المواظبة والسلوك',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              'متابعة الطلاب',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 12, color: AppColors.pinkColor),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
