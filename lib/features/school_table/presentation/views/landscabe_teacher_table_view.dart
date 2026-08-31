@@ -54,29 +54,34 @@ class _LandscabeTeacherTableViewState
                     Icon(fitScreen ? Icons.fullscreen_exit : Icons.fullscreen))
           ],
         ),
-        body: teacherTableAsyncValue.when(
-          data: (data) {
-            final headerClasess =
-                getHeaderClassesList(data.tableInfo.first.lessons);
-            final headerClassTimes =
-                getHeaderClassTimes(data.tableInfo.first.lessons);
-            final lessonsData = prepareLessonsData(data.tableInfo.first.lessons,
-                data.tableInfo.first.daysOfWeek, headerClasess.length);
-            final table = DashedBorderTable(
-              headerClasess: headerClasess,
-              headerClassTimes: headerClassTimes,
-              daysOfWeek: data.tableInfo.first.daysOfWeek,
-              lessonsData: lessonsData,
-              teacherName: data.tableInfo.first.teacherName,
-              teacherImageUrl: data.tableInfo.first.teacherImageUrl,
-              isLandscape: fitScreen,
-            );
-            return fitScreen ? table : SingleChildScrollView(child: table);
-          },
-          error: (error, stackTrace) => CustomErrorWidget(
-            onTap: () => ref.invalidate(teacherTableProvider),
+        body: SafeArea(
+          top: false,
+          child: teacherTableAsyncValue.when(
+            data: (data) {
+              final headerClasess =
+                  getHeaderClassesList(data.tableInfo.first.lessons);
+              final headerClassTimes =
+                  getHeaderClassTimes(data.tableInfo.first.lessons);
+              final lessonsData = prepareLessonsData(
+                  data.tableInfo.first.lessons,
+                  data.tableInfo.first.daysOfWeek,
+                  headerClasess.length);
+              final table = DashedBorderTable(
+                headerClasess: headerClasess,
+                headerClassTimes: headerClassTimes,
+                daysOfWeek: data.tableInfo.first.daysOfWeek,
+                lessonsData: lessonsData,
+                teacherName: data.tableInfo.first.teacherName,
+                teacherImageUrl: data.tableInfo.first.teacherImageUrl,
+                isLandscape: fitScreen,
+              );
+              return fitScreen ? table : SingleChildScrollView(child: table);
+            },
+            error: (error, stackTrace) => CustomErrorWidget(
+              onTap: () => ref.invalidate(teacherTableProvider),
+            ),
+            loading: () => const Center(child: LoadingWidget()),
           ),
-          loading: () => const Center(child: LoadingWidget()),
         ));
   }
 }

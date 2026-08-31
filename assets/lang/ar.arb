@@ -150,5 +150,8 @@
   "signatureSavedSuccessfully": "تم حفظ التوقيع بنجاح",
   "signatureClearedSuccessfully": "تم مسح التوقيع بنجاح",
   "pleaseDrawOrPickSignature": "يرجى رسم التوقيع أو اختيار صورة أولاً",
-  "signaturePreview": "معاينة التوقيع"
+  "signaturePreview": "معاينة التوقيع",
+  "signCircular": "توقيع",
+  "circularSigned": "تم التوقيع",
+  "circularSignedSuccessfully": "تم توقيع التعميم بنجاح"
 }

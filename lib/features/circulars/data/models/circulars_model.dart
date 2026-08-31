@@ -23,6 +23,7 @@ class Tasks {
   final String fileName;
   final String fileUrl;
   final String fileIcon;
+  final bool isSigned;
 
   Tasks({
     required this.id,
@@ -34,6 +35,7 @@ class Tasks {
     required this.fileName,
     required this.fileUrl,
     required this.fileIcon,
+    required this.isSigned,
   });
 
   factory Tasks.fromJson(Map<String, dynamic> json) => Tasks(
@@ -46,5 +48,6 @@ class Tasks {
         fileName: json["file_name"],
         fileUrl: json["file_url"],
         fileIcon: json["file_icon"],
+        isSigned: json["is_signed"] == true,
       );
 }

@@ -5,10 +5,17 @@ import 'package:smart_table_app/features/scheduled_tasks/data/models/scheduled_t
 import '../../../core/constants/keys_enums.dart';
 import '../data/repostories/scheduled_tasks_repo.dart';
 
+typedef ScheduledTasksRequest = ({int page, ScheduledTasksSource source});
+
 final scheduledTasksProvider = FutureProvider.autoDispose
-    .family<PaginationModel<ScheduledTasksModel>, int>((ref, page) async {
+    .family<PaginationModel<ScheduledTasksModel>, ScheduledTasksRequest>(
+        (ref, request) async {
   final filter = ref.watch(scheduledTaskFilterProvider);
-  return ref.read(scheduledTasksRepoProvider).getScheduledTasks(filter, page);
+  return ref.read(scheduledTasksRepoProvider).getScheduledTasks(
+        filter,
+        request.page,
+        request.source,
+      );
 });
 
 final scheduledTaskFilterProvider = StateProvider<ScheduledTasksFilter>((ref) {

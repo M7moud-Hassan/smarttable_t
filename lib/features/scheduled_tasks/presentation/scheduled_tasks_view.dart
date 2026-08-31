@@ -4,13 +4,20 @@ import 'package:smart_table_app/core/extensions/context_extensions.dart';
 import 'package:smart_table_app/core/widgets/pagination_list_view.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/keys_enums.dart';
 import '../data/models/scheduled_tasks_model.dart';
 import '../providers/scheduled_tasks_provider.dart';
 import 'widgets/filter_widget.dart';
 
 class ScheduledTasksView extends ConsumerWidget {
-  const ScheduledTasksView({super.key, required this.title});
+  const ScheduledTasksView({
+    super.key,
+    required this.title,
+    this.source = ScheduledTasksSource.dutyRoster,
+  });
+
   final String title;
+  final ScheduledTasksSource source;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,7 +34,9 @@ class ScheduledTasksView extends ConsumerWidget {
               key: Key(filter.name),
               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
               sepratedWidget: const SizedBox.shrink(),
-              getList: (page) => ref.watch(scheduledTasksProvider(page).future),
+              getList: (page) => ref.watch(
+                scheduledTasksProvider((page: page, source: source)).future,
+              ),
               itemBuilder: (subTasks, index) {
                 return Column(
                   children: [

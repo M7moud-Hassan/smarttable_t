@@ -19,8 +19,15 @@ class ScheduledTasksRepository {
       : _apiService = ref.read(apiServiceProvider);
 
   Future<PaginationModel<ScheduledTasksModel>> getScheduledTasks(
-      ScheduledTasksFilter filter, int page) async {
-    final response = await _apiService.get(Endpoints.dutyRoster, parameters: {
+    ScheduledTasksFilter filter,
+    int page,
+    ScheduledTasksSource source,
+  ) async {
+    final endpoint = switch (source) {
+      ScheduledTasksSource.dailyTasks => Endpoints.dailyTasks,
+      ScheduledTasksSource.dutyRoster => Endpoints.dutyRoster,
+    };
+    final response = await _apiService.get(endpoint, parameters: {
       'filter': filter.name,
       'page': page,
     });

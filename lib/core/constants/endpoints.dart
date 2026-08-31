@@ -38,9 +38,12 @@ class Endpoints {
   static const String deleteSignature = 'teacher-mobile/v2/signature/delete/';
   static const String getSignature = 'teacher-mobile/v2/signature/me/';
   static const String circulars = 'teacher-mobile/v2/followers/circulars/';
+  static String circularSign(int circularId) =>
+      'teacher-mobile/v2/followers/circulars/$circularId/sign/';
   static const String classVisits = 'teacher-mobile/v2/followers/class-visits/';
   static const String healthCases =
       'teacher-mobile/v2/followers/health-conditions/';
+  static const String dailyTasks = 'teacher-mobile/v2/daily-tasks/';
   static const String dutyRoster = 'teacher-mobile/v2/duty-roster/';
   static const String socialCases =
       'teacher-mobile/v2/followers/social-status/';
@@ -61,9 +64,12 @@ class Endpoints {
   static String wish(int wishId) => 'teacher-mobile/v2/wishes/$wishId/';
   static const String administrativeProcedures =
       'teacher-mobile/v2/followers/administrative-procedures/';
+  static const String noteAccountabilityProcedureType = 'note_accountability';
   static String administrativeProcedure(String procedureType, int id) =>
       'teacher-mobile/v2/followers/administrative-procedures/'
       '$procedureType/$id/';
+  static String noteAccountabilityProcedure(int id) =>
+      administrativeProcedure(noteAccountabilityProcedureType, id);
 
   static const String perseveranceAttendance =
       'teacher-mobile/v2/perseverance/attendance/';

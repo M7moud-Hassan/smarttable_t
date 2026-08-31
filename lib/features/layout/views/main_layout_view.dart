@@ -94,9 +94,11 @@ class _MainLayoutViewState extends ConsumerState<MainLayoutView> {
               title: Text(bottomTabs[currentIndex].title),
             ),
       body: bottomTabs[currentIndex].page,
-      bottomNavigationBar: SizedBox(
-        height: 85,
-        child: BottomNavigationBar(
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 85,
+          child: BottomNavigationBar(
             currentIndex: currentIndex,
             onTap: (index) {
               setState(() {
@@ -136,7 +138,8 @@ class _MainLayoutViewState extends ConsumerState<MainLayoutView> {
                   label: item.title,
                 ),
               )
-            ]),
+              ]),
+        ),
       ),
     );
   }

@@ -464,4 +464,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get signaturePreview => 'Signature Preview';
+
+  @override
+  String get signCircular => 'Sign';
+
+  @override
+  String get circularSigned => 'Signed';
+
+  @override
+  String get circularSignedSuccessfully => 'Circular signed successfully';
 }

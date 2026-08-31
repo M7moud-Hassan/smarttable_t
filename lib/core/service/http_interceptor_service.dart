@@ -125,7 +125,10 @@ class InterceptorClientService extends InterceptorContract {
     if (response is Response) {
       _log('Response body: ${_redactSensitiveResponse(response.body)}');
     }
-    if (response.statusCode == 400 || response.statusCode == 403) {
+    // Validation and permission responses (400/403) must stay available to
+    // the feature that made the request so it can show the server's message.
+    // Only an authentication failure should end the teacher's session.
+    if (response.statusCode == 401) {
       final token = await _ref.read(tokenStorageProvider).getToken();
       if (token != null) {
         _ref.read(requestResponseProvider.notifier).update((state) =>

@@ -151,5 +151,8 @@
   "signatureSavedSuccessfully": "Signature saved successfully",
   "signatureClearedSuccessfully": "Signature cleared successfully",
   "pleaseDrawOrPickSignature": "Please draw a signature or pick an image first",
-  "signaturePreview": "Signature Preview"
+  "signaturePreview": "Signature Preview",
+  "signCircular": "Sign",
+  "circularSigned": "Signed",
+  "circularSignedSuccessfully": "Circular signed successfully"
 }

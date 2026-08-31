@@ -38,10 +38,11 @@ class _HomeViewState extends ConsumerState<HomeView> {
 
   @override
   Widget build(BuildContext context) {
+    final isTablet = MediaQuery.sizeOf(context).shortestSide >= 600;
     final homeAsync = ref.watch(homeMenuProvider);
     return homeAsync.when(
         data: (data) {
-          final smartScheduleIds = [1, 2, 3, 10, 12]; // Smart schedule items
+          final smartScheduleIds = [1, 2, 3, 10, 12, 14];
           final filteredMenus = activeTab == 0
               ? data.menus
                   .where((m) => smartScheduleIds.contains(m.id))
@@ -115,6 +116,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
               children: [
                 const SizedBox(height: 25),
                 Container(
+                  constraints: const BoxConstraints(maxWidth: 720),
                   height: 50,
                   margin: const EdgeInsets.symmetric(horizontal: 20),
                   decoration: BoxDecoration(
@@ -175,8 +177,8 @@ class _HomeViewState extends ConsumerState<HomeView> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 10),
                     gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 280,
                       childAspectRatio: 1.45,
                       mainAxisSpacing: 15,
                       crossAxisSpacing: 15,
@@ -186,6 +188,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                     itemBuilder: (context, index) {
                       if (index == filteredMenus.length) {
                         return _AttendanceBehaviorHomeCard(
+                          isTablet: isTablet,
                           onTap: () => context.push(
                             const AttendanceBehaviorView(),
                           ),
@@ -303,6 +306,14 @@ class _HomeViewState extends ConsumerState<HomeView> {
                                       const AdministrativeActionsView(),
                                     );
                                     break;
+                                  case 14:
+                                    context.push(
+                                      ScheduledTasksView(
+                                        title: item.title,
+                                        source: ScheduledTasksSource.dailyTasks,
+                                      ),
+                                    );
+                                    break;
                                 }
                               },
                         child: Container(
@@ -329,10 +340,10 @@ class _HomeViewState extends ConsumerState<HomeView> {
                                       color: const Color(0xFFE6FAFA),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: const Icon(
+                                    child: Icon(
                                       Icons.fact_check_outlined,
                                       color: AppColors.secondryColor,
-                                      size: 30,
+                                      size: isTablet ? 42 : 30,
                                     ),
                                   );
                                 }
@@ -392,6 +403,10 @@ class _HomeViewState extends ConsumerState<HomeView> {
                                     iconPath = SvgAssets.administrativeActions;
                                     bgColor = const Color(0xFFFFF4E8);
                                     break;
+                                  case 14:
+                                    iconPath = SvgAssets.file06;
+                                    bgColor = const Color(0xFFF4EBFF);
+                                    break;
                                   default:
                                     iconPath = SvgAssets.table;
                                     bgColor = AppColors.grayColor;
@@ -406,8 +421,8 @@ class _HomeViewState extends ConsumerState<HomeView> {
                                   ),
                                   child: SvgPicture.asset(
                                     iconPath,
-                                    width: 30,
-                                    height: 30,
+                                    width: isTablet ? 42 : 30,
+                                    height: isTablet ? 42 : 30,
                                   ),
                                 );
                               }),
@@ -415,7 +430,8 @@ class _HomeViewState extends ConsumerState<HomeView> {
                               Text(
                                 item.title,
                                 style: context.textTheme.titleMedium!.copyWith(
-                                    fontSize: 14, fontWeight: FontWeight.bold),
+                                    fontSize: isTablet ? 18 : 14,
+                                    fontWeight: FontWeight.bold),
                                 textAlign: TextAlign.center,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -427,7 +443,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                                   maxLines: 1,
                                   style: context.textTheme.titleMedium!
                                       .copyWith(
-                                          fontSize: 12,
+                                          fontSize: isTablet ? 15 : 12,
                                           color: AppColors.pinkColor),
                                 )
                             ],
@@ -458,8 +474,12 @@ class _HomeViewState extends ConsumerState<HomeView> {
 }
 
 class _AttendanceBehaviorHomeCard extends StatelessWidget {
-  const _AttendanceBehaviorHomeCard({required this.onTap});
+  const _AttendanceBehaviorHomeCard({
+    required this.isTablet,
+    required this.onTap,
+  });
 
+  final bool isTablet;
   final VoidCallback onTap;
 
   @override
@@ -479,35 +499,41 @@ class _AttendanceBehaviorHomeCard extends StatelessWidget {
             ),
           ],
         ),
-        child: const Column(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             DecoratedBox(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Color(0xFFE6FAFA),
                 borderRadius: BorderRadius.all(Radius.circular(10)),
               ),
               child: Padding(
-                padding: EdgeInsets.all(12),
+                padding: const EdgeInsets.all(12),
                 child: Icon(
                   Icons.fact_check_outlined,
                   color: AppColors.secondryColor,
-                  size: 30,
+                  size: isTablet ? 42 : 30,
                 ),
               ),
             ),
-            Spacer(),
+            const Spacer(),
             Text(
               'المواظبة والسلوك',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: isTablet ? 18 : 14,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             Text(
               'متابعة الطلاب',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12, color: AppColors.pinkColor),
+              style: TextStyle(
+                fontSize: isTablet ? 15 : 12,
+                color: AppColors.pinkColor,
+              ),
             ),
           ],
         ),

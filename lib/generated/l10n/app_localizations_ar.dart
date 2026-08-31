@@ -461,4 +461,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get signaturePreview => 'معاينة التوقيع';
+
+  @override
+  String get signCircular => 'توقيع';
+
+  @override
+  String get circularSigned => 'تم التوقيع';
+
+  @override
+  String get circularSignedSuccessfully => 'تم توقيع التعميم بنجاح';
 }

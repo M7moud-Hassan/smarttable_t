@@ -967,6 +967,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Signature Preview'**
   String get signaturePreview;
+
+  /// No description provided for @signCircular.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign'**
+  String get signCircular;
+
+  /// No description provided for @circularSigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed'**
+  String get circularSigned;
+
+  /// No description provided for @circularSignedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Circular signed successfully'**
+  String get circularSignedSuccessfully;
 }
 
 class _AppLocalizationsDelegate
