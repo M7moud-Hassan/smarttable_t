@@ -274,7 +274,7 @@ class MasterTableView extends ConsumerWidget {
             flex: 4,
             child: lesson.isWaitingSlot
                 ? AutoSizeText(
-                    LessonModel.waitingLabel,
+                    lesson.compactTitle,
                     maxLines: 1,
                     minFontSize: 12,
                     stepGranularity: 0.5,

@@ -281,7 +281,7 @@ class DashedBorderTable extends ConsumerWidget {
                 : Colors.white;
     final classroom = lesson.classroomName;
     final displayText = lesson.isWaitingSlot
-        ? LessonModel.waitingLabel
+        ? lesson.compactTitle
         : [if (classroom.isNotEmpty) classroom, lesson.compactTitle].join('\n');
 
     final cell = Container(

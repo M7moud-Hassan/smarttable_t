@@ -185,9 +185,31 @@ class LessonModel {
   bool get canAcceptWaitingClass =>
       isWaiting && !confirmed && confirmLink.trim().isNotEmpty;
 
+  /// The waiting marker shown in timetable cells, including its slot number.
+  /// Classroom details following a colon are displayed in the details sheet.
+  String get waitingTitle {
+    for (final line in contentLines) {
+      final title = _waitingTitleFrom(line);
+      if (title != null) return title;
+    }
+    return waitingLabel;
+  }
+
+  String? _waitingTitleFrom(String value) {
+    final waitingIndex = value.indexOf(waitingLabel);
+    if (waitingIndex == -1) return null;
+
+    final waitingText = value.substring(waitingIndex).trim();
+    final separatorIndex = waitingText.indexOf(RegExp(r'[:：]'));
+    final title = separatorIndex == -1
+        ? waitingText
+        : waitingText.substring(0, separatorIndex).trim();
+    return title.isEmpty ? waitingLabel : title;
+  }
+
   /// Text shown in the compact timetable cell/card.
   String get compactTitle =>
-      isWaitingSlot ? waitingLabel : truncateText(subjectName, 10);
+      isWaitingSlot ? waitingTitle : truncateText(subjectName, 10);
 
   /// The actual subject, excluding the waiting marker and classroom.
   String get subjectName {
