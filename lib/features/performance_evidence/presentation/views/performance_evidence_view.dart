@@ -35,15 +35,6 @@ class PerformanceEvidenceView extends HookConsumerWidget {
           icon: const Icon(Icons.arrow_back_ios, color: AppColors.primaryColor),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10),
-            child: CircleAvatar(
-              backgroundImage: AssetImage(PngAssets.teacher),
-              radius: 18,
-            ),
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -79,18 +70,18 @@ class PerformanceEvidenceView extends HookConsumerWidget {
             onPressed: () {
               context.push(const AddPerformanceEvidenceView());
             },
-            child: Row(
+            child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
+                Text(
                   'إضافة ملف جديد',
                   style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(width: 10),
-                const Icon(Icons.add, color: Colors.white),
+                SizedBox(width: 10),
+                Icon(Icons.add, color: Colors.white),
               ],
             ),
           ),

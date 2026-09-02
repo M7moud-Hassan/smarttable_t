@@ -4,6 +4,7 @@ import 'package:smart_table_app/core/constants/app_colors.dart';
 import 'package:smart_table_app/core/extensions/extensions.dart';
 import 'package:smart_table_app/core/widgets/download_button.dart';
 import 'package:smart_table_app/core/widgets/pagination_list_view.dart';
+import '../../data/models/class_visits_model.dart';
 import '../../providers/class_visits_provider.dart';
 
 class ClassVisitsView extends ConsumerWidget {
@@ -16,7 +17,7 @@ class ClassVisitsView extends ConsumerWidget {
       appBar: AppBar(
         title: Text(title),
       ),
-      body: PaginationListView(
+      body: PaginationListView<ClassVisitsModel>(
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
         getList: (page) => ref.read(classVisitsProvider(page).future),
         itemBuilder: (visit, index) => _ClassVisitCard(visit: visit),
@@ -32,7 +33,7 @@ class ClassVisitsView extends ConsumerWidget {
 }
 
 class _ClassVisitCard extends StatefulWidget {
-  final dynamic visit;
+  final ClassVisitsModel visit;
 
   const _ClassVisitCard({required this.visit});
 
@@ -69,9 +70,9 @@ class _ClassVisitCardState extends State<_ClassVisitCard> {
                     const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                 child: Row(
                   children: [
-                    Expanded(
+                    const Expanded(
                       flex: 1,
-                      child: const SizedBox(),
+                      child: SizedBox(),
                     ),
                     Expanded(
                       flex: 4,
@@ -122,8 +123,12 @@ class _ClassVisitCardState extends State<_ClassVisitCard> {
                   const Divider(
                       color: AppColors.primaryColor, height: 1, thickness: 1.2),
                   // Rating Row
-                  _buildDataRow('التقيم العام', widget.visit.rate ?? 'ممتاز',
-                      isRating: true),
+                  _buildDataRow(
+                    'التقييم العام',
+                    widget.visit.rateLabel,
+                    isRating: true,
+                    ratingValue: widget.visit.ratingValue,
+                  ),
                   const Divider(
                       color: AppColors.primaryColor, height: 1, thickness: 1.2),
                   Padding(
@@ -173,7 +178,12 @@ class _ClassVisitCardState extends State<_ClassVisitCard> {
     );
   }
 
-  Widget _buildDataRow(String title, String value, {required bool isRating}) {
+  Widget _buildDataRow(
+    String title,
+    String value, {
+    required bool isRating,
+    double? ratingValue,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
@@ -213,14 +223,25 @@ class _ClassVisitCardState extends State<_ClassVisitCard> {
                       alignment: Alignment.centerLeft,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
-                        children: List.generate(
-                          5,
-                          (index) => const Icon(
-                            Icons.star_rounded,
-                            color: Color(0xFFE88A60),
+                        children: List.generate(5, (index) {
+                          final fullStarThreshold = index + 1;
+                          final halfStarThreshold = index + 0.5;
+                          final icon = ratingValue == null
+                              ? Icons.star_border_rounded
+                              : ratingValue >= fullStarThreshold
+                                  ? Icons.star_rounded
+                                  : ratingValue >= halfStarThreshold
+                                      ? Icons.star_half_rounded
+                                      : Icons.star_border_rounded;
+
+                          return Icon(
+                            icon,
+                            color: icon == Icons.star_border_rounded
+                                ? const Color(0xFFD7D7D7)
+                                : const Color(0xFFE88A60),
                             size: 20,
-                          ),
-                        ),
+                          );
+                        }),
                       ),
                     ),
                   )

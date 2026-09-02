@@ -5,12 +5,12 @@ import 'package:smart_table_app/core/extensions/extensions.dart';
 
 import 'package:smart_table_app/features/class_timing/providers/class_timing_notifer.dart';
 import 'package:smart_table_app/features/home/presentation/views/home_view.dart';
-import 'package:svg_flutter/svg.dart';
 import '../../../core/service/firebase_messaging_service.dart';
 import '../../auth/data/repositories/auth_repo.dart';
 import '../../notifications/presentation/views/notifications_view.dart';
 import '../../profile/presentation/views/profile_view.dart';
 import '../data/models/layout_model.dart';
+import '../widgets/main_bottom_navigation_bar.dart';
 
 class MainLayoutView extends ConsumerStatefulWidget {
   const MainLayoutView({super.key, this.requestFcm = false});
@@ -94,52 +94,14 @@ class _MainLayoutViewState extends ConsumerState<MainLayoutView> {
               title: Text(bottomTabs[currentIndex].title),
             ),
       body: bottomTabs[currentIndex].page,
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 85,
-          child: BottomNavigationBar(
-            currentIndex: currentIndex,
-            onTap: (index) {
-              setState(() {
-                currentIndex = index;
-              });
-            },
-            selectedItemColor: AppColors.primaryColor,
-            unselectedItemColor: AppColors.textGrayColor,
-            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-            items: [
-              ...bottomTabs.map(
-                (item) => BottomNavigationBarItem(
-                  icon: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: SvgPicture.asset(item.inActiveIcon,
-                        colorFilter: const ColorFilter.mode(
-                            AppColors.textGrayColor, BlendMode.srcIn)),
-                  ),
-                  activeIcon: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        height: 5,
-                        width: 40,
-                        decoration: const BoxDecoration(
-                          color: AppColors.primaryColor,
-                          borderRadius: BorderRadius.vertical(
-                              bottom: Radius.circular(10)),
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      SvgPicture.asset(item.activeIcon,
-                          colorFilter: const ColorFilter.mode(
-                              AppColors.primaryColor, BlendMode.srcIn)),
-                    ],
-                  ),
-                  label: item.title,
-                ),
-              )
-              ]),
-        ),
+      bottomNavigationBar: MainBottomNavigationBar(
+        tabs: bottomTabs,
+        currentIndex: currentIndex,
+        onTap: (index) {
+          setState(() {
+            currentIndex = index;
+          });
+        },
       ),
     );
   }

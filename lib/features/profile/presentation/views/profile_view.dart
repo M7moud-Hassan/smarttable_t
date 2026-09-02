@@ -8,6 +8,7 @@ import 'package:smart_table_app/core/extensions/extensions.dart';
 import 'package:smart_table_app/core/utils/helpers.dart';
 import 'package:smart_table_app/core/widgets/app_button.dart';
 import 'package:smart_table_app/core/widgets/loading_widget.dart';
+import 'package:smart_table_app/features/auth/presentation/views/change_password_view.dart';
 import 'package:smart_table_app/features/auth/providers/auth_provider.dart';
 import 'package:smart_table_app/features/profile/presentation/views/aboutus_view.dart';
 
@@ -209,7 +210,9 @@ class ProfileView extends ConsumerWidget {
               ProfileItemWidget(
                 title: context.locale.changePassword,
                 icon: SvgAssets.lock3,
-                onTap: () {},
+                onTap: () {
+                  context.push(const ChangePasswordView());
+                },
               ),
               ProfileItemWidget(
                 title: context.locale.teacherSignature,
@@ -228,7 +231,9 @@ class ProfileView extends ConsumerWidget {
               ProfileItemWidget(
                 title: context.locale.faq,
                 icon: SvgAssets.faQuestion,
-                onTap: () {},
+                onTap: () {
+                  openLink(AppConstants.faqLink);
+                },
               ),
               ProfileItemWidget(
                 title: context.locale.contactUs,
@@ -241,10 +246,7 @@ class ProfileView extends ConsumerWidget {
                 title: context.locale.privacyPolicy,
                 icon: SvgAssets.iconamoonShieldYesFill,
                 onTap: () {
-                  final currentLocale = context.locale.localeName;
-                  openLink(
-                    '${AppConstants.privacyPolicyLink}$currentLocale/',
-                  );
+                  openLink(AppConstants.privacyPolicyLink);
                 },
               ),
               ProfileItemWidget(

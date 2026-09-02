@@ -46,8 +46,12 @@ class InterceptorClientService extends InterceptorContract {
       if (decoded is! Map<String, dynamic>) return body;
 
       final safeBody = Map<String, dynamic>.from(decoded);
-      for (final key in const ['password', 'token', 'access', 'refresh']) {
-        if (safeBody.containsKey(key)) safeBody[key] = '***';
+      for (final key in safeBody.keys.toList(growable: false)) {
+        final normalizedKey = key.toLowerCase();
+        if (normalizedKey.contains('password') ||
+            const {'token', 'access', 'refresh'}.contains(normalizedKey)) {
+          safeBody[key] = '***';
+        }
       }
       return jsonEncode(safeBody);
     } catch (_) {
@@ -61,14 +65,13 @@ class InterceptorClientService extends InterceptorContract {
       if (decoded is! Map<String, dynamic>) return body;
 
       final safeBody = Map<String, dynamic>.from(decoded);
-      for (final key in const [
-        'password',
-        'token',
-        'access',
-        'refresh',
-        'fcm_token',
-      ]) {
-        if (safeBody.containsKey(key)) safeBody[key] = '***';
+      for (final key in safeBody.keys.toList(growable: false)) {
+        final normalizedKey = key.toLowerCase();
+        if (normalizedKey.contains('password') ||
+            const {'token', 'access', 'refresh', 'fcm_token'}
+                .contains(normalizedKey)) {
+          safeBody[key] = '***';
+        }
       }
       return jsonEncode(safeBody);
     } catch (_) {

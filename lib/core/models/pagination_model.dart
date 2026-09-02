@@ -6,12 +6,24 @@ final class PaginationModel<T> {
   late final List<T> list;
 
   void setData({
-    required Map<String, dynamic> map,
+    required Object? map,
     required T Function(Map<String, dynamic>) fromJson,
   }) {
-    final data = List<Map<String, dynamic>>.from(map['results']);
-    count = map['count'];
-    next = map['next'];
+    final Map<String, dynamic>? page =
+        map is Map ? Map<String, dynamic>.from(map) : null;
+    final Object? rawResults = map is List ? map : page?['results'];
+
+    if (rawResults is! List) {
+      throw const FormatException('Invalid pagination response');
+    }
+
+    final data = rawResults
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+
+    count = page?['count'] is int ? page!['count'] as int : data.length;
+    next = page?['next']?.toString();
     currentPage = next == null ? 1 : getCurrentPage(next ?? '');
     isLastPage = next == null;
     list = List<T>.from(data.map(fromJson));

@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:hooks_riverpod/hooks_riverpod.dart' show Ref, Provider;
 import 'package:smart_table_app/core/models/response_model.dart';
 import 'package:smart_table_app/core/providers/api_service_provider.dart';
@@ -94,6 +92,23 @@ class AuthRepository {
     });
 
     if (response.success!) {
+      return response;
+    }
+    throw ServerException(response.message);
+  }
+
+  Future<ResponseModel> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final response = await _apiService.post(Endpoints.changePassword, {
+      'current_password': currentPassword,
+      'new_password': newPassword,
+      'confirm_password': confirmPassword,
+    });
+
+    if (response.success ?? false) {
       return response;
     }
     throw ServerException(response.message);

@@ -247,6 +247,44 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      _ref.read(requestResponseProvider.notifier).update(
+            (state) => RequestResponseModel.loading(),
+          );
+
+      final result = await _ref.read(authRepoProvider).changePassword(
+            currentPassword: currentPassword,
+            newPassword: newPassword,
+            confirmPassword: confirmPassword,
+          );
+
+      _ref.read(requestResponseProvider.notifier).update(
+            (state) => RequestResponseModel.success(
+              actionOnDone: ActionOnDone.showSucessMessageAndPop,
+              message: result.message,
+            ),
+          );
+    } on Exception catch (e, s) {
+      await FirebaseCrashlytics.instance.recordError(
+        e,
+        s,
+        reason: 'changePassword failed',
+      );
+      _ref.read(requestResponseProvider.notifier).update(
+            (state) => RequestResponseModel.error(exception: e),
+          );
+    } finally {
+      _ref.read(requestResponseProvider.notifier).update(
+            (state) => RequestResponseModel.loading(loading: false),
+          );
+    }
+  }
+
   Future<void> logout() async {
     try {
       await _ref.read(authRepoProvider).teacherLogout();
