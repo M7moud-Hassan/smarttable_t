@@ -363,6 +363,10 @@ class AttendancePanel extends ConsumerWidget {
     AttendanceBehaviorStudent student,
     String action,
   ) {
+    if (action == 'edit-attendance') {
+      _showAttendanceEditDialog(context, ref, student);
+      return;
+    }
     final Widget page = switch (action) {
       'history' => StudentAttendanceHistoryView(student: student),
       'take-action' => TakeStudentActionView(
@@ -378,6 +382,73 @@ class AttendancePanel extends ConsumerWidget {
       _ => StudentActionsView(student: student),
     };
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+  }
+
+  Future<void> _showAttendanceEditDialog(
+    BuildContext context,
+    WidgetRef ref,
+    AttendanceBehaviorStudent student,
+  ) async {
+    var selectedStatus =
+        student.attendanceStatus == AttendanceStatus.notRecorded
+            ? AttendanceStatus.present
+            : student.attendanceStatus;
+    final status = await showDialog<AttendanceStatus>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text('تعديل حالة الحضور'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: AttendanceStatus.values
+                .where((status) => status != AttendanceStatus.notRecorded)
+                .map(
+                  (status) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(status.label),
+                    leading: Icon(
+                      selectedStatus == status
+                          ? Icons.check_circle_rounded
+                          : Icons.circle_outlined,
+                      color: selectedStatus == status
+                          ? attendanceStatusColor(status)
+                          : Colors.grey,
+                    ),
+                    onTap: () => setDialogState(
+                      () => selectedStatus = status,
+                    ),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('إلغاء'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(selectedStatus),
+              child: const Text('حفظ التعديل'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (status == null || status == student.attendanceStatus) return;
+
+    try {
+      await ref
+          .read(attendanceBehaviorProvider.notifier)
+          .updateStudentAttendance(studentId: student.id, status: status);
+      if (!context.mounted) return;
+      context.showSnackbarSuccess('تم تعديل حالة الحضور بنجاح');
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(perseveranceErrorMessage(error))),
+      );
+    }
   }
 }
 
@@ -623,9 +694,15 @@ class _StudentMoreMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
+      color: Colors.white,
       tooltip: 'خيارات الطالب',
       onSelected: onSelected,
       itemBuilder: (_) => [
+        if (!behavior)
+          const PopupMenuItem(
+            value: 'edit-attendance',
+            child: Text('تعديل حالة الحضور'),
+          ),
         PopupMenuItem(
           value: 'history',
           child: Text(behavior ? 'سجل سلوك الطالب' : 'سجل حضور الطالب'),

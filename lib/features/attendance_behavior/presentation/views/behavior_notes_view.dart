@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:smart_table_app/core/constants/constants.dart';
 import 'package:smart_table_app/features/attendance_behavior/data/models/attendance_behavior_models.dart';
 import 'package:smart_table_app/features/attendance_behavior/presentation/widgets/attendance_behavior_widgets.dart';
 import 'package:smart_table_app/features/attendance_behavior/providers/attendance_behavior_provider.dart';
@@ -31,13 +30,8 @@ class _BehaviorNotesViewState extends ConsumerState<BehaviorNotesView> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: FeatureTitleAppBar(
+        appBar: const FeatureTitleAppBar(
           title: 'قائمة ملاحظات السلوك',
-          action: IconButton.filled(
-            tooltip: 'إضافة ملاحظة جديدة',
-            onPressed: () => _openForm(context),
-            icon: const Icon(Icons.add_rounded, color: Colors.white),
-          ),
         ),
         body: Column(
           children: [
@@ -60,7 +54,6 @@ class _BehaviorNotesViewState extends ConsumerState<BehaviorNotesView> {
                         final note = notes[index];
                         return _BehaviorNoteCard(
                           note: note,
-                          onEdit: () => _openForm(context, note),
                           onDelete: () => _delete(context, note),
                         );
                       },
@@ -69,15 +62,6 @@ class _BehaviorNotesViewState extends ConsumerState<BehaviorNotesView> {
           ],
         ),
       ),
-    );
-  }
-
-  Future<void> _openForm(
-    BuildContext context, [
-    BehaviorNoteModel? note,
-  ]) async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(builder: (_) => BehaviorNoteFormView(note: note)),
     );
   }
 
@@ -123,12 +107,10 @@ class _BehaviorNotesViewState extends ConsumerState<BehaviorNotesView> {
 class _BehaviorNoteCard extends StatelessWidget {
   const _BehaviorNoteCard({
     required this.note,
-    required this.onEdit,
     required this.onDelete,
   });
 
   final BehaviorNoteModel note;
-  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   @override
@@ -222,12 +204,6 @@ class _BehaviorNoteCard extends StatelessWidget {
               ),
             ),
             IconButton(
-              tooltip: 'تعديل',
-              onPressed: onEdit,
-              icon: const Icon(Icons.edit_outlined),
-              color: AppColors.primaryColor,
-            ),
-            IconButton(
               tooltip: 'حذف',
               onPressed: onDelete,
               icon: const Icon(Icons.delete_outline_rounded),
@@ -236,212 +212,6 @@ class _BehaviorNoteCard extends StatelessWidget {
             const SizedBox(width: 5),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class BehaviorNoteFormView extends ConsumerStatefulWidget {
-  const BehaviorNoteFormView({super.key, this.note});
-
-  final BehaviorNoteModel? note;
-
-  @override
-  ConsumerState<BehaviorNoteFormView> createState() =>
-      _BehaviorNoteFormViewState();
-}
-
-class _BehaviorNoteFormViewState extends ConsumerState<BehaviorNoteFormView> {
-  final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _nameController;
-  late int _points;
-  late BehaviorNoteType _type;
-  late String _iconKey;
-
-  static const _icons = ['smile', 'sad', 'star', 'like', 'warning'];
-
-  @override
-  void initState() {
-    super.initState();
-    final note = widget.note;
-    _nameController = TextEditingController(text: note?.name ?? '');
-    _points = note?.points ?? -1;
-    _type = note?.type ?? BehaviorNoteType.needsImprovement;
-    _iconKey = note?.iconKey ?? 'like';
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: FeatureTitleAppBar(
-          title: widget.note == null
-              ? 'إضافة ملاحظة سلوك جديدة'
-              : 'تعديل ملاحظة السلوك',
-        ),
-        body: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(18, 16, 18, 28),
-            children: [
-              const _FieldLabel('اسم الملاحظة'),
-              TextFormField(
-                controller: _nameController,
-                decoration: _inputDecoration('أدخل اسم الملاحظة'),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? 'أدخل اسم الملاحظة'
-                    : null,
-              ),
-              const SizedBox(height: 20),
-              const _FieldLabel('النقاط'),
-              DropdownButtonFormField<int>(
-                initialValue: _points,
-                decoration: _inputDecoration('اختر النقاط'),
-                items: ({-10, -5, -1, 0, 1, 5, 10, _points}.toList()..sort())
-                    .map(
-                      (points) => DropdownMenuItem(
-                        value: points,
-                        child: Text('$points'),
-                      ),
-                    )
-                    .toList(growable: false),
-                onChanged: (value) => setState(() => _points = value!),
-              ),
-              const SizedBox(height: 20),
-              const _FieldLabel('نوع الملاحظة'),
-              DropdownButtonFormField<BehaviorNoteType>(
-                initialValue: _type,
-                decoration: _inputDecoration('اختر نوع الملاحظة'),
-                items: BehaviorNoteType.values
-                    .map(
-                      (type) => DropdownMenuItem(
-                        value: type,
-                        child: Text(type.label),
-                      ),
-                    )
-                    .toList(growable: false),
-                onChanged: (value) => setState(() => _type = value!),
-              ),
-              const SizedBox(height: 20),
-              const _FieldLabel('الأيقونة'),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.primaryColor),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Wrap(
-                  alignment: WrapAlignment.spaceAround,
-                  spacing: 8,
-                  children: _icons.map((iconKey) {
-                    final selected = iconKey == _iconKey;
-                    return InkWell(
-                      borderRadius: BorderRadius.circular(14),
-                      onTap: () => setState(() => _iconKey = iconKey),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 160),
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? AppColors.primaryColor.withValues(alpha: .14)
-                              : Colors.transparent,
-                          border: selected
-                              ? Border.all(color: AppColors.primaryColor)
-                              : null,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Icon(
-                          behaviorIcon(iconKey),
-                          color:
-                              selected ? AppColors.secondryColor : Colors.grey,
-                        ),
-                      ),
-                    );
-                  }).toList(growable: false),
-                ),
-              ),
-              const SizedBox(height: 34),
-              PrimaryActionButton(
-                label: 'حفظ',
-                onPressed: _save,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: AppColors.primaryColor),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: AppColors.primaryColor),
-      ),
-    );
-  }
-
-  Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
-    final notifier = ref.read(attendanceBehaviorProvider.notifier);
-    final existing = widget.note;
-    final edited = (existing ??
-            BehaviorNoteModel(
-              id: 0,
-              name: _nameController.text.trim(),
-              points: _points,
-              type: _type,
-              iconKey: _iconKey,
-            ))
-        .copyWith(
-      name: _nameController.text.trim(),
-      points: _points,
-      type: _type,
-      iconKey: _iconKey,
-    );
-    try {
-      if (existing == null) {
-        await notifier.createBehaviorNote(edited);
-      } else {
-        await notifier.updateBehaviorNote(edited);
-      }
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(perseveranceErrorMessage(error))),
-      );
-      return;
-    }
-    if (!mounted) return;
-    Navigator.of(context).pop();
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  const _FieldLabel(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        label,
-        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
       ),
     );
   }

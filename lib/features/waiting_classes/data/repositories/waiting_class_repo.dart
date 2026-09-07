@@ -116,4 +116,28 @@ class WaitingClasessRepository {
 
     return response.message;
   }
+
+  Future<String?> respondToSecureClassRequest(
+    int requestId, {
+    required bool accepted,
+    String? rejectionReason,
+  }) async {
+    final reason = rejectionReason?.trim();
+    if (!accepted && (reason == null || reason.isEmpty)) {
+      throw ServerException('سبب الرفض مطلوب');
+    }
+    final response = await _apiService.post(
+      Endpoints.secureClassRequestRespond(requestId),
+      {
+        'action': accepted ? 'accept' : 'reject',
+        if (!accepted && reason != null && reason.isNotEmpty) 'reason': reason,
+      },
+    );
+
+    if (response.success != true) {
+      throw ServerException(response.message ?? 'تعذر إرسال الرد');
+    }
+
+    return response.message;
+  }
 }

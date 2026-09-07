@@ -187,11 +187,9 @@ class _ActionDetailsPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final details = detail.details.isNotEmpty
         ? detail.details
+            .where((item) => item.label.trim() != 'نوع الإجراء')
+            .toList(growable: false)
         : <AdministrativeActionDetailItem>[
-            AdministrativeActionDetailItem(
-              label: 'نوع الإجراء',
-              value: detail.title,
-            ),
             AdministrativeActionDetailItem(
               label: 'التاريخ',
               value: detail.date,

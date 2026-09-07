@@ -101,6 +101,45 @@ class WaitingClassNotifier extends StateNotifier<bool> {
           .update((state) => RequestResponseModel.loading(loading: false));
     }
   }
+
+  Future<bool> respondToSecureClassRequest(
+    int requestId, {
+    required bool accepted,
+    String? rejectionReason,
+  }) async {
+    final repo = _ref.read(waitingClasessRepoProvider);
+    try {
+      _ref
+          .read(requestResponseProvider.notifier)
+          .update((state) => RequestResponseModel.loading());
+      final message = await repo.respondToSecureClassRequest(
+        requestId,
+        accepted: accepted,
+        rejectionReason: rejectionReason,
+      );
+      _ref.invalidate(secureClassRequestsProvider);
+      _ref.invalidate(teacherTableProvider);
+      _ref.invalidate(waitingClassProvider);
+      _ref.invalidate(homeMenuProvider);
+      _ref.read(requestResponseProvider.notifier).update(
+            (state) => RequestResponseModel.success(
+              message: message ??
+                  (accepted ? 'تمت الموافقة على الطلب' : 'تم رفض الطلب'),
+              actionOnDone: ActionOnDone.showSucessMessage,
+            ),
+          );
+      return true;
+    } on Exception catch (e) {
+      _ref
+          .read(requestResponseProvider.notifier)
+          .update((state) => RequestResponseModel.error(exception: e));
+      return false;
+    } finally {
+      _ref
+          .read(requestResponseProvider.notifier)
+          .update((state) => RequestResponseModel.loading(loading: false));
+    }
+  }
 }
 
 final waitingClassNotifierProvider =

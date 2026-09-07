@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class Endpoints {
   static const String baseUrl = 'https://www.smartble.net/';
 
@@ -26,6 +24,8 @@ class Endpoints {
       'teacher-mobile/v2/secure-class/requests/';
   static String secureClassRequest(int requestId) =>
       'teacher-mobile/v2/secure-class/requests/$requestId/';
+  static String secureClassRequestRespond(int requestId) =>
+      'teacher-mobile/v2/secure-class/requests/$requestId/respond/';
   static const String days = 'teacher-mobile/v2/days/';
   static const String notifications = 'teacher-mobile/v2/notifications/';
   static const String deleteNotifications =

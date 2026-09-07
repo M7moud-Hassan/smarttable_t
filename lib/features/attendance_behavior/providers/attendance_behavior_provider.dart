@@ -284,6 +284,40 @@ class AttendanceBehaviorNotifier
     }
   }
 
+  Future<void> updateStudentAttendance({
+    required int studentId,
+    required AttendanceStatus status,
+  }) async {
+    final classId = state.selectedClassId;
+    final session = state.selectedSession;
+    if (classId == null ||
+        session == null ||
+        status == AttendanceStatus.notRecorded) {
+      return;
+    }
+    state = state.copyWith(saving: true, errorMessage: null);
+    try {
+      await _repository.saveAttendance(
+        classId: classId,
+        session: session,
+        studentIds: [studentId],
+        status: status,
+        date: state.selectedDate,
+      );
+      await _loadData(
+        classId: classId,
+        session: session,
+        date: state.selectedDate,
+      );
+    } catch (error) {
+      state = state.copyWith(
+        saving: false,
+        errorMessage: perseveranceErrorMessage(error),
+      );
+      rethrow;
+    }
+  }
+
   void toggleBehaviorStudent(int studentId) {
     final selected = {...state.selectedBehaviorIds};
     selected.contains(studentId)

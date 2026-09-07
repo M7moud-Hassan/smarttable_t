@@ -7,6 +7,8 @@ class SecureClassRequestModel {
     required this.date,
     required this.status,
     required this.statusText,
+    required this.stage,
+    required this.awaitingSubstitute,
     required this.note,
     required this.managerNote,
     required this.lesson,
@@ -20,12 +22,21 @@ class SecureClassRequestModel {
   final String date;
   final String status;
   final String statusText;
+  final int stage;
+  final bool awaitingSubstitute;
   final String note;
   final String managerNote;
   final SecureClassRequestLesson lesson;
   final String createdAt;
 
   bool get canCancel => status == 'pending';
+  bool get canRespond => awaitingSubstitute;
+
+  String get stageText => switch (stage) {
+        1 => 'بانتظار رد المعلم البديل',
+        2 => 'بانتظار اعتماد الإدارة',
+        _ => 'منتهي',
+      };
 
   factory SecureClassRequestModel.fromJson(Map<String, dynamic> json) {
     return SecureClassRequestModel(
@@ -36,6 +47,8 @@ class SecureClassRequestModel {
       date: _asText(json['date']),
       status: _asText(json['status']),
       statusText: _asText(json['status_text']),
+      stage: _asInt(json['stage']) ?? 0,
+      awaitingSubstitute: _asBool(json['awaiting_substitute']),
       note: _asText(json['note']),
       managerNote: _asText(json['manager_note']),
       lesson: SecureClassRequestLesson.fromJson(json['lesson']),
@@ -110,6 +123,15 @@ class SecureClassRequestLesson {
 int? _asInt(dynamic value) {
   if (value is int) return value;
   return int.tryParse(value?.toString() ?? '');
+}
+
+bool _asBool(dynamic value) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  return switch (value?.toString().trim().toLowerCase()) {
+    'true' || '1' || 'yes' => true,
+    _ => false,
+  };
 }
 
 String _asText(dynamic value) => value?.toString().trim() ?? '';

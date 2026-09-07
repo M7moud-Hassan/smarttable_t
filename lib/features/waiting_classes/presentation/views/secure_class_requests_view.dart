@@ -68,6 +68,14 @@ class _RequestsTab extends ConsumerStatefulWidget {
 class _RequestsTabState extends ConsumerState<_RequestsTab> {
   String? _status;
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.role == 'received') {
+      _status = 'awaiting_substitute';
+    }
+  }
+
   SecureClassRequestsQuery get _query => (
         role: widget.role,
         status: _status,
@@ -81,6 +89,7 @@ class _RequestsTabState extends ConsumerState<_RequestsTab> {
       children: [
         _StatusFilter(
           selectedStatus: _status,
+          received: widget.role == 'received',
           onSelected: (status) => setState(() => _status = status),
         ),
         Expanded(
@@ -95,14 +104,24 @@ class _RequestsTabState extends ConsumerState<_RequestsTab> {
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                       itemCount: requests.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) => _RequestCard(
-                        request: requests[index],
-                        role: widget.role,
-                        onCancel:
-                            widget.role == 'made' && requests[index].canCancel
-                                ? () => _confirmCancellation(requests[index])
-                                : null,
-                      ),
+                      itemBuilder: (context, index) {
+                        final request = requests[index];
+                        final canRespond =
+                            widget.role == 'received' && request.canRespond;
+                        return _RequestCard(
+                          request: request,
+                          role: widget.role,
+                          onCancel: widget.role == 'made' && request.canCancel
+                              ? () => _confirmCancellation(request)
+                              : null,
+                          onAccept: canRespond
+                              ? () => _confirmAcceptance(request)
+                              : null,
+                          onReject: canRespond
+                              ? () => _requestRejection(request)
+                              : null,
+                        );
+                      },
                     ),
             ),
             loading: () => const Center(child: LoadingWidget()),
@@ -132,18 +151,50 @@ class _RequestsTabState extends ConsumerState<_RequestsTab> {
       ),
     );
   }
+
+  void _confirmAcceptance(SecureClassRequestModel request) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => ConfirmDialogWidget(
+        title: 'هل تريد الموافقة على طلب تأمين هذه الحصة؟',
+        onConfirm: () {
+          ref
+              .read(waitingClassNotifierProvider.notifier)
+              .respondToSecureClassRequest(request.id, accepted: true);
+        },
+      ),
+    );
+  }
+
+  Future<void> _requestRejection(SecureClassRequestModel request) async {
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (_) => const _RejectRequestDialog(),
+    );
+    if (!mounted || reason == null) return;
+
+    await ref
+        .read(waitingClassNotifierProvider.notifier)
+        .respondToSecureClassRequest(
+          request.id,
+          accepted: false,
+          rejectionReason: reason,
+        );
+  }
 }
 
 class _StatusFilter extends StatelessWidget {
   const _StatusFilter({
     required this.selectedStatus,
+    required this.received,
     required this.onSelected,
   });
 
   final String? selectedStatus;
+  final bool received;
   final ValueChanged<String?> onSelected;
 
-  static const statuses = <(String?, String)>[
+  static const _statuses = <(String?, String)>[
     (null, 'الكل'),
     ('pending', 'قيد الانتظار'),
     ('confirmed', 'مؤكد'),
@@ -153,6 +204,13 @@ class _StatusFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final statuses = received
+        ? const <(String?, String)>[
+            ('awaiting_substitute', 'بانتظار ردي'),
+            ..._statuses,
+          ]
+        : _statuses;
+
     return Container(
       color: Colors.white,
       width: double.infinity,
@@ -194,11 +252,15 @@ class _RequestCard extends StatelessWidget {
     required this.request,
     required this.role,
     this.onCancel,
+    this.onAccept,
+    this.onReject,
   });
 
   final SecureClassRequestModel request;
   final String role;
   final VoidCallback? onCancel;
+  final VoidCallback? onAccept;
+  final VoidCallback? onReject;
 
   @override
   Widget build(BuildContext context) {
@@ -273,6 +335,13 @@ class _RequestCard extends StatelessWidget {
               const SizedBox(height: 7),
               _InfoLine(icon: Icons.calendar_today_rounded, text: request.date),
             ],
+            if (request.stage == 1 || request.stage == 2) ...[
+              const SizedBox(height: 7),
+              _InfoLine(
+                icon: Icons.account_tree_outlined,
+                text: request.stageText,
+              ),
+            ],
             const SizedBox(height: 10),
             Text(
               '$counterpartLabel: ${counterpart.isEmpty ? 'غير محدد' : counterpart}',
@@ -293,21 +362,244 @@ class _RequestCard extends StatelessWidget {
               ),
             ],
             if (onCancel != null) ...[
-              const SizedBox(height: 14),
-              OutlinedButton.icon(
-                onPressed: onCancel,
-                icon: const Icon(Icons.cancel_outlined),
-                label: const Text('إلغاء الطلب'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.redAccent,
-                  side: const BorderSide(color: Colors.redAccent),
-                  padding: const EdgeInsets.symmetric(vertical: 11),
-                ),
+              const SizedBox(height: 16),
+              _RequestActionButton(
+                onPressed: onCancel!,
+                icon: Icons.close_rounded,
+                label: 'إلغاء الطلب',
+                color: const Color(0xFFB73D32),
+                semanticLabel: 'إلغاء طلب تأمين الحصة',
+              ),
+            ],
+            if (onAccept != null && onReject != null) ...[
+              const SizedBox(height: 16),
+              _RequestDecisionActions(
+                onAccept: onAccept!,
+                onReject: onReject!,
               ),
             ],
           ],
         ),
       ),
+    );
+  }
+}
+
+class _RequestDecisionActions extends StatelessWidget {
+  const _RequestDecisionActions({
+    required this.onAccept,
+    required this.onReject,
+  });
+
+  final VoidCallback onAccept;
+  final VoidCallback onReject;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final accept = _RequestActionButton(
+          onPressed: onAccept,
+          icon: Icons.check_rounded,
+          label: 'موافقة',
+          color: const Color(0xFF187A57),
+          semanticLabel: 'الموافقة على طلب تأمين الحصة',
+          filled: true,
+        );
+        final reject = _RequestActionButton(
+          onPressed: onReject,
+          icon: Icons.close_rounded,
+          label: 'رفض',
+          color: const Color(0xFFB73D32),
+          semanticLabel: 'رفض طلب تأمين الحصة',
+        );
+
+        if (constraints.maxWidth < 300) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              accept,
+              const SizedBox(height: 10),
+              reject,
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: accept),
+            const SizedBox(width: 12),
+            Expanded(child: reject),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _RequestActionButton extends StatelessWidget {
+  const _RequestActionButton({
+    required this.onPressed,
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.semanticLabel,
+    this.filled = false,
+  });
+
+  final VoidCallback onPressed;
+  final IconData icon;
+  final String label;
+  final Color color;
+  final String semanticLabel;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    );
+    final textStyle = context.textTheme.titleMedium?.copyWith(
+      fontSize: 17,
+      fontWeight: FontWeight.w700,
+      height: 1.1,
+    );
+    final foregroundColor = filled ? Colors.white : color;
+    final child = Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 25,
+          height: 25,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: filled
+                ? Colors.white.withValues(alpha: 0.18)
+                : color.withValues(alpha: 0.10),
+          ),
+          alignment: Alignment.center,
+          child: Icon(icon, size: 18, color: foregroundColor),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.fade,
+            softWrap: false,
+          ),
+        ),
+      ],
+    );
+
+    final button = filled
+        ? ElevatedButton(
+            onPressed: onPressed,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: color,
+              foregroundColor: Colors.white,
+              elevation: 2,
+              shadowColor: color.withValues(alpha: 0.32),
+              fixedSize: const Size.fromHeight(56),
+              minimumSize: const Size(0, 56),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              shape: shape,
+              textStyle: textStyle,
+            ),
+            child: child,
+          )
+        : OutlinedButton(
+            onPressed: onPressed,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: color,
+              backgroundColor: color.withValues(alpha: 0.055),
+              side:
+                  BorderSide(color: color.withValues(alpha: 0.85), width: 1.4),
+              fixedSize: const Size.fromHeight(56),
+              minimumSize: const Size(0, 56),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              shape: shape,
+              textStyle: textStyle,
+            ),
+            child: child,
+          );
+
+    return Semantics(
+      label: semanticLabel,
+      button: true,
+      enabled: true,
+      onTap: onPressed,
+      excludeSemantics: true,
+      child: Tooltip(
+        message: semanticLabel,
+        excludeFromSemantics: true,
+        child: button,
+      ),
+    );
+  }
+}
+
+class _RejectRequestDialog extends StatefulWidget {
+  const _RejectRequestDialog();
+
+  @override
+  State<_RejectRequestDialog> createState() => _RejectRequestDialogState();
+}
+
+class _RejectRequestDialogState extends State<_RejectRequestDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _reasonController = TextEditingController();
+
+  @override
+  void dispose() {
+    _reasonController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: context.theme.scaffoldBackgroundColor,
+      title: const Text(
+        'رفض طلب تأمين الحصة',
+        textAlign: TextAlign.center,
+      ),
+      content: Form(
+        key: _formKey,
+        child: TextFormField(
+          controller: _reasonController,
+          autofocus: true,
+          minLines: 3,
+          maxLines: 5,
+          maxLength: 500,
+          textInputAction: TextInputAction.newline,
+          decoration: const InputDecoration(
+            labelText: 'سبب الرفض',
+            hintText: 'اكتب سبب الرفض هنا',
+            border: OutlineInputBorder(),
+          ),
+          validator: (value) =>
+              value == null || value.trim().isEmpty ? 'سبب الرفض مطلوب' : null,
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('إلغاء'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            if (_formKey.currentState?.validate() != true) return;
+            Navigator.pop(context, _reasonController.text.trim());
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFC44738),
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('تأكيد الرفض'),
+        ),
+      ],
     );
   }
 }

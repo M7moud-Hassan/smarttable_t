@@ -40,7 +40,7 @@ class ApiAdministrativeActionsRepository
     final response = await _apiService.get(
       Endpoints.administrativeProcedures,
       parameters: {
-        'procedure_type': Endpoints.noteAccountabilityProcedureType,
+        // 'procedure_type': Endpoints.noteAccountabilityProcedureType,
         'page': page,
         'page_size': pageSize,
       },
@@ -63,7 +63,7 @@ class ApiAdministrativeActionsRepository
     AdministrativeProcedureKey key,
   ) async {
     final response = await _apiService.get(
-      Endpoints.noteAccountabilityProcedure(key.id),
+      Endpoints.administrativeProcedure(key.procedureType, key.id),
     );
     _ensureSuccess(response.success, response.message);
     return AdministrativeActionDetailModel.fromJson(_asMap(response.data));
@@ -75,7 +75,7 @@ class ApiAdministrativeActionsRepository
     String teacherReason,
   ) async {
     final response = await _apiService.patch(
-      Endpoints.noteAccountabilityProcedure(key.id),
+      Endpoints.administrativeProcedure(key.procedureType, key.id),
       // The detail response exposes this value as `teacher_reason`, while the
       // endpoint's write serializer validates it under `reason`.
       {'reason': teacherReason.trim()},
