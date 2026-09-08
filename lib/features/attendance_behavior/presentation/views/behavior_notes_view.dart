@@ -52,10 +52,7 @@ class _BehaviorNotesViewState extends ConsumerState<BehaviorNotesView> {
                       separatorBuilder: (_, __) => const SizedBox(height: 13),
                       itemBuilder: (context, index) {
                         final note = notes[index];
-                        return _BehaviorNoteCard(
-                          note: note,
-                          onDelete: () => _delete(context, note),
-                        );
+                        return _BehaviorNoteCard(note: note);
                       },
                     ),
             ),
@@ -64,54 +61,12 @@ class _BehaviorNotesViewState extends ConsumerState<BehaviorNotesView> {
       ),
     );
   }
-
-  Future<void> _delete(
-    BuildContext context,
-    BehaviorNoteModel note,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('حذف الملاحظة'),
-        content: Text('هل تريد حذف ملاحظة "${note.name}"؟'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('إلغاء'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text(
-              'حذف',
-              style: TextStyle(color: attendanceRed),
-            ),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true) {
-      try {
-        await ref
-            .read(attendanceBehaviorProvider.notifier)
-            .deleteBehaviorNote(note.id);
-      } catch (error) {
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(perseveranceErrorMessage(error))),
-        );
-      }
-    }
-  }
 }
 
 class _BehaviorNoteCard extends StatelessWidget {
-  const _BehaviorNoteCard({
-    required this.note,
-    required this.onDelete,
-  });
+  const _BehaviorNoteCard({required this.note});
 
   final BehaviorNoteModel note;
-  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -202,12 +157,6 @@ class _BehaviorNoteCard extends StatelessWidget {
                   ],
                 ),
               ),
-            ),
-            IconButton(
-              tooltip: 'حذف',
-              onPressed: onDelete,
-              icon: const Icon(Icons.delete_outline_rounded),
-              color: attendanceRed,
             ),
             const SizedBox(width: 5),
           ],

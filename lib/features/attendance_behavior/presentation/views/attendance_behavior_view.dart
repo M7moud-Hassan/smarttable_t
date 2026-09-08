@@ -485,8 +485,17 @@ class BehaviorPanel extends ConsumerWidget {
     final students = state.students
         .where((student) => student.name.toLowerCase().contains(searchQuery))
         .toList(growable: false);
-    final allSelected =
-        state.selectedBehaviorIds.length == state.students.length;
+    final assignableStudents = state.students
+        .where(
+          (student) =>
+              student.behaviorRecordId == null ||
+              student.teacherCanModifyBehavior,
+        )
+        .toList(growable: false);
+    final allSelected = assignableStudents.isNotEmpty &&
+        assignableStudents.every(
+          (student) => state.selectedBehaviorIds.contains(student.id),
+        );
     final selectedNoteId = state.behaviorNotes.any(
       (note) => note.id == state.selectedBehaviorNoteId,
     )
@@ -589,12 +598,17 @@ class BehaviorPanel extends ConsumerWidget {
                 trailing: recording
                     ? Checkbox(
                         value: state.selectedBehaviorIds.contains(student.id),
-                        onChanged: (_) => ref
-                            .read(attendanceBehaviorProvider.notifier)
-                            .toggleBehaviorStudent(student.id),
+                        onChanged: student.behaviorRecordId != null &&
+                                !student.teacherCanModifyBehavior
+                            ? null
+                            : (_) => ref
+                                .read(attendanceBehaviorProvider.notifier)
+                                .toggleBehaviorStudent(student.id),
                       )
                     : _StudentMoreMenu(
                         behavior: true,
+                        canModifyBehavior: student.behaviorRecordId != null &&
+                            student.teacherCanModifyBehavior,
                         onSelected: (action) => _openBehaviorAction(
                           context,
                           ref,
@@ -659,13 +673,21 @@ class BehaviorPanel extends ConsumerWidget {
     return null;
   }
 
-  void _openBehaviorAction(
+  Future<void> _openBehaviorAction(
     BuildContext context,
     WidgetRef ref,
     AttendanceBehaviorStudent student,
     BehaviorNoteModel? note,
     String action,
-  ) {
+  ) async {
+    if (action == 'edit-behavior') {
+      await _showBehaviorEditDialog(context, ref, student);
+      return;
+    }
+    if (action == 'delete-behavior') {
+      await _deleteBehaviorRecord(context, ref, student);
+      return;
+    }
     final Widget page = switch (action) {
       'history' => StudentBehaviorHistoryView(student: student),
       'take-action' => TakeStudentActionView(
@@ -680,16 +702,140 @@ class BehaviorPanel extends ConsumerWidget {
     };
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
   }
+
+  Future<void> _showBehaviorEditDialog(
+    BuildContext context,
+    WidgetRef ref,
+    AttendanceBehaviorStudent student,
+  ) async {
+    final originalNoteIds = student.behaviorNoteIds.toSet();
+    final selectedNoteIds = {...originalNoteIds};
+    final result = await showDialog<Set<int>>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text('تعديل ملاحظة السلوك'),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * .55,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: ref
+                    .read(attendanceBehaviorProvider)
+                    .behaviorNotes
+                    .map(
+                      (behaviorNote) => CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        value: selectedNoteIds.contains(behaviorNote.id),
+                        title: Text(behaviorNote.name),
+                        subtitle: Text('${behaviorNote.points} نقاط'),
+                        secondary: Icon(
+                          behaviorIcon(behaviorNote.iconKey),
+                          color: behaviorNoteColor(behaviorNote),
+                        ),
+                        onChanged: (selected) => setDialogState(() {
+                          if (selected == true) {
+                            selectedNoteIds.add(behaviorNote.id);
+                          } else {
+                            selectedNoteIds.remove(behaviorNote.id);
+                          }
+                        }),
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('إلغاء'),
+            ),
+            FilledButton(
+              onPressed: selectedNoteIds.isEmpty
+                  ? null
+                  : () => Navigator.of(dialogContext).pop(selectedNoteIds),
+              child: const Text('حفظ التعديل'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (result == null ||
+        (result.length == originalNoteIds.length &&
+            result.every(originalNoteIds.contains))) {
+      return;
+    }
+    try {
+      await ref.read(attendanceBehaviorProvider.notifier).updateStudentBehavior(
+            studentId: student.id,
+            noteIds: result.toList(growable: false),
+          );
+      if (!context.mounted) return;
+      context.showSnackbarSuccess('تم تعديل ملاحظة السلوك بنجاح');
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(perseveranceErrorMessage(error))),
+      );
+    }
+  }
+
+  Future<void> _deleteBehaviorRecord(
+    BuildContext context,
+    WidgetRef ref,
+    AttendanceBehaviorStudent student,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('حذف ملاحظة السلوك'),
+        content: Text('هل تريد حذف ملاحظة ${student.name}؟'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text(
+              'حذف',
+              style: TextStyle(color: attendanceRed),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await ref
+          .read(attendanceBehaviorProvider.notifier)
+          .deleteStudentBehaviorRecord(student.id);
+      if (!context.mounted) return;
+      context.showSnackbarSuccess('تم حذف ملاحظة السلوك بنجاح');
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(perseveranceErrorMessage(error))),
+      );
+    }
+  }
 }
 
 class _StudentMoreMenu extends StatelessWidget {
   const _StudentMoreMenu({
     required this.onSelected,
     this.behavior = false,
+    this.canModifyBehavior = false,
   });
 
   final ValueChanged<String> onSelected;
   final bool behavior;
+  final bool canModifyBehavior;
 
   @override
   Widget build(BuildContext context) {
@@ -702,6 +848,19 @@ class _StudentMoreMenu extends StatelessWidget {
           const PopupMenuItem(
             value: 'edit-attendance',
             child: Text('تعديل حالة الحضور'),
+          ),
+        if (behavior && canModifyBehavior)
+          const PopupMenuItem(
+            value: 'edit-behavior',
+            child: Text('تعديل ملاحظة السلوك'),
+          ),
+        if (behavior && canModifyBehavior)
+          const PopupMenuItem(
+            value: 'delete-behavior',
+            child: Text(
+              'حذف ملاحظة السلوك',
+              style: TextStyle(color: attendanceRed),
+            ),
           ),
         PopupMenuItem(
           value: 'history',

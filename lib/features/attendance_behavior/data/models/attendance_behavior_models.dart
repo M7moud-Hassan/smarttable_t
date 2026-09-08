@@ -113,6 +113,7 @@ class AttendanceBehaviorStudent {
     this.attendanceRecordId,
     this.attendanceNote = '',
     this.behaviorRecordId,
+    this.teacherCanModifyBehavior = false,
     this.behaviorNoteIds = const [],
     this.additionalBehaviorNotes = '',
     this.totalBehaviorPoints = 0,
@@ -128,6 +129,7 @@ class AttendanceBehaviorStudent {
   final int? attendanceRecordId;
   final String attendanceNote;
   final int? behaviorRecordId;
+  final bool teacherCanModifyBehavior;
   final List<int> behaviorNoteIds;
   final String additionalBehaviorNotes;
   final int totalBehaviorPoints;
@@ -329,18 +331,26 @@ class BehaviorRosterStudentData {
     required this.numberStudent,
     required this.recordId,
     required this.notes,
+    required this.teacherCanModify,
     required this.additionalNotes,
     required this.totalPoints,
     required this.proceduresCount,
   });
 
   factory BehaviorRosterStudentData.fromJson(Map<String, dynamic> json) {
+    final rawNotes = json['notes'];
+    final firstNote = rawNotes is List && rawNotes.isNotEmpty
+        ? _asMap(rawNotes.first)
+        : const <String, dynamic>{};
     return BehaviorRosterStudentData(
       studentId: _asInt(json['student_id']),
       name: _asString(json['name']),
       numberStudent: _asString(json['number_student']),
       recordId: _asNullableInt(json['record_id']),
       notes: _mapList(json['notes'], BehaviorNoteModel.fromJson),
+      teacherCanModify: _asBool(
+        json['teacher_can_modify'] ?? firstNote['teacher_can_modify'],
+      ),
       additionalNotes: _asString(json['additional_notes']),
       totalPoints: _asInt(json['total_points']),
       proceduresCount: _asInt(json['procedures_count']),
@@ -352,6 +362,7 @@ class BehaviorRosterStudentData {
   final String numberStudent;
   final int? recordId;
   final List<BehaviorNoteModel> notes;
+  final bool teacherCanModify;
   final String additionalNotes;
   final int totalPoints;
   final int proceduresCount;
@@ -911,4 +922,14 @@ int? _asNullableInt(dynamic value) {
 double _asDouble(dynamic value, {double fallback = 0}) {
   if (value is num) return value.toDouble();
   return double.tryParse(value?.toString() ?? '') ?? fallback;
+}
+
+bool _asBool(dynamic value, {bool fallback = false}) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  return switch (value?.toString().trim().toLowerCase()) {
+    'true' || '1' || 'yes' => true,
+    'false' || '0' || 'no' => false,
+    _ => fallback,
+  };
 }

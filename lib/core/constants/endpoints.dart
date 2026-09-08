@@ -78,6 +78,8 @@ class Endpoints {
       'teacher-mobile/v2/perseverance/attendance/students/$studentId/';
   static const String perseveranceBehavior =
       'teacher-mobile/v2/perseverance/behavior/';
+  static String perseveranceBehaviorRecord(int recordId) =>
+      'teacher-mobile/v2/perseverance/behavior/records/$recordId/';
   static const String perseveranceBehaviorNotes =
       'teacher-mobile/v2/perseverance/behavior/notes/';
   static String perseveranceBehaviorNote(int noteId) =>

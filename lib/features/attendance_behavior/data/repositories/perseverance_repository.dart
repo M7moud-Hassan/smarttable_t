@@ -41,6 +41,8 @@ abstract class PerseveranceRepository {
     String? date,
   });
 
+  Future<void> deleteBehaviorRecord(int recordId);
+
   Future<List<BehaviorNoteModel>> getBehaviorNotes({
     BehaviorNoteType? type,
     String? search,
@@ -186,6 +188,14 @@ class ApiPerseveranceRepository implements PerseveranceRepository {
             {'student_id': entry.key, 'note_ids': entry.value},
         ],
       },
+    );
+    _ensureSuccess(response.success, response.message);
+  }
+
+  @override
+  Future<void> deleteBehaviorRecord(int recordId) async {
+    final response = await _apiService.delete(
+      Endpoints.perseveranceBehaviorRecord(recordId),
     );
     _ensureSuccess(response.success, response.message);
   }

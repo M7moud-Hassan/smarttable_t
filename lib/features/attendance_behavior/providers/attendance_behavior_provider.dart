@@ -221,6 +221,7 @@ class AttendanceBehaviorNotifier
         attendanceRecordId: student.attendanceRecordId,
         attendanceNote: student.attendanceNote,
         behaviorRecordId: behaviorStudent?.recordId,
+        teacherCanModifyBehavior: behaviorStudent?.teacherCanModify ?? false,
         behaviorNoteIds:
             behaviorStudent?.notes.map((note) => note.id).toList() ?? const [],
         additionalBehaviorNotes: behaviorStudent?.additionalNotes ?? '',
@@ -319,6 +320,8 @@ class AttendanceBehaviorNotifier
   }
 
   void toggleBehaviorStudent(int studentId) {
+    final student = _studentById(studentId);
+    if (student == null || !_canChangeBehavior(student)) return;
     final selected = {...state.selectedBehaviorIds};
     selected.contains(studentId)
         ? selected.remove(studentId)
@@ -327,9 +330,12 @@ class AttendanceBehaviorNotifier
   }
 
   void toggleAllBehaviorStudents(bool selected) {
+    final assignableStudentIds = state.students
+        .where(_canChangeBehavior)
+        .map((student) => student.id)
+        .toSet();
     state = state.copyWith(
-      selectedBehaviorIds:
-          selected ? state.students.map((student) => student.id).toSet() : {},
+      selectedBehaviorIds: selected ? assignableStudentIds : {},
     );
   }
 
@@ -350,8 +356,10 @@ class AttendanceBehaviorNotifier
     final assignments = <int, List<int>>{};
     for (final student in state.students) {
       if (!state.selectedBehaviorIds.contains(student.id)) continue;
+      if (!_canChangeBehavior(student)) continue;
       assignments[student.id] = {...student.behaviorNoteIds, noteId}.toList();
     }
+    if (assignments.isEmpty) return;
     state = state.copyWith(saving: true, errorMessage: null);
     try {
       await _repository.saveBehavior(
@@ -373,6 +381,90 @@ class AttendanceBehaviorNotifier
       );
       rethrow;
     }
+  }
+
+  Future<void> updateStudentBehavior({
+    required int studentId,
+    required List<int> noteIds,
+  }) async {
+    final student = _studentById(studentId);
+    if (student == null ||
+        student.behaviorRecordId == null ||
+        !student.teacherCanModifyBehavior) {
+      throw ServerException('لا يمكنك تعديل هذه الملاحظة');
+    }
+    if (noteIds.isEmpty) return;
+    await _changeBehaviorRecord(
+      studentId: studentId,
+      noteIds: noteIds,
+    );
+  }
+
+  Future<void> deleteStudentBehaviorRecord(int studentId) async {
+    final student = _studentById(studentId);
+    final recordId = student?.behaviorRecordId;
+    if (student == null ||
+        recordId == null ||
+        !student.teacherCanModifyBehavior) {
+      throw ServerException('لا يمكنك حذف هذه الملاحظة');
+    }
+    state = state.copyWith(saving: true, errorMessage: null);
+    try {
+      await _repository.deleteBehaviorRecord(recordId);
+      await _reloadSelectedContext();
+    } catch (error) {
+      state = state.copyWith(
+        saving: false,
+        errorMessage: perseveranceErrorMessage(error),
+      );
+      rethrow;
+    }
+  }
+
+  AttendanceBehaviorStudent? _studentById(int studentId) {
+    for (final student in state.students) {
+      if (student.id == studentId) return student;
+    }
+    return null;
+  }
+
+  bool _canChangeBehavior(AttendanceBehaviorStudent student) =>
+      student.behaviorRecordId == null || student.teacherCanModifyBehavior;
+
+  Future<void> _changeBehaviorRecord({
+    required int studentId,
+    required List<int> noteIds,
+  }) async {
+    final classId = state.selectedClassId;
+    final session = state.selectedSession;
+    if (classId == null || session == null) return;
+    state = state.copyWith(saving: true, errorMessage: null);
+    try {
+      await _repository.saveBehavior(
+        classId: classId,
+        session: session,
+        studentNoteIds: {studentId: noteIds},
+        date: state.selectedDate,
+      );
+      await _reloadSelectedContext();
+    } catch (error) {
+      state = state.copyWith(
+        saving: false,
+        errorMessage: perseveranceErrorMessage(error),
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> _reloadSelectedContext() async {
+    final classId = state.selectedClassId;
+    final session = state.selectedSession;
+    if (classId == null || session == null) return;
+    await _loadData(
+      classId: classId,
+      session: session,
+      date: state.selectedDate,
+    );
   }
 
   Future<void> createBehaviorNote(BehaviorNoteModel note) async {
