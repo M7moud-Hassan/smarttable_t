@@ -17,6 +17,7 @@ import 'dart:developer' as dev;
 import '../constants/keys_enums.dart';
 import '../models/request_response_state_model.dart';
 import '../providers/providers.dart';
+import '../utils/exceptions.dart';
 import '../utils/token_storage.dart';
 
 class InterceptorClientService extends InterceptorContract {
@@ -128,10 +129,22 @@ class InterceptorClientService extends InterceptorContract {
     if (response is Response) {
       _log('Response body: ${_redactSensitiveResponse(response.body)}');
     }
-    // Validation and permission responses (400/403) must stay available to
-    // the feature that made the request so it can show the server's message.
-    // Only an authentication failure should end the teacher's session.
-    if (response.statusCode == 401) {
+    Object? responseBody;
+    if (response is Response && response.body.isNotEmpty) {
+      try {
+        responseBody = jsonDecode(response.body);
+      } catch (_) {
+        responseBody = response.body;
+      }
+    }
+
+    // Validation and permission responses must stay available to the feature
+    // that made the request. Only an explicit authentication failure should
+    // end the teacher's session.
+    if (isAuthenticationFailure(
+      statusCode: response.statusCode,
+      response: responseBody,
+    )) {
       final token = await _ref.read(tokenStorageProvider).getToken();
       if (token != null) {
         _ref.read(requestResponseProvider.notifier).update((state) =>

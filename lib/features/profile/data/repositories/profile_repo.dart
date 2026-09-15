@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart' show Ref, Provider;
 import 'package:smart_table_app/core/providers/api_service_provider.dart';
 import 'package:smart_table_app/core/service/api_service.dart';
 import 'package:smart_table_app/core/models/response_model.dart';
+import 'package:smart_table_app/core/utils/exceptions.dart';
 import 'package:smart_table_app/features/profile/data/models/profile_model.dart';
 
 import '../../../../core/constants/endpoints.dart';
@@ -22,12 +23,22 @@ class ProfileRepository {
     final response = await _apiService.get(
       Endpoints.profile,
     );
-    final rawData = response.data;
-    if (rawData is! Map) {
-      throw Exception(
-          'Unexpected profile response (${response.statusCode}): ${response.message ?? rawData}');
+    if (response.success != true) {
+      if (isAuthenticationFailure(
+        statusCode: response.statusCode,
+        response: response.message,
+      )) {
+        throw AuthenticationException(response.message);
+      }
+      throw ServerException(response.message);
     }
-    final data = Map<String, dynamic>.from(rawData);
+
+    final responseData = response.data;
+    if (responseData is! Map || responseData.isEmpty) {
+      throw ServerException(response.message);
+    }
+
+    final data = Map<String, dynamic>.from(responseData);
     final fcmToken = response.fcmToken;
     if (fcmToken != null) {
       data.addAll({'fcm_token': fcmToken});

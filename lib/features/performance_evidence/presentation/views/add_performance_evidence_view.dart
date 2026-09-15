@@ -21,7 +21,8 @@ class AddPerformanceEvidenceView extends ConsumerStatefulWidget {
 
 class _AddPerformanceEvidenceViewState
     extends ConsumerState<AddPerformanceEvidenceView> {
-  int? selectedCategoryId;
+  int? selectedMainCategoryId;
+  int? selectedSubcategoryId;
   File? selectedFile;
   String? typeFile;
   bool isUploading = false;
@@ -62,6 +63,9 @@ class _AddPerformanceEvidenceViewState
   @override
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(evidenceCategoriesProvider);
+    final categories =
+        categoriesAsync.valueOrNull ?? const <EvidenceCategoryModel>[];
+    final selectedCategoryId = _resolvedCategoryId(categories);
 
     return Scaffold(
       appBar: AppBar(
@@ -80,7 +84,7 @@ class _AddPerformanceEvidenceViewState
           children: [
             const SizedBox(height: 10),
             categoriesAsync.when(
-              data: (categories) => _buildDropdown(categories),
+              data: _buildCategoryDropdowns,
               loading: () => const CircularProgressIndicator(),
               error: (err, stack) => Text('Error: $err'),
             ),
@@ -127,19 +131,16 @@ class _AddPerformanceEvidenceViewState
                     final success = await ref
                         .read(performanceEvidenceProvider.notifier)
                         .addEvidence(
-                          categoryId: selectedCategoryId!,
+                          categoryId: selectedCategoryId,
                           typeFile: typeFile!,
                           file: selectedFile!,
                         );
+                    if (!mounted) return;
                     setState(() => isUploading = false);
                     if (success) {
-                      if (mounted) {
-                        context.pushReplacement(const UploadSuccessView());
-                      }
+                      this.context.pushReplacement(const UploadSuccessView());
                     } else {
-                      if (mounted) {
-                        context.showSnackbarError('فشل رفع الملف');
-                      }
+                      this.context.showSnackbarError('فشل رفع الملف');
                     }
                   },
             child: isUploading
@@ -157,7 +158,70 @@ class _AddPerformanceEvidenceViewState
     );
   }
 
-  Widget _buildDropdown(List<EvidenceCategoryModel> categories) {
+  EvidenceCategoryModel? _selectedMainCategory(
+    List<EvidenceCategoryModel> categories,
+  ) {
+    for (final category in categories) {
+      if (category.id == selectedMainCategoryId) return category;
+    }
+    return null;
+  }
+
+  int? _resolvedCategoryId(List<EvidenceCategoryModel> categories) {
+    final mainCategory = _selectedMainCategory(categories);
+    if (mainCategory == null) return null;
+    if (mainCategory.subcategories.isEmpty) return mainCategory.id;
+
+    final isValidSubcategory = mainCategory.subcategories.any(
+      (subcategory) => subcategory.id == selectedSubcategoryId,
+    );
+    return isValidSubcategory ? selectedSubcategoryId : null;
+  }
+
+  Widget _buildCategoryDropdowns(List<EvidenceCategoryModel> categories) {
+    final mainCategories = categories
+        .where((category) => category.isMain || category.parentId == null)
+        .toList();
+    final selectedMainCategory = _selectedMainCategory(mainCategories);
+    final subcategories =
+        selectedMainCategory?.subcategories ?? const <EvidenceCategoryModel>[];
+
+    return Column(
+      children: [
+        _buildDropdown(
+          value: selectedMainCategoryId,
+          hint: 'اختر الفئة الرئيسية',
+          categories: mainCategories,
+          onChanged: (value) {
+            setState(() {
+              selectedMainCategoryId = value;
+              selectedSubcategoryId = null;
+            });
+          },
+        ),
+        if (selectedMainCategory != null && subcategories.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _buildDropdown(
+            value: selectedSubcategoryId,
+            hint: 'اختر الفئة الفرعية',
+            categories: subcategories,
+            onChanged: (value) {
+              setState(() {
+                selectedSubcategoryId = value;
+              });
+            },
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildDropdown({
+    required int? value,
+    required String hint,
+    required List<EvidenceCategoryModel> categories,
+    required ValueChanged<int?> onChanged,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15),
       decoration: BoxDecoration(
@@ -167,28 +231,24 @@ class _AddPerformanceEvidenceViewState
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int>(
-          value: selectedCategoryId,
-          hint: const Align(
+          value: value,
+          hint: Align(
             alignment: Alignment.centerRight,
-            child: Text('اختر الفئة', style: TextStyle(color: Colors.grey)),
+            child: Text(hint, style: const TextStyle(color: Colors.grey)),
           ),
           isExpanded: true,
           icon: const Icon(Icons.keyboard_arrow_down,
               color: AppColors.primaryColor),
-          items: categories.map((EvidenceCategoryModel cat) {
+          items: categories.where((category) => category.id != null).map((cat) {
             return DropdownMenuItem<int>(
-              value: cat.id,
+              value: cat.id!,
               child: Align(
                 alignment: Alignment.centerRight,
                 child: Text(cat.name),
               ),
             );
           }).toList(),
-          onChanged: (value) {
-            setState(() {
-              selectedCategoryId = value;
-            });
-          },
+          onChanged: onChanged,
         ),
       ),
     );

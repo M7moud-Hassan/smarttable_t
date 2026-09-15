@@ -6,6 +6,8 @@ import 'package:svg_flutter/svg.dart';
 import 'package:smart_table_app/core/constants/constants.dart';
 import 'package:smart_table_app/core/extensions/extensions.dart';
 import 'package:smart_table_app/core/service/firebase_messaging_service.dart';
+import 'package:smart_table_app/core/utils/exceptions.dart';
+import 'package:smart_table_app/core/utils/token_storage.dart';
 import 'package:smart_table_app/features/auth/presentation/views/login_view.dart';
 import 'package:smart_table_app/features/layout/views/main_layout_view.dart';
 import 'package:smart_table_app/features/profile/providers/profile_provider.dart';
@@ -26,21 +28,32 @@ class SplashView extends ConsumerWidget {
         //
         if (next.requireValue == true) {
           Future.delayed(const Duration(milliseconds: 2000), () async {
-            await FirebaseMessagingService().initNotifications(ref);
-            await ref.read(profileProvider.future).then((value) async {
-              if (value.fcmToken == null || value.fcmToken!.isEmpty) {
+            try {
+              await FirebaseMessagingService().initNotifications(ref);
+              final profile = await ref.read(profileProvider.future);
+              if (profile.fcmToken == null || profile.fcmToken!.isEmpty) {
                 await ref.read(authRepoProvider).updateFcm();
               }
-            });
-            context.pushAndRemoveWithoutTransition(const MainLayoutView());
+              if (!context.mounted) return;
+              context.pushAndRemoveWithoutTransition(const MainLayoutView());
+            } on AuthenticationException {
+              await ref.read(tokenStorageProvider).deleteToken();
+              if (!context.mounted) return;
+              context.pushAndRemoveWithoutTransition(const LoginView());
+            } on Exception {
+              if (!context.mounted) return;
+              context.pushAndRemoveWithoutTransition(const LoginView());
+            }
           });
         } else {
           Future.delayed(const Duration(milliseconds: 2000), () {
+            if (!context.mounted) return;
             context.pushAndRemoveWithoutTransition(const LoginView());
           });
         }
       } else {
         Future.delayed(const Duration(milliseconds: 2000), () {
+          if (!context.mounted) return;
           context.pushAndRemoveWithoutTransition(const LoginView());
         });
       }
