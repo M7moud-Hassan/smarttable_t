@@ -65,6 +65,7 @@ dependencies:
   firebase_crashlytics: ^5.0.4
   intl_phone_number_input: ^0.7.5
   signature: ^5.5.0
+  package_info_plus: ^8.3.1
   
 
 dev_dependencies:
