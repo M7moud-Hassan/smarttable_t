@@ -1,5 +1,6 @@
 class Endpoints {
   static const String baseUrl = 'https://www.smartble.net/';
+  static const String appVersion = 'common/app-version/';
 
   static const String login = 'teacher-mobile/v2/auth/login/';
   static const String logout = 'teacher-mobile/v2/auth/logout/';

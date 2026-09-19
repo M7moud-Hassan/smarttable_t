@@ -5,9 +5,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:svg_flutter/svg.dart';
 import 'package:smart_table_app/core/constants/constants.dart';
 import 'package:smart_table_app/core/extensions/extensions.dart';
+import 'package:smart_table_app/core/providers/providers.dart';
+import 'package:smart_table_app/core/service/app_update_service.dart';
 import 'package:smart_table_app/core/service/firebase_messaging_service.dart';
 import 'package:smart_table_app/core/utils/exceptions.dart';
 import 'package:smart_table_app/core/utils/token_storage.dart';
+import 'package:smart_table_app/core/widgets/app_update_dialog.dart';
 import 'package:smart_table_app/features/auth/presentation/views/login_view.dart';
 import 'package:smart_table_app/features/layout/views/main_layout_view.dart';
 import 'package:smart_table_app/features/profile/providers/profile_provider.dart';
@@ -15,48 +18,20 @@ import 'package:smart_table_app/features/profile/providers/profile_provider.dart
 import '../../features/auth/data/repositories/auth_repo.dart';
 import '../../features/auth/providers/check_login_provider.dart';
 
-class SplashView extends ConsumerWidget {
+class SplashView extends ConsumerStatefulWidget {
   const SplashView({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen(checkLoginProvider, (previous, next) async {
-      final firstRun = await checkFirstRun();
-      if (next.hasValue && !firstRun) {
-        //
+  ConsumerState<SplashView> createState() => _SplashViewState();
+}
 
-        //
-        if (next.requireValue == true) {
-          Future.delayed(const Duration(milliseconds: 2000), () async {
-            try {
-              await FirebaseMessagingService().initNotifications(ref);
-              final profile = await ref.read(profileProvider.future);
-              if (profile.fcmToken == null || profile.fcmToken!.isEmpty) {
-                await ref.read(authRepoProvider).updateFcm();
-              }
-              if (!context.mounted) return;
-              context.pushAndRemoveWithoutTransition(const MainLayoutView());
-            } on AuthenticationException {
-              await ref.read(tokenStorageProvider).deleteToken();
-              if (!context.mounted) return;
-              context.pushAndRemoveWithoutTransition(const LoginView());
-            } on Exception {
-              if (!context.mounted) return;
-              context.pushAndRemoveWithoutTransition(const LoginView());
-            }
-          });
-        } else {
-          Future.delayed(const Duration(milliseconds: 2000), () {
-            if (!context.mounted) return;
-            context.pushAndRemoveWithoutTransition(const LoginView());
-          });
-        }
-      } else {
-        Future.delayed(const Duration(milliseconds: 2000), () {
-          if (!context.mounted) return;
-          context.pushAndRemoveWithoutTransition(const LoginView());
-        });
-      }
+class _SplashViewState extends ConsumerState<SplashView> {
+  bool _isHandlingInitialRoute = false;
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(checkLoginProvider, (previous, next) {
+      _handleInitialRoute(next);
     });
 
     return Scaffold(
@@ -152,9 +127,53 @@ class SplashView extends ConsumerWidget {
     );
   }
 
-  Future<bool> checkFirstRun() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool isFirstRun = prefs.getBool('first_run') ?? true;
+  Future<void> _handleInitialRoute(AsyncValue<bool> loginState) async {
+    if (_isHandlingInitialRoute) return;
+    _isHandlingInitialRoute = true;
+
+    final firstRun = await _checkFirstRun();
+    await Future<void>.delayed(const Duration(milliseconds: 2000));
+    if (!mounted) return;
+
+    await _showUpdateIfAvailable();
+    if (!mounted) return;
+
+    if (loginState.hasValue && !firstRun && loginState.requireValue) {
+      try {
+        await FirebaseMessagingService().initNotifications(ref);
+        final profile = await ref.read(profileProvider.future);
+        if (profile.fcmToken == null || profile.fcmToken!.isEmpty) {
+          await ref.read(authRepoProvider).updateFcm();
+        }
+        if (!mounted) return;
+        context.pushAndRemoveWithoutTransition(const MainLayoutView());
+        return;
+      } on AuthenticationException {
+        await ref.read(tokenStorageProvider).deleteToken();
+      } on Exception {
+        // Continue to login when restoring the authenticated session fails.
+      }
+    }
+
+    if (!mounted) return;
+    context.pushAndRemoveWithoutTransition(const LoginView());
+  }
+
+  Future<void> _showUpdateIfAvailable() async {
+    try {
+      final update = await AppUpdateService(
+        ref.read(apiServiceProvider),
+      ).checkForUpdate();
+      if (!mounted || update == null || !update.isUpdateAvailable) return;
+      await showAppUpdateDialog(context, update);
+    } on Exception {
+      // An update check must never prevent the app from starting.
+    }
+  }
+
+  Future<bool> _checkFirstRun() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isFirstRun = prefs.getBool('first_run') ?? true;
 
     if (isFirstRun) {
       // Clear secure storage

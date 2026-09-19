@@ -1003,6 +1003,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Circular signed successfully'**
   String get circularSignedSuccessfully;
+
+  /// No description provided for @updateAvailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update available'**
+  String get updateAvailableTitle;
+
+  /// No description provided for @updateAvailableMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'A new version of the app is available. Update now to get the latest improvements.'**
+  String get updateAvailableMessage;
+
+  /// No description provided for @updateNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Update now'**
+  String get updateNow;
+
+  /// No description provided for @later.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get later;
+
+  /// No description provided for @unableToOpenStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to open the app store. Please try again.'**
+  String get unableToOpenStore;
 }
 
 class _AppLocalizationsDelegate

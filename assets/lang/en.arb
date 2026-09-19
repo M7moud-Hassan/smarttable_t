@@ -157,5 +157,10 @@
   "signaturePreview": "Signature Preview",
   "signCircular": "Sign",
   "circularSigned": "Signed",
-  "circularSignedSuccessfully": "Circular signed successfully"
+  "circularSignedSuccessfully": "Circular signed successfully",
+  "updateAvailableTitle": "Update available",
+  "updateAvailableMessage": "A new version of the app is available. Update now to get the latest improvements.",
+  "updateNow": "Update now",
+  "later": "Later",
+  "unableToOpenStore": "Unable to open the app store. Please try again."
 }

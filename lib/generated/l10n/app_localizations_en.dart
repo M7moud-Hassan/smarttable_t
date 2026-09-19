@@ -482,4 +482,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get circularSignedSuccessfully => 'Circular signed successfully';
+
+  @override
+  String get updateAvailableTitle => 'Update available';
+
+  @override
+  String get updateAvailableMessage =>
+      'A new version of the app is available. Update now to get the latest improvements.';
+
+  @override
+  String get updateNow => 'Update now';
+
+  @override
+  String get later => 'Later';
+
+  @override
+  String get unableToOpenStore =>
+      'Unable to open the app store. Please try again.';
 }

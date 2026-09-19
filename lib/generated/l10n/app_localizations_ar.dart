@@ -479,4 +479,21 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get circularSignedSuccessfully => 'تم توقيع التعميم بنجاح';
+
+  @override
+  String get updateAvailableTitle => 'يتوفر تحديث جديد';
+
+  @override
+  String get updateAvailableMessage =>
+      'يتوفر إصدار جديد من التطبيق. حدّث الآن للحصول على أحدث التحسينات.';
+
+  @override
+  String get updateNow => 'تحديث الآن';
+
+  @override
+  String get later => 'لاحقًا';
+
+  @override
+  String get unableToOpenStore =>
+      'تعذر فتح متجر التطبيقات. يرجى المحاولة مرة أخرى.';
 }

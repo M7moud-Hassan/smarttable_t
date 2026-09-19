@@ -156,5 +156,10 @@
   "signaturePreview": "معاينة التوقيع",
   "signCircular": "توقيع",
   "circularSigned": "تم التوقيع",
-  "circularSignedSuccessfully": "تم توقيع التعميم بنجاح"
+  "circularSignedSuccessfully": "تم توقيع التعميم بنجاح",
+  "updateAvailableTitle": "يتوفر تحديث جديد",
+  "updateAvailableMessage": "يتوفر إصدار جديد من التطبيق. حدّث الآن للحصول على أحدث التحسينات.",
+  "updateNow": "تحديث الآن",
+  "later": "لاحقًا",
+  "unableToOpenStore": "تعذر فتح متجر التطبيقات. يرجى المحاولة مرة أخرى."
 }
