@@ -21,7 +21,7 @@ class AttendanceBehaviorState {
     this.behaviorNotes = const [],
     this.selectedAttendanceIds = const {},
     this.selectedBehaviorIds = const {},
-    this.selectedAttendanceStatus = AttendanceStatus.present,
+    this.selectedAttendanceStatus,
     this.selectedBehaviorNoteId,
     this.selectedClassId,
     this.selectedSession,
@@ -38,7 +38,7 @@ class AttendanceBehaviorState {
   final List<BehaviorNoteModel> behaviorNotes;
   final Set<int> selectedAttendanceIds;
   final Set<int> selectedBehaviorIds;
-  final AttendanceStatus selectedAttendanceStatus;
+  final AttendanceStatus? selectedAttendanceStatus;
   final int? selectedBehaviorNoteId;
   final int? selectedClassId;
   final String? selectedSession;
@@ -55,7 +55,7 @@ class AttendanceBehaviorState {
     List<BehaviorNoteModel>? behaviorNotes,
     Set<int>? selectedAttendanceIds,
     Set<int>? selectedBehaviorIds,
-    AttendanceStatus? selectedAttendanceStatus,
+    Object? selectedAttendanceStatus = _unchanged,
     Object? selectedBehaviorNoteId = _unchanged,
     int? selectedClassId,
     String? selectedSession,
@@ -73,8 +73,9 @@ class AttendanceBehaviorState {
       selectedAttendanceIds:
           selectedAttendanceIds ?? this.selectedAttendanceIds,
       selectedBehaviorIds: selectedBehaviorIds ?? this.selectedBehaviorIds,
-      selectedAttendanceStatus:
-          selectedAttendanceStatus ?? this.selectedAttendanceStatus,
+      selectedAttendanceStatus: identical(selectedAttendanceStatus, _unchanged)
+          ? this.selectedAttendanceStatus
+          : selectedAttendanceStatus as AttendanceStatus?,
       selectedBehaviorNoteId: identical(selectedBehaviorNoteId, _unchanged)
           ? this.selectedBehaviorNoteId
           : selectedBehaviorNoteId as int?,
@@ -110,6 +111,7 @@ class AttendanceBehaviorNotifier
       if (availableClasses.isEmpty || filters.sessions.isEmpty) {
         state = state.copyWith(
           filters: filters,
+          selectedAttendanceStatus: _initialAttendanceStatus(filters),
           students: const [],
           behaviorNotes: await _repository.getBehaviorNotes(),
           loading: false,
@@ -129,6 +131,7 @@ class AttendanceBehaviorNotifier
           : filters.sessions.first.value;
       state = state.copyWith(
         filters: filters,
+        selectedAttendanceStatus: _initialAttendanceStatus(filters),
         selectedClassId: classId,
         selectedSession: session,
       );
@@ -249,15 +252,18 @@ class AttendanceBehaviorNotifier
   }
 
   void setAttendanceStatus(AttendanceStatus status) {
-    if (status == AttendanceStatus.notRecorded) return;
+    if (!_isAttendanceStatusAllowed(status)) return;
     state = state.copyWith(selectedAttendanceStatus: status);
   }
 
   Future<void> saveAttendance() async {
     final classId = state.selectedClassId;
     final session = state.selectedSession;
+    final status = state.selectedAttendanceStatus;
     if (classId == null ||
         session == null ||
+        status == null ||
+        !_isAttendanceStatusAllowed(status) ||
         state.selectedAttendanceIds.isEmpty) {
       return;
     }
@@ -267,7 +273,7 @@ class AttendanceBehaviorNotifier
         classId: classId,
         session: session,
         studentIds: state.selectedAttendanceIds.toList(),
-        status: state.selectedAttendanceStatus,
+        status: status,
         date: state.selectedDate,
       );
       state = state.copyWith(selectedAttendanceIds: const {});
@@ -293,7 +299,7 @@ class AttendanceBehaviorNotifier
     final session = state.selectedSession;
     if (classId == null ||
         session == null ||
-        status == AttendanceStatus.notRecorded) {
+        !_isAttendanceStatusAllowed(status)) {
       return;
     }
     state = state.copyWith(saving: true, errorMessage: null);
@@ -426,6 +432,25 @@ class AttendanceBehaviorNotifier
       if (student.id == studentId) return student;
     }
     return null;
+  }
+
+  AttendanceStatus? _initialAttendanceStatus(PerseveranceFilters filters) {
+    final allowedStatuses = filters.allowedAttendanceStates
+        .map((option) => AttendanceStatus.tryFromApi(option.value)!)
+        .toList(growable: false);
+    final selectedStatus = state.selectedAttendanceStatus;
+    if (selectedStatus != null && allowedStatuses.contains(selectedStatus)) {
+      return selectedStatus;
+    }
+    return allowedStatuses.isEmpty ? null : allowedStatuses.first;
+  }
+
+  bool _isAttendanceStatusAllowed(AttendanceStatus status) {
+    if (status == AttendanceStatus.notRecorded) return false;
+    return state.filters?.allowedAttendanceStates.any(
+          (option) => AttendanceStatus.tryFromApi(option.value) == status,
+        ) ??
+        false;
   }
 
   bool _canChangeBehavior(AttendanceBehaviorStudent student) =>

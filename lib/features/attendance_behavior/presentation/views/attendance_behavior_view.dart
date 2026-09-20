@@ -195,6 +195,8 @@ class AttendancePanel extends ConsumerWidget {
         .toList(growable: false);
     final summary =
         state.attendanceRoster?.summary ?? const AttendanceSummary();
+    final attendanceStates =
+        state.filters?.allowedAttendanceStates ?? const <PerseveranceOption>[];
     final allSelected =
         state.selectedAttendanceIds.length == state.students.length;
 
@@ -269,32 +271,43 @@ class AttendancePanel extends ConsumerWidget {
         ),
         if (recording) ...[
           const SizedBox(height: 8),
-          DropdownButtonFormField<AttendanceStatus>(
-            initialValue: state.selectedAttendanceStatus,
-            decoration: InputDecoration(
-              labelText: 'اختر حالة الحضور للطلاب المحددين',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: AppColors.primaryColor),
+          if (attendanceStates.isEmpty)
+            const _FeatureEmptyState(
+              message: 'لا توجد حالات حضور متاحة لهذا المعلم',
+            )
+          else
+            DropdownButtonFormField<AttendanceStatus>(
+              initialValue: state.selectedAttendanceStatus,
+              decoration: InputDecoration(
+                labelText: 'اختر حالة الحضور للطلاب المحددين',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: AppColors.primaryColor),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: AppColors.primaryColor),
+                ),
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: AppColors.primaryColor),
-              ),
+              items: attendanceStates
+                  .map(
+                    (option) => DropdownMenuItem(
+                      value: AttendanceStatus.tryFromApi(option.value)!,
+                      child: Text(
+                        option.label.isEmpty
+                            ? AttendanceStatus.fromApi(option.value).label
+                            : option.label,
+                      ),
+                    ),
+                  )
+                  .toList(growable: false),
+              onChanged: (status) {
+                if (status == null) return;
+                ref
+                    .read(attendanceBehaviorProvider.notifier)
+                    .setAttendanceStatus(status);
+              },
             ),
-            items: AttendanceStatus.values
-                .where((status) => status != AttendanceStatus.notRecorded)
-                .map(
-                  (status) => DropdownMenuItem(
-                    value: status,
-                    child: Text(status.label),
-                  ),
-                )
-                .toList(growable: false),
-            onChanged: (status) => ref
-                .read(attendanceBehaviorProvider.notifier)
-                .setAttendanceStatus(status!),
-          ),
         ],
         const SizedBox(height: 12),
         if (students.isEmpty)
@@ -330,7 +343,9 @@ class AttendancePanel extends ConsumerWidget {
           const SizedBox(height: 10),
           PrimaryActionButton(
             label: 'حفظ البيانات',
-            onPressed: state.selectedAttendanceIds.isEmpty || state.saving
+            onPressed: state.selectedAttendanceIds.isEmpty ||
+                    state.selectedAttendanceStatus == null ||
+                    state.saving
                 ? null
                 : () async {
                     try {
@@ -389,10 +404,23 @@ class AttendancePanel extends ConsumerWidget {
     WidgetRef ref,
     AttendanceBehaviorStudent student,
   ) async {
-    var selectedStatus =
-        student.attendanceStatus == AttendanceStatus.notRecorded
-            ? AttendanceStatus.present
-            : student.attendanceStatus;
+    final attendanceStates =
+        ref.read(attendanceBehaviorProvider).filters?.allowedAttendanceStates ??
+            const <PerseveranceOption>[];
+    if (attendanceStates.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('لا توجد حالات حضور متاحة لهذا المعلم'),
+        ),
+      );
+      return;
+    }
+    final allowedStatuses = attendanceStates
+        .map((option) => AttendanceStatus.tryFromApi(option.value)!)
+        .toList(growable: false);
+    var selectedStatus = allowedStatuses.contains(student.attendanceStatus)
+        ? student.attendanceStatus
+        : allowedStatuses.first;
     final status = await showDialog<AttendanceStatus>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
@@ -401,26 +429,28 @@ class AttendancePanel extends ConsumerWidget {
           title: const Text('تعديل حالة الحضور'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: AttendanceStatus.values
-                .where((status) => status != AttendanceStatus.notRecorded)
-                .map(
-                  (status) => ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(status.label),
-                    leading: Icon(
-                      selectedStatus == status
-                          ? Icons.check_circle_rounded
-                          : Icons.circle_outlined,
-                      color: selectedStatus == status
-                          ? attendanceStatusColor(status)
-                          : Colors.grey,
-                    ),
-                    onTap: () => setDialogState(
-                      () => selectedStatus = status,
-                    ),
+            children: attendanceStates.map(
+              (option) {
+                final status = AttendanceStatus.tryFromApi(option.value)!;
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    option.label.isEmpty ? status.label : option.label,
                   ),
-                )
-                .toList(growable: false),
+                  leading: Icon(
+                    selectedStatus == status
+                        ? Icons.check_circle_rounded
+                        : Icons.circle_outlined,
+                    color: selectedStatus == status
+                        ? attendanceStatusColor(status)
+                        : Colors.grey,
+                  ),
+                  onTap: () => setDialogState(
+                    () => selectedStatus = status,
+                  ),
+                );
+              },
+            ).toList(growable: false),
           ),
           actions: [
             TextButton(

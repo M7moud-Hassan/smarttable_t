@@ -9,13 +9,17 @@ enum AttendanceStatus {
 
   final String apiValue;
 
-  static AttendanceStatus fromApi(dynamic value) => switch (value?.toString()) {
+  static AttendanceStatus? tryFromApi(dynamic value) =>
+      switch (value?.toString().trim().toLowerCase()) {
         's' => AttendanceStatus.present,
         'a' => AttendanceStatus.absent,
         'l' => AttendanceStatus.late,
         'p' => AttendanceStatus.excused,
-        _ => AttendanceStatus.notRecorded,
+        _ => null,
       };
+
+  static AttendanceStatus fromApi(dynamic value) =>
+      tryFromApi(value) ?? AttendanceStatus.notRecorded;
 }
 
 extension AttendanceStatusLabel on AttendanceStatus {
@@ -244,6 +248,14 @@ class PerseveranceFilters {
   final List<PerseveranceClassOption> classes;
   final List<PerseveranceSessionOption> sessions;
   final List<PerseveranceOption> attendanceStates;
+
+  List<PerseveranceOption> get allowedAttendanceStates {
+    final seen = <AttendanceStatus>{};
+    return attendanceStates.where((option) {
+      final status = AttendanceStatus.tryFromApi(option.value);
+      return status != null && seen.add(status);
+    }).toList(growable: false);
+  }
 }
 
 class AttendanceSummary {

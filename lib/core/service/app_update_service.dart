@@ -31,7 +31,7 @@ class AppUpdateService {
       parameters: {
         'app': _appType,
         'platform': platform,
-        'version': packageInfo.version,
+        'version': 'packageInfo.version',
         'build': packageInfo.buildNumber,
       },
     ).timeout(const Duration(seconds: 10));
