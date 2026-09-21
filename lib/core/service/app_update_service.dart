@@ -1,7 +1,7 @@
 import 'dart:convert' show jsonDecode, utf8;
 
 import 'package:flutter/foundation.dart'
-    show TargetPlatform, defaultTargetPlatform, kIsWeb;
+    show TargetPlatform, defaultTargetPlatform, kDebugMode, kIsWeb;
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../constants/endpoints.dart';
@@ -31,8 +31,8 @@ class AppUpdateService {
       parameters: {
         'app': _appType,
         'platform': platform,
-        'version': 'packageInfo.version',
-        'build': packageInfo.buildNumber,
+        'version': kDebugMode ? '2.0.22' : packageInfo.version,
+        'build': kDebugMode ? '20' : packageInfo.buildNumber,
       },
     ).timeout(const Duration(seconds: 10));
 

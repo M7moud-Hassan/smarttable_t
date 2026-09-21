@@ -24,6 +24,7 @@ class _AttendanceBehaviorViewState
   int _attendanceMode = 0;
   int _behaviorMode = 0;
   int _reportIndex = 0;
+  String? _reportSession;
   String _searchQuery = '';
   bool _showSearch = false;
 
@@ -43,15 +44,21 @@ class _AttendanceBehaviorViewState
           title: 'المواظبة والسلوك',
           action: IconButton.filled(
             tooltip: 'فلترة',
-            onPressed: () {
+            onPressed: () async {
               if (_sectionIndex == 2) {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
+                final reportType = await Navigator.of(context).push<String>(
+                  MaterialPageRoute<String>(
                     builder: (_) => ReportFilterView(
                       initialReportIndex: _reportIndex,
+                      initialSession: _reportSession,
                     ),
                   ),
                 );
+                if (!mounted) return;
+                if (reportType == 'attendance' || reportType == 'behavior') {
+                  setState(
+                      () => _reportIndex = reportType == 'attendance' ? 0 : 1);
+                }
               } else {
                 showModalBottomSheet<void>(
                   context: context,
@@ -72,6 +79,10 @@ class _AttendanceBehaviorViewState
                 selectedIndex: _sectionIndex,
                 onSelected: (index) {
                   setState(() {
+                    if (index == 2 && _sectionIndex != 2) {
+                      _reportSession =
+                          ref.read(attendanceBehaviorProvider).selectedSession;
+                    }
                     _sectionIndex = index;
                     _showSearch = false;
                     _searchController.clear();
@@ -113,6 +124,7 @@ class _AttendanceBehaviorViewState
         ),
       _ => AttendanceBehaviorReportsPanel(
           reportIndex: _reportIndex,
+          initialSession: _reportSession,
           onReportChanged: (index) => setState(() => _reportIndex = index),
         ),
     };

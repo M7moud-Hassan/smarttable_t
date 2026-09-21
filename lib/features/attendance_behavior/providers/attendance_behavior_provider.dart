@@ -589,6 +589,26 @@ final reportOptionsProvider = FutureProvider.autoDispose<ReportOptions>((ref) {
   return ref.read(perseveranceRepositoryProvider).getReportOptions();
 });
 
+typedef ReportStudentsQuery = ({int classId, String? session});
+
+final reportStudentsProvider = FutureProvider.autoDispose
+    .family<List<AttendanceBehaviorStudent>, ReportStudentsQuery>(
+        (ref, query) async {
+  final repository = ref.read(perseveranceRepositoryProvider);
+  final filters = await repository.getFilters();
+  if (filters.sessions.isEmpty) {
+    throw ServerException('لا توجد حصص متاحة لتحميل الطلاب');
+  }
+  final session = filters.sessions.any((item) => item.value == query.session)
+      ? query.session!
+      : filters.sessions.first.value;
+  final roster = await repository.getAttendanceRoster(
+    classId: query.classId,
+    session: session,
+  );
+  return roster.students;
+});
+
 String perseveranceErrorMessage(Object error) {
   if (error is ServerException &&
       error.message != null &&

@@ -683,18 +683,21 @@ class StudentProcedureModel {
 class ReportQuery {
   const ReportQuery({
     this.classId,
+    this.studentId,
     this.period = 'month',
     this.dateFrom,
     this.dateTo,
   });
 
   final int? classId;
+  final int? studentId;
   final String period;
   final String? dateFrom;
   final String? dateTo;
 
   Map<String, dynamic> toParameters({bool includeStudents = false}) => {
-        if (classId != null) 'class_id': classId,
+        if (studentId == null && classId != null) 'class_id': classId,
+        if (studentId != null) 'student_id': studentId,
         'period': period,
         if (dateFrom != null) 'date_from': dateFrom,
         if (dateTo != null) 'date_to': dateTo,
@@ -705,12 +708,13 @@ class ReportQuery {
   bool operator ==(Object other) =>
       other is ReportQuery &&
       classId == other.classId &&
+      studentId == other.studentId &&
       period == other.period &&
       dateFrom == other.dateFrom &&
       dateTo == other.dateTo;
 
   @override
-  int get hashCode => Object.hash(classId, period, dateFrom, dateTo);
+  int get hashCode => Object.hash(classId, studentId, period, dateFrom, dateTo);
 }
 
 class AttendanceReportSummary {

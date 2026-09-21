@@ -10,18 +10,22 @@ import 'package:smart_table_app/features/attendance_behavior/data/repositories/p
 import 'package:smart_table_app/features/attendance_behavior/presentation/widgets/attendance_behavior_widgets.dart';
 import 'package:smart_table_app/features/attendance_behavior/providers/attendance_behavior_provider.dart';
 
-class AttendanceBehaviorReportsPanel extends StatelessWidget {
+class AttendanceBehaviorReportsPanel extends ConsumerWidget {
   const AttendanceBehaviorReportsPanel({
     super.key,
     required this.reportIndex,
     required this.onReportChanged,
+    this.initialSession,
   });
 
   final int reportIndex;
   final ValueChanged<int> onReportChanged;
+  final String? initialSession;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(attendanceReportQueryProvider);
+    ref.watch(behaviorReportQueryProvider);
     return Column(
       children: [
         Padding(
@@ -38,13 +42,18 @@ class AttendanceBehaviorReportsPanel extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ReportFilterView(
-                        initialReportIndex: reportIndex,
+                  onPressed: () async {
+                    final reportType = await Navigator.of(context).push<String>(
+                      MaterialPageRoute<String>(
+                        builder: (_) => ReportFilterView(
+                          initialReportIndex: reportIndex,
+                          initialSession: initialSession,
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                    if (reportType == 'attendance') onReportChanged(0);
+                    if (reportType == 'behavior') onReportChanged(1);
+                  },
                   icon: const Icon(Icons.tune_rounded),
                   label: const Text('فلترة وتصدير التقرير'),
                 ),
@@ -68,6 +77,13 @@ class AttendanceReportContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final query = ref.watch(attendanceReportQueryProvider);
+    if (query.studentId case final studentId?) {
+      return _StudentAttendanceReportContent(
+        studentId: studentId,
+        period: query.period,
+      );
+    }
     final report = ref.watch(attendanceReportProvider);
     return report.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -129,6 +145,86 @@ class AttendanceReportContent extends ConsumerWidget {
               (classroom) => Padding(
                 padding: const EdgeInsets.only(bottom: 13),
                 child: _AttendanceClassReportCard(report: classroom),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StudentAttendanceReportContent extends ConsumerWidget {
+  const _StudentAttendanceReportContent({
+    required this.studentId,
+    required this.period,
+  });
+
+  final int studentId;
+  final String period;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final query = StudentPeriodQuery(studentId, period);
+    final report = ref.watch(studentAttendanceHistoryProvider(query));
+    return report.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => _ReportError(
+        message: perseveranceErrorMessage(error),
+        onRetry: () => ref.invalidate(studentAttendanceHistoryProvider(query)),
+      ),
+      data: (data) => ListView(
+        padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
+        children: [
+          Text(
+            'تقرير حضور ${data.student.name}',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _StudentReportStat(
+                label: 'نسبة الحضور',
+                value: '${data.summary.presentPercentage.round()}%',
+                color: attendanceGreen,
+              ),
+              _StudentReportStat(
+                label: 'حاضر',
+                value: '${data.summary.presentDays}',
+                color: attendanceGreen,
+              ),
+              _StudentReportStat(
+                label: 'غائب',
+                value: '${data.summary.absentDays}',
+                color: attendanceRed,
+              ),
+              _StudentReportStat(
+                label: 'متأخر',
+                value: '${data.summary.lateDays}',
+                color: attendanceAmber,
+              ),
+              _StudentReportStat(
+                label: 'مستأذن',
+                value: '${data.summary.permissionDays}',
+                color: attendanceNavy,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          if (data.entries.isEmpty)
+            const _EmptyReport(message: 'لا يوجد سجل حضور لهذه الفترة')
+          else
+            ...data.entries.map(
+              (entry) => _StudentReportEntry(
+                title:
+                    '${entry.dayName} ${entry.dateHijri.isNotEmpty ? entry.dateHijri : entry.date}'
+                        .trim(),
+                details: [entry.sessionLabel, entry.courseName]
+                    .where((value) => value.isNotEmpty)
+                    .join(' • '),
+                trailing: AttendanceStatusBadge(status: entry.status),
               ),
             ),
         ],
@@ -274,6 +370,13 @@ class BehaviorReportContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final query = ref.watch(behaviorReportQueryProvider);
+    if (query.studentId case final studentId?) {
+      return _StudentBehaviorReportContent(
+        studentId: studentId,
+        period: query.period,
+      );
+    }
     final report = ref.watch(behaviorReportProvider);
     return report.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -304,6 +407,137 @@ class BehaviorReportContent extends ConsumerWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _StudentBehaviorReportContent extends ConsumerWidget {
+  const _StudentBehaviorReportContent({
+    required this.studentId,
+    required this.period,
+  });
+
+  final int studentId;
+  final String period;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final query = StudentPeriodQuery(studentId, period);
+    final report = ref.watch(studentBehaviorHistoryProvider(query));
+    return report.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => _ReportError(
+        message: perseveranceErrorMessage(error),
+        onRetry: () => ref.invalidate(studentBehaviorHistoryProvider(query)),
+      ),
+      data: (data) => ListView(
+        padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
+        children: [
+          Text(
+            'تقرير سلوك ${data.student.name}',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _StudentReportStat(
+                label: 'سجلات السلوك',
+                value: '${data.summary.recordsCount}',
+              ),
+              _StudentReportStat(
+                label: 'إيجابي',
+                value: '${data.summary.positiveCount}',
+              ),
+              _StudentReportStat(
+                label: 'بحاجة لتحسين',
+                value: '${data.summary.negativeCount}',
+              ),
+              _StudentReportStat(
+                label: 'مجموع النقاط',
+                value: '${data.summary.totalPoints}',
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          if (data.entries.isEmpty)
+            const _EmptyReport(message: 'لا يوجد سجل سلوك لهذه الفترة')
+          else
+            ...data.entries.map(
+              (entry) => _StudentReportEntry(
+                title:
+                    '${entry.dayName} ${entry.dateHijri.isNotEmpty ? entry.dateHijri : entry.date}'
+                        .trim(),
+                details: [
+                  entry.sessionLabel,
+                  ...entry.notes.map((note) => note.name),
+                  entry.additionalNotes,
+                ].where((value) => value.isNotEmpty).join(' • '),
+                trailing: Text('${entry.totalPoints} نقاط'),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StudentReportStat extends StatelessWidget {
+  const _StudentReportStat({
+    required this.label,
+    required this.value,
+    this.color,
+  });
+
+  final String label;
+  final String value;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      backgroundColor: Colors.white,
+      side: BorderSide(
+        color: color?.withValues(alpha: .55) ?? const Color(0xFFD7D7D7),
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      label: Text(
+        '$label: $value',
+        style: TextStyle(color: color, fontWeight: FontWeight.w700),
+      ),
+    );
+  }
+}
+
+class _StudentReportEntry extends StatelessWidget {
+  const _StudentReportEntry({
+    required this.title,
+    required this.details,
+    required this.trailing,
+  });
+
+  final String title;
+  final String details;
+  final Widget trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: Color(0xFFD7D7D7)),
+      ),
+      margin: const EdgeInsets.only(bottom: 10),
+      child: ListTile(
+        title: Text(title),
+        subtitle: details.isEmpty ? null : Text(details),
+        trailing: trailing,
       ),
     );
   }
@@ -392,9 +626,11 @@ class ReportFilterView extends ConsumerStatefulWidget {
   const ReportFilterView({
     super.key,
     required this.initialReportIndex,
+    this.initialSession,
   });
 
   final int initialReportIndex;
+  final String? initialSession;
 
   @override
   ConsumerState<ReportFilterView> createState() => _ReportFilterViewState();
@@ -404,8 +640,20 @@ class _ReportFilterViewState extends ConsumerState<ReportFilterView> {
   String? _reportType;
   String? _period;
   String? _classId;
+  String? _studentId;
   String? _format;
   bool _downloading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final query = ref.read(widget.initialReportIndex == 0
+        ? attendanceReportQueryProvider
+        : behaviorReportQueryProvider);
+    _period = query.period;
+    _classId = query.classId?.toString();
+    _studentId = query.studentId?.toString();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -451,6 +699,19 @@ class _ReportFilterViewState extends ConsumerState<ReportFilterView> {
     )
         ? _classId!
         : '';
+    final selectedClassId = int.tryParse(classValue);
+    final studentQuery = selectedClassId == null
+        ? null
+        : (classId: selectedClassId, session: widget.initialSession);
+    final studentOptions = selectedClassId == null
+        ? null
+        : ref.watch(reportStudentsProvider(studentQuery!));
+    final selectedStudentId = studentOptions?.asData?.value.any(
+              (student) => student.id.toString() == _studentId,
+            ) ==
+            true
+        ? _studentId
+        : null;
 
     if (reportType == null || period == null || format == null) {
       return const _EmptyReport(message: 'خيارات التقرير غير متاحة حالياً');
@@ -482,8 +743,21 @@ class _ReportFilterViewState extends ConsumerState<ReportFilterView> {
                 ),
               )
               .toList(growable: false),
-          onChanged: (value) => setState(() => _classId = value),
+          onChanged: (value) => setState(() {
+            _classId = value;
+            _studentId = null;
+          }),
         ),
+        if (selectedClassId == null)
+          const _FilterDropdown(
+            label: 'اسم الطالب',
+            value: '',
+            options: [PerseveranceOption(value: '', label: 'كل الطلاب')],
+            helperText: 'اختر فصلاً لتحديد طالب',
+            onChanged: null,
+          )
+        else
+          _buildStudentDropdown(studentQuery!, studentOptions!),
         _FilterDropdown(
           label: 'الصيغة',
           value: format,
@@ -500,6 +774,7 @@ class _ReportFilterViewState extends ConsumerState<ReportFilterView> {
                   reportType: reportType,
                   period: period,
                   classId: classValue,
+                  studentId: selectedStudentId,
                 ),
               ),
             ),
@@ -515,6 +790,7 @@ class _ReportFilterViewState extends ConsumerState<ReportFilterView> {
                           fileFormat: format,
                           period: period,
                           classId: classValue,
+                          studentId: selectedStudentId,
                         ),
               ),
             ),
@@ -528,9 +804,51 @@ class _ReportFilterViewState extends ConsumerState<ReportFilterView> {
     return options.any((item) => item.value == value) ? value : null;
   }
 
-  ReportQuery _query(String period, String classId) {
+  Widget _buildStudentDropdown(
+    ReportStudentsQuery query,
+    AsyncValue<List<AttendanceBehaviorStudent>> students,
+  ) {
+    return students.when(
+      loading: () => const _FilterDropdown(
+        label: 'اسم الطالب',
+        value: '',
+        options: [PerseveranceOption(value: '', label: 'جارٍ تحميل الطلاب...')],
+        onChanged: null,
+      ),
+      error: (_, __) => const _FilterDropdown(
+        label: 'اسم الطالب',
+        value: '',
+        options: [PerseveranceOption(value: '', label: 'كل الطلاب')],
+        onChanged: null,
+      ),
+      data: (items) {
+        final options = <PerseveranceOption>[
+          const PerseveranceOption(value: '', label: 'كل الطلاب'),
+          for (final student in items)
+            PerseveranceOption(
+              value: student.id.toString(),
+              label: student.name,
+            ),
+        ];
+        final value = _validOption(_studentId, options) ?? '';
+        return _FilterDropdown(
+          key: ValueKey('student-${query.classId}'),
+          label: 'اسم الطالب',
+          value: value,
+          options: options,
+          onChanged: items.isEmpty
+              ? null
+              : (selected) => setState(() => _studentId = selected),
+        );
+      },
+    );
+  }
+
+  ReportQuery _query(String period, String classId, String? studentId) {
+    final parsedClassId = int.tryParse(classId);
     return ReportQuery(
-      classId: int.tryParse(classId),
+      classId: parsedClassId,
+      studentId: parsedClassId == null ? null : int.tryParse(studentId ?? ''),
       period: period,
     );
   }
@@ -539,15 +857,16 @@ class _ReportFilterViewState extends ConsumerState<ReportFilterView> {
     required String reportType,
     required String period,
     required String classId,
+    required String? studentId,
   }) {
-    final query = _query(period, classId);
+    final query = _query(period, classId, studentId);
     if (reportType == 'attendance' || reportType == 'combined') {
       ref.read(attendanceReportQueryProvider.notifier).state = query;
     }
     if (reportType == 'behavior' || reportType == 'combined') {
       ref.read(behaviorReportQueryProvider.notifier).state = query;
     }
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(reportType);
   }
 
   Future<void> _download({
@@ -555,6 +874,7 @@ class _ReportFilterViewState extends ConsumerState<ReportFilterView> {
     required String fileFormat,
     required String period,
     required String classId,
+    required String? studentId,
   }) async {
     setState(() => _downloading = true);
     try {
@@ -562,7 +882,7 @@ class _ReportFilterViewState extends ConsumerState<ReportFilterView> {
           await ref.read(perseveranceRepositoryProvider).exportReport(
                 reportType: reportType,
                 fileFormat: fileFormat,
-                query: _query(period, classId),
+                query: _query(period, classId, studentId),
               );
       final directory = await getTemporaryDirectory();
       final file = File('${directory.path}/${export.fileName}');
@@ -594,16 +914,19 @@ class _ReportFilterViewState extends ConsumerState<ReportFilterView> {
 
 class _FilterDropdown extends StatelessWidget {
   const _FilterDropdown({
+    super.key,
     required this.label,
     required this.value,
     required this.options,
     required this.onChanged,
+    this.helperText,
   });
 
   final String label;
   final String value;
   final List<PerseveranceOption> options;
-  final ValueChanged<String> onChanged;
+  final ValueChanged<String>? onChanged;
+  final String? helperText;
 
   @override
   Widget build(BuildContext context) {
@@ -619,7 +942,9 @@ class _FilterDropdown extends StatelessWidget {
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             initialValue: value,
+            isExpanded: true,
             decoration: InputDecoration(
+              helperText: helperText,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(15),
                 borderSide: const BorderSide(color: AppColors.primaryColor),
@@ -633,11 +958,19 @@ class _FilterDropdown extends StatelessWidget {
                 .map(
                   (option) => DropdownMenuItem(
                     value: option.value,
-                    child: Text(option.label),
+                    child: Text(
+                      option.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 )
                 .toList(growable: false),
-            onChanged: (selected) => onChanged(selected!),
+            onChanged: onChanged == null
+                ? null
+                : (selected) {
+                    if (selected != null) onChanged!(selected);
+                  },
           ),
         ],
       ),
