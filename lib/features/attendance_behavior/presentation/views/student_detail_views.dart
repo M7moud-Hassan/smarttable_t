@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/constants/constants.dart';
+import 'package:smart_table_app/core/widgets/sliding_dropdown.dart';
 import 'package:smart_table_app/features/attendance_behavior/data/models/attendance_behavior_models.dart';
 import 'package:smart_table_app/features/attendance_behavior/data/repositories/perseverance_repository.dart';
 import 'package:smart_table_app/features/attendance_behavior/presentation/widgets/attendance_behavior_widgets.dart';
@@ -619,25 +620,34 @@ class _PeriodSelector extends StatelessWidget {
           style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
         ),
         const Spacer(),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFF999999)),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: value,
-              items: options.entries
-                  .map(
-                    (entry) => DropdownMenuItem(
-                      value: entry.key,
-                      child: Text(entry.value),
-                    ),
-                  )
-                  .toList(growable: false),
-              onChanged: (selected) => onChanged(selected!),
+        SizedBox(
+          width: 145,
+          child: SlidingDropdown<String>(
+            value: value,
+            menuMaxHeight: 200,
+            decoration: InputDecoration(
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFF999999)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFF999999)),
+              ),
             ),
+            items: options.entries
+                .map(
+                  (entry) => DropdownMenuItem(
+                    value: entry.key,
+                    child: Text(entry.value),
+                  ),
+                )
+                .toList(growable: false),
+            onChanged: (selected) {
+              if (selected != null) onChanged(selected);
+            },
           ),
         ),
       ],

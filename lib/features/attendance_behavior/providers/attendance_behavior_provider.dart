@@ -19,6 +19,8 @@ class AttendanceBehaviorState {
     this.behaviorRoster,
     this.students = const [],
     this.behaviorNotes = const [],
+    this.attendanceNoteCodes = const [],
+    this.attendanceNoteDrafts = const {},
     this.selectedAttendanceIds = const {},
     this.selectedBehaviorIds = const {},
     this.selectedAttendanceStatus,
@@ -36,6 +38,8 @@ class AttendanceBehaviorState {
   final BehaviorRosterData? behaviorRoster;
   final List<AttendanceBehaviorStudent> students;
   final List<BehaviorNoteModel> behaviorNotes;
+  final List<PerseveranceOption> attendanceNoteCodes;
+  final Map<int, AttendanceNoteDraft> attendanceNoteDrafts;
   final Set<int> selectedAttendanceIds;
   final Set<int> selectedBehaviorIds;
   final AttendanceStatus? selectedAttendanceStatus;
@@ -53,6 +57,8 @@ class AttendanceBehaviorState {
     BehaviorRosterData? behaviorRoster,
     List<AttendanceBehaviorStudent>? students,
     List<BehaviorNoteModel>? behaviorNotes,
+    List<PerseveranceOption>? attendanceNoteCodes,
+    Map<int, AttendanceNoteDraft>? attendanceNoteDrafts,
     Set<int>? selectedAttendanceIds,
     Set<int>? selectedBehaviorIds,
     Object? selectedAttendanceStatus = _unchanged,
@@ -70,6 +76,8 @@ class AttendanceBehaviorState {
       behaviorRoster: behaviorRoster ?? this.behaviorRoster,
       students: students ?? this.students,
       behaviorNotes: behaviorNotes ?? this.behaviorNotes,
+      attendanceNoteCodes: attendanceNoteCodes ?? this.attendanceNoteCodes,
+      attendanceNoteDrafts: attendanceNoteDrafts ?? this.attendanceNoteDrafts,
       selectedAttendanceIds:
           selectedAttendanceIds ?? this.selectedAttendanceIds,
       selectedBehaviorIds: selectedBehaviorIds ?? this.selectedBehaviorIds,
@@ -101,19 +109,26 @@ class AttendanceBehaviorNotifier
       : super(const AttendanceBehaviorState());
 
   final PerseveranceRepository _repository;
+  int _contextRevision = 0;
+  int _latestLoadRequest = 0;
 
   Future<void> load() async {
-    state = state.copyWith(loading: true, errorMessage: null);
+    final contextRevision = ++_contextRevision;
+    state = state.copyWith(loading: true, saving: false, errorMessage: null);
     try {
       final filters = await _repository.getFilters();
+      if (contextRevision != _contextRevision) return;
+
       final availableClasses =
           filters.classes.where((item) => item.id != null).toList();
       if (availableClasses.isEmpty || filters.sessions.isEmpty) {
+        final behaviorNotes = await _repository.getBehaviorNotes();
+        if (contextRevision != _contextRevision) return;
         state = state.copyWith(
           filters: filters,
           selectedAttendanceStatus: _initialAttendanceStatus(filters),
           students: const [],
-          behaviorNotes: await _repository.getBehaviorNotes(),
+          behaviorNotes: behaviorNotes,
           loading: false,
         );
         return;
@@ -135,8 +150,14 @@ class AttendanceBehaviorNotifier
         selectedClassId: classId,
         selectedSession: session,
       );
-      await _loadData(classId: classId, session: session);
+      await _loadData(
+        classId: classId,
+        session: session,
+        date: state.selectedDate,
+        contextRevision: contextRevision,
+      );
     } catch (error) {
+      if (contextRevision != _contextRevision) return;
       state = state.copyWith(
         loading: false,
         errorMessage: perseveranceErrorMessage(error),
@@ -149,6 +170,7 @@ class AttendanceBehaviorNotifier
     required String session,
     String? date,
   }) async {
+    final contextRevision = ++_contextRevision;
     final previousState = state;
     state = state.copyWith(
       selectedClassId: classId,
@@ -156,14 +178,23 @@ class AttendanceBehaviorNotifier
       selectedDate: date,
       selectedAttendanceIds: const {},
       selectedBehaviorIds: const {},
+      attendanceNoteDrafts: const {},
       loading: true,
+      saving: false,
       errorMessage: null,
     );
     try {
-      await _loadData(classId: classId, session: session, date: date);
+      await _loadData(
+        classId: classId,
+        session: session,
+        date: date,
+        contextRevision: contextRevision,
+      );
     } catch (error) {
+      if (contextRevision != _contextRevision) return;
       state = previousState.copyWith(
         loading: false,
+        saving: false,
         errorMessage: perseveranceErrorMessage(error),
       );
       rethrow;
@@ -174,28 +205,49 @@ class AttendanceBehaviorNotifier
     required int classId,
     required String session,
     String? date,
+    required int contextRevision,
   }) async {
-    final results = await Future.wait<dynamic>([
-      _repository.getAttendanceRoster(
-        classId: classId,
-        session: session,
-        date: date,
-      ),
-      _repository.getBehaviorRoster(
-        classId: classId,
-        session: session,
-        date: date,
-      ),
-      _repository.getBehaviorNotes(),
-    ]);
+    if (!_isCurrentContext(classId, session, contextRevision)) return;
+    final loadRequest = ++_latestLoadRequest;
+    late final List<dynamic> results;
+    try {
+      results = await Future.wait<dynamic>([
+        _repository.getAttendanceRoster(
+          classId: classId,
+          session: session,
+          date: date,
+        ),
+        _repository.getBehaviorRoster(
+          classId: classId,
+          session: session,
+          date: date,
+        ),
+        _repository.getBehaviorNotes(),
+        _repository
+            .getAttendanceNoteCodes()
+            .catchError((Object _) => <PerseveranceOption>[]),
+      ]);
+    } catch (_) {
+      if (loadRequest != _latestLoadRequest ||
+          !_isCurrentContext(classId, session, contextRevision)) {
+        return;
+      }
+      rethrow;
+    }
     final attendance = results[0] as AttendanceRosterData;
     final behavior = results[1] as BehaviorRosterData;
     final notes = results[2] as List<BehaviorNoteModel>;
+    final attendanceNoteCodes = results[3] as List<PerseveranceOption>;
+    if (loadRequest != _latestLoadRequest ||
+        !_isCurrentContext(classId, session, contextRevision)) {
+      return;
+    }
     state = state.copyWith(
       attendanceRoster: attendance,
       behaviorRoster: behavior,
       students: _mergeStudents(attendance, behavior),
       behaviorNotes: notes,
+      attendanceNoteCodes: attendanceNoteCodes,
       selectedDate: attendance.date,
       selectedBehaviorNoteId:
           notes.isEmpty ? null : state.selectedBehaviorNoteId ?? notes.first.id,
@@ -204,6 +256,11 @@ class AttendanceBehaviorNotifier
       errorMessage: null,
     );
   }
+
+  bool _isCurrentContext(int classId, String session, int contextRevision) =>
+      contextRevision == _contextRevision &&
+      classId == state.selectedClassId &&
+      session == state.selectedSession;
 
   List<AttendanceBehaviorStudent> _mergeStudents(
     AttendanceRosterData attendance,
@@ -256,15 +313,50 @@ class AttendanceBehaviorNotifier
     state = state.copyWith(selectedAttendanceStatus: status);
   }
 
+  void setAttendanceNoteCode({
+    required int studentId,
+    required String? noteCode,
+    String note = '',
+    bool isCustom = false,
+  }) {
+    final drafts = {...state.attendanceNoteDrafts};
+    if (noteCode == null && !isCustom && note.isEmpty) {
+      drafts.remove(studentId);
+    } else {
+      drafts[studentId] = AttendanceNoteDraft(
+        note: note,
+        noteCode: noteCode,
+        isCustom: isCustom,
+      );
+    }
+    state = state.copyWith(attendanceNoteDrafts: drafts);
+  }
+
+  void setAttendanceNoteText({
+    required int studentId,
+    required String note,
+  }) {
+    setAttendanceNoteCode(
+      studentId: studentId,
+      noteCode: null,
+      note: note,
+      isCustom: true,
+    );
+  }
+
   Future<void> saveAttendance() async {
     final classId = state.selectedClassId;
     final session = state.selectedSession;
+    final date = state.selectedDate;
+    final contextRevision = _contextRevision;
+    final studentIds = state.selectedAttendanceIds.toList(growable: false);
     final status = state.selectedAttendanceStatus;
+    final attendanceNoteDrafts = state.attendanceNoteDrafts;
     if (classId == null ||
         session == null ||
         status == null ||
         !_isAttendanceStatusAllowed(status) ||
-        state.selectedAttendanceIds.isEmpty) {
+        studentIds.isEmpty) {
       return;
     }
     state = state.copyWith(saving: true, errorMessage: null);
@@ -272,17 +364,31 @@ class AttendanceBehaviorNotifier
       await _repository.saveAttendance(
         classId: classId,
         session: session,
-        studentIds: state.selectedAttendanceIds.toList(),
+        studentIds: studentIds,
         status: status,
-        date: state.selectedDate,
+        notes: {
+          for (final studentId in studentIds)
+            if (attendanceNoteDrafts[studentId] != null)
+              studentId: attendanceNoteDrafts[studentId]!,
+        },
+        date: date,
       );
-      state = state.copyWith(selectedAttendanceIds: const {});
+      if (contextRevision != _contextRevision) return;
+      state = state.copyWith(
+        selectedAttendanceIds: const {},
+        attendanceNoteDrafts: {
+          for (final entry in attendanceNoteDrafts.entries)
+            if (!studentIds.contains(entry.key)) entry.key: entry.value,
+        },
+      );
       await _loadData(
         classId: classId,
         session: session,
-        date: state.selectedDate,
+        date: date,
+        contextRevision: contextRevision,
       );
     } catch (error) {
+      if (contextRevision != _contextRevision) rethrow;
       state = state.copyWith(
         saving: false,
         errorMessage: perseveranceErrorMessage(error),
@@ -297,6 +403,8 @@ class AttendanceBehaviorNotifier
   }) async {
     final classId = state.selectedClassId;
     final session = state.selectedSession;
+    final date = state.selectedDate;
+    final contextRevision = _contextRevision;
     if (classId == null ||
         session == null ||
         !_isAttendanceStatusAllowed(status)) {
@@ -309,14 +417,17 @@ class AttendanceBehaviorNotifier
         session: session,
         studentIds: [studentId],
         status: status,
-        date: state.selectedDate,
+        date: date,
       );
+      if (contextRevision != _contextRevision) return;
       await _loadData(
         classId: classId,
         session: session,
-        date: state.selectedDate,
+        date: date,
+        contextRevision: contextRevision,
       );
     } catch (error) {
+      if (contextRevision != _contextRevision) rethrow;
       state = state.copyWith(
         saving: false,
         errorMessage: perseveranceErrorMessage(error),
@@ -352,6 +463,8 @@ class AttendanceBehaviorNotifier
   Future<void> saveBehaviorAssignment() async {
     final classId = state.selectedClassId;
     final session = state.selectedSession;
+    final date = state.selectedDate;
+    final contextRevision = _contextRevision;
     final noteId = state.selectedBehaviorNoteId;
     if (classId == null ||
         session == null ||
@@ -372,15 +485,18 @@ class AttendanceBehaviorNotifier
         classId: classId,
         session: session,
         studentNoteIds: assignments,
-        date: state.selectedDate,
+        date: date,
       );
+      if (contextRevision != _contextRevision) return;
       state = state.copyWith(selectedBehaviorIds: const {});
       await _loadData(
         classId: classId,
         session: session,
-        date: state.selectedDate,
+        date: date,
+        contextRevision: contextRevision,
       );
     } catch (error) {
+      if (contextRevision != _contextRevision) rethrow;
       state = state.copyWith(
         saving: false,
         errorMessage: perseveranceErrorMessage(error),
@@ -409,16 +525,29 @@ class AttendanceBehaviorNotifier
   Future<void> deleteStudentBehaviorRecord(int studentId) async {
     final student = _studentById(studentId);
     final recordId = student?.behaviorRecordId;
+    final classId = state.selectedClassId;
+    final session = state.selectedSession;
+    final date = state.selectedDate;
+    final contextRevision = _contextRevision;
     if (student == null ||
         recordId == null ||
-        !student.teacherCanModifyBehavior) {
+        !student.teacherCanModifyBehavior ||
+        classId == null ||
+        session == null) {
       throw ServerException('لا يمكنك حذف هذه الملاحظة');
     }
     state = state.copyWith(saving: true, errorMessage: null);
     try {
       await _repository.deleteBehaviorRecord(recordId);
-      await _reloadSelectedContext();
+      if (contextRevision != _contextRevision) return;
+      await _loadData(
+        classId: classId,
+        session: session,
+        date: date,
+        contextRevision: contextRevision,
+      );
     } catch (error) {
+      if (contextRevision != _contextRevision) rethrow;
       state = state.copyWith(
         saving: false,
         errorMessage: perseveranceErrorMessage(error),
@@ -463,33 +592,31 @@ class AttendanceBehaviorNotifier
     final classId = state.selectedClassId;
     final session = state.selectedSession;
     if (classId == null || session == null) return;
+    final date = state.selectedDate;
+    final contextRevision = _contextRevision;
     state = state.copyWith(saving: true, errorMessage: null);
     try {
       await _repository.saveBehavior(
         classId: classId,
         session: session,
         studentNoteIds: {studentId: noteIds},
-        date: state.selectedDate,
+        date: date,
       );
-      await _reloadSelectedContext();
+      if (contextRevision != _contextRevision) return;
+      await _loadData(
+        classId: classId,
+        session: session,
+        date: date,
+        contextRevision: contextRevision,
+      );
     } catch (error) {
+      if (contextRevision != _contextRevision) rethrow;
       state = state.copyWith(
         saving: false,
         errorMessage: perseveranceErrorMessage(error),
       );
       rethrow;
     }
-  }
-
-  Future<void> _reloadSelectedContext() async {
-    final classId = state.selectedClassId;
-    final session = state.selectedSession;
-    if (classId == null || session == null) return;
-    await _loadData(
-      classId: classId,
-      session: session,
-      date: state.selectedDate,
-    );
   }
 
   Future<void> createBehaviorNote(BehaviorNoteModel note) async {

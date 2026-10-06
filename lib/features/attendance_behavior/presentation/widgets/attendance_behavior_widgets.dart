@@ -242,11 +242,13 @@ class StudentSummaryCard extends StatelessWidget {
     required this.student,
     this.trailing,
     this.subtitle,
+    this.attendanceNote,
   });
 
   final AttendanceBehaviorStudent student;
   final Widget? trailing;
   final Widget? subtitle;
+  final String? attendanceNote;
 
   @override
   Widget build(BuildContext context) {
@@ -257,38 +259,80 @@ class StudentSummaryCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            StudentAvatar(name: student.name),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    student.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  subtitle ??
+            Row(
+              children: [
+                StudentAvatar(name: student.name),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        student.className,
+                        student.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Color(0xFF747474),
-                          fontSize: 12,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
+                      const SizedBox(height: 3),
+                      subtitle ??
+                          Text(
+                            student.className,
+                            style: const TextStyle(
+                              color: Color(0xFF747474),
+                              fontSize: 12,
+                            ),
+                          ),
+                    ],
+                  ),
+                ),
+                if (trailing != null) ...[
+                  const SizedBox(width: 8),
+                  trailing!,
                 ],
-              ),
+              ],
             ),
-            if (trailing != null) ...[
-              const SizedBox(width: 8),
-              trailing!,
+            if (attendanceNote?.trim().isNotEmpty == true) ...[
+              const SizedBox(height: 9),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FCFC),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.sticky_note_2_outlined,
+                      size: 17,
+                      color: AppColors.secondryColor,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'ملاحظة المواظبة: ${attendanceNote!.trim()}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF3B858B),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ],
         ),

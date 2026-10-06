@@ -20,11 +20,14 @@ abstract class PerseveranceRepository {
     String? date,
   });
 
+  Future<List<PerseveranceOption>> getAttendanceNoteCodes();
+
   Future<void> saveAttendance({
     required int classId,
     required String session,
     required List<int> studentIds,
     required AttendanceStatus status,
+    Map<int, AttendanceNoteDraft> notes = const {},
     String? date,
   });
 
@@ -127,11 +130,23 @@ class ApiPerseveranceRepository implements PerseveranceRepository {
   }
 
   @override
+  Future<List<PerseveranceOption>> getAttendanceNoteCodes() async {
+    final response =
+        await _apiService.get(Endpoints.perseveranceAttendanceNoteCodes);
+    _ensureSuccess(response.success, response.message);
+    return _asList(response.data)
+        .map(PerseveranceOption.fromJson)
+        .where((option) => option.value.isNotEmpty && option.label.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  @override
   Future<void> saveAttendance({
     required int classId,
     required String session,
     required List<int> studentIds,
     required AttendanceStatus status,
+    Map<int, AttendanceNoteDraft> notes = const {},
     String? date,
   }) async {
     final response = await _apiService.post(
@@ -145,6 +160,10 @@ class ApiPerseveranceRepository implements PerseveranceRepository {
             {
               'student_id': studentId,
               'attendance': status.apiValue,
+              if (notes[studentId]?.note.trim().isNotEmpty == true)
+                'note': notes[studentId]!.note.trim(),
+              if (notes[studentId]?.noteCode?.isNotEmpty == true)
+                'note_code': notes[studentId]!.noteCode,
             },
         ],
       },
@@ -411,7 +430,13 @@ class ApiPerseveranceRepository implements PerseveranceRepository {
 
   List<Map<String, dynamic>> _asList(dynamic value) {
     dynamic items = value;
-    if (value is Map) items = value['results'] ?? value['data'];
+    if (value is Map) {
+      items = value['results'] ??
+          value['data'] ??
+          value['note_codes'] ??
+          value['attendance_note_codes'] ??
+          value['codes'];
+    }
     if (items is! List) throw ServerException(null);
     return items
         .whereType<Map>()

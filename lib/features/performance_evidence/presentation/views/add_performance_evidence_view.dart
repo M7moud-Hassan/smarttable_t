@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/constants/constants.dart';
 import 'package:smart_table_app/core/extensions/extensions.dart';
 import 'package:smart_table_app/core/widgets/app_button.dart';
+import 'package:smart_table_app/core/widgets/sliding_dropdown.dart';
 import 'package:smart_table_app/features/performance_evidence/data/models/performance_evidence_model.dart';
 import 'package:smart_table_app/features/performance_evidence/presentation/widgets/choose_file_type_sheet.dart';
 import 'package:smart_table_app/features/performance_evidence/presentation/views/upload_success_view.dart';
@@ -222,35 +223,38 @@ class _AddPerformanceEvidenceViewState
     required List<EvidenceCategoryModel> categories,
     required ValueChanged<int?> onChanged,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 15),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        border:
-            Border.all(color: AppColors.primaryColor.withValues(alpha: 0.5)),
+    return SlidingDropdown<int>(
+      value: value,
+      hint: Align(
+        alignment: Alignment.centerRight,
+        child: Text(hint, style: const TextStyle(color: Colors.grey)),
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int>(
-          value: value,
-          hint: Align(
-            alignment: Alignment.centerRight,
-            child: Text(hint, style: const TextStyle(color: Colors.grey)),
-          ),
-          isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down,
-              color: AppColors.primaryColor),
-          items: categories.where((category) => category.id != null).map((cat) {
-            return DropdownMenuItem<int>(
-              value: cat.id!,
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Text(cat.name),
-              ),
-            );
-          }).toList(),
-          onChanged: onChanged,
+      iconColor: AppColors.primaryColor,
+      menuMaxHeight: 200,
+      decoration: InputDecoration(
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide:
+              BorderSide(color: AppColors.primaryColor.withValues(alpha: 0.5)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide:
+              BorderSide(color: AppColors.primaryColor.withValues(alpha: 0.5)),
         ),
       ),
+      items: categories.where((category) => category.id != null).map((cat) {
+        return DropdownMenuItem<int>(
+          value: cat.id!,
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Text(cat.name),
+          ),
+        );
+      }).toList(),
+      onChanged: onChanged,
     );
   }
 

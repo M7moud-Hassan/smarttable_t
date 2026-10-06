@@ -30,68 +30,14 @@ class InterceptorClientService extends InterceptorContract {
     }
   }
 
-  Map<String, String> _redactSensitiveHeaders(Map<String, String> headers) {
-    final safeHeaders = Map<String, String>.from(headers);
-    for (final key in safeHeaders.keys.toList(growable: false)) {
-      final normalizedKey = key.toLowerCase();
-      if (normalizedKey == 'auth-token' || normalizedKey == 'authorization') {
-        safeHeaders[key] = '***';
-      }
-    }
-    return safeHeaders;
-  }
-
-  String _redactSensitiveBody(String body) {
-    try {
-      final decoded = jsonDecode(body);
-      if (decoded is! Map<String, dynamic>) return body;
-
-      final safeBody = Map<String, dynamic>.from(decoded);
-      for (final key in safeBody.keys.toList(growable: false)) {
-        final normalizedKey = key.toLowerCase();
-        if (normalizedKey.contains('password') ||
-            const {'token', 'access', 'refresh'}.contains(normalizedKey)) {
-          safeBody[key] = '***';
-        }
-      }
-      return jsonEncode(safeBody);
-    } catch (_) {
-      return '[non-JSON request body omitted]';
-    }
-  }
-
-  String _redactSensitiveResponse(String body) {
-    try {
-      final decoded = jsonDecode(body);
-      if (decoded is! Map<String, dynamic>) return body;
-
-      final safeBody = Map<String, dynamic>.from(decoded);
-      for (final key in safeBody.keys.toList(growable: false)) {
-        final normalizedKey = key.toLowerCase();
-        if (normalizedKey.contains('password') ||
-            const {'token', 'access', 'refresh', 'fcm_token'}
-                .contains(normalizedKey)) {
-          safeBody[key] = '***';
-        }
-      }
-      return jsonEncode(safeBody);
-    } catch (_) {
-      return '[non-JSON response body omitted]';
-    }
-  }
-
   @override
   Future<BaseRequest> interceptRequest({required BaseRequest request}) async {
-    debugPrint('request:${request.url}');
     final prefs = _ref.read(sharedPreferencesProvider);
     final token = await _ref.read(tokenStorageProvider).getToken();
     final lang = prefs.getString(SharedPreferenceKeys.locale.name) ?? 'ar';
     final localeGenderFemale =
         prefs.getBool(SharedPreferenceKeys.localeFemale.name) ?? false;
     if (!request.headers.containsKey('auth-token')) {
-      debugPrint(
-        'InterceptorClientService========>request.headers.isEmpty<<<=========',
-      );
       if (token != null) {
         final Map<String, String> headers = Map.from(request.headers);
         headers[HttpHeaders.acceptHeader] = 'application/json';
@@ -104,18 +50,25 @@ class InterceptorClientService extends InterceptorContract {
         request.headers.addAll(headers);
       }
     }
-    debugPrint(
-      'InterceptorClientService========>'
-      '${_redactSensitiveHeaders(request.headers)}'
-      '<<<=========',
+    _log(
+      '➡️ Request -> ${request.method} ${request.url}\n'
+      'Request headers: ${jsonEncode(request.headers)}',
     );
-    // Fix: Check if request is a specific type that has body
     if (request is Request && request.body.isNotEmpty) {
-      _log('📦 Body: ${_redactSensitiveBody(request.body)}');
+      _log('Request body: ${request.body}');
     } else if (request is MultipartRequest) {
-      _log(
-        '📦 Multipart request with ${request.files.length} files and ${request.fields.length} fields',
-      );
+      _log('Multipart request fields: ${jsonEncode(request.fields)}');
+      final files = request.files
+          .map(
+            (file) => {
+              'field': file.field,
+              'filename': file.filename,
+              'length': file.length,
+              'content_type': file.contentType.toString(),
+            },
+          )
+          .toList(growable: false);
+      _log('Multipart request files: ${jsonEncode(files)}');
     }
     return request;
   }
@@ -127,7 +80,8 @@ class InterceptorClientService extends InterceptorContract {
     _log('✅ Response <- [${response.statusCode}] ${response.request?.url}');
 
     if (response is Response) {
-      _log('Response body: ${_redactSensitiveResponse(response.body)}');
+      _log('Response headers: ${jsonEncode(response.headers)}');
+      _log('Response body: ${response.body}');
     }
     Object? responseBody;
     if (response is Response && response.body.isNotEmpty) {

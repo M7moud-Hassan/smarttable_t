@@ -32,8 +32,32 @@ class AppThemes {
             fontWeight: FontWeight.bold,
             fontFamily: AppAssets.arFont),
       ),
-      colorScheme: ThemeData.light().colorScheme.copyWith(
-          primary: AppColors.primaryColor, secondary: AppColors.secondryColor),
+      colorScheme: baseTheme.colorScheme.copyWith(
+        primary: AppColors.primaryColor,
+        secondary: AppColors.secondryColor,
+        surface: Colors.white,
+      ),
+      // Keep Material's default surfaces white across routes and overlays.
+      // These themes cover dialogs, modal sheets, popup menus, and dropdowns.
+      canvasColor: Colors.white,
+      dialogTheme: const DialogThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Colors.white,
+        modalBackgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+      ),
+      popupMenuTheme: const PopupMenuThemeData(
+        color: Colors.white,
+        surfaceTintColor: Colors.white,
+      ),
+      dropdownMenuTheme: const DropdownMenuThemeData(
+        menuStyle: MenuStyle(
+          backgroundColor: WidgetStatePropertyAll<Color>(Colors.white),
+        ),
+      ),
       scaffoldBackgroundColor: Colors.white,
       radioTheme: RadioThemeData(
           fillColor: WidgetStateProperty.all<Color>(AppColors.primaryColor)),

@@ -75,6 +75,8 @@ class Endpoints {
 
   static const String perseveranceAttendance =
       'teacher-mobile/v2/perseverance/attendance/';
+  static const String perseveranceAttendanceNoteCodes =
+      'teacher-mobile/v2/perseverance/attendance/note-codes/';
   static String perseveranceStudentAttendance(int studentId) =>
       'teacher-mobile/v2/perseverance/attendance/students/$studentId/';
   static const String perseveranceBehavior =

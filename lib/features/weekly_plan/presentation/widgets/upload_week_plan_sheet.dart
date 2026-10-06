@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/constants/constants.dart';
 import 'package:smart_table_app/core/extensions/extensions.dart';
 import 'package:smart_table_app/core/providers/request_response_provider.dart';
+import 'package:smart_table_app/core/widgets/sliding_dropdown.dart';
 import 'package:smart_table_app/features/weekly_plan/providers/weekly_plan_notififer.dart';
 
 import '../../../../core/providers/picked_file_provider.dart';
@@ -41,84 +42,88 @@ class UploadWeekPlanSheet extends ConsumerWidget {
         child: Column(
           children: [
             ref.watch(weekInfoProvider(1)).when(
-              data: (data) {
-                final weeks = data.list;
-                return DropdownButtonFormField<int>(
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.primaryColor),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.primaryColor),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.primaryColor, width: 2),
-                    ),
-                  ),
-                  icon: const Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: AppColors.primaryColor,
-                  ),
-                  hint: Text(
-                    'اختر اسبوع الخطة',
-                    style: context.textTheme.titleMedium!.copyWith(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-                  value: selectedWeek != null && weeks.any((w) => w.id == selectedWeek.id)
-                      ? selectedWeek.id
-                      : null,
-                  items: weeks.map((week) {
-                    return DropdownMenuItem<int>(
-                      value: week.id,
-                      child: Text(
-                        week.weekNumberText,
+                  data: (data) {
+                    final weeks = data.list;
+                    return SlidingDropdown<int>(
+                      value: selectedWeek != null &&
+                              weeks.any((w) => w.id == selectedWeek.id)
+                          ? selectedWeek.id
+                          : null,
+                      hint: Text(
+                        'اختر اسبوع الخطة',
                         style: context.textTheme.titleMedium!.copyWith(
-                          color: Colors.black,
+                          color: Colors.grey,
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
                         ),
                       ),
+                      menuMaxHeight: 180,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide:
+                              const BorderSide(color: AppColors.primaryColor),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide:
+                              const BorderSide(color: AppColors.primaryColor),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                              color: AppColors.primaryColor, width: 2),
+                        ),
+                      ),
+                      items: weeks.map((week) {
+                        return DropdownMenuItem<int>(
+                          value: week.id,
+                          child: Text(
+                            week.weekNumberText,
+                            style: context.textTheme.titleMedium!.copyWith(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          final week = weeks.firstWhere((w) => w.id == value);
+                          ref.read(selectedWeekProvider.notifier).state = week;
+                        }
+                      },
                     );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      final week = weeks.firstWhere((w) => w.id == value);
-                      ref.read(selectedWeekProvider.notifier).state = week;
-                    }
                   },
-                );
-              },
-              loading: () => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.primaryColor),
-                  color: Colors.white,
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                  loading: () => Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.primaryColor),
+                      color: Colors.white,
                     ),
-                    Text('جاري التحميل...'),
-                  ],
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        Text('جاري التحميل...'),
+                      ],
+                    ),
+                  ),
+                  error: (err, stack) => Text('حدث خطأ أثناء تحميل الأسابيع',
+                      style: context.textTheme.titleMedium!
+                          .copyWith(color: Colors.red)),
                 ),
-              ),
-              error: (err, stack) => Text('حدث خطأ أثناء تحميل الأسابيع',
-                  style: context.textTheme.titleMedium!.copyWith(color: Colors.red)),
-            ),
             const SizedBox(height: 24),
             GestureDetector(
               onTap: () async {
