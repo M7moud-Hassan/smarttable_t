@@ -5,11 +5,9 @@ import 'package:smart_table_app/features/attendance_behavior/data/repositories/p
 
 final attendanceBehaviorProvider = StateNotifierProvider.autoDispose<
     AttendanceBehaviorNotifier, AttendanceBehaviorState>((ref) {
-  final notifier = AttendanceBehaviorNotifier(
+  return AttendanceBehaviorNotifier(
     ref.read(perseveranceRepositoryProvider),
   );
-  Future.microtask(notifier.load);
-  return notifier;
 });
 
 class AttendanceBehaviorState {
@@ -103,6 +101,18 @@ class AttendanceBehaviorState {
 
 const _unchanged = Object();
 
+String _filterKey(String? value) {
+  const arabicDigits = '٠١٢٣٤٥٦٧٨٩';
+  const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+  var normalized = (value ?? '').trim().toLowerCase();
+  for (var index = 0; index < 10; index++) {
+    normalized = normalized
+        .replaceAll(arabicDigits[index], '$index')
+        .replaceAll(persianDigits[index], '$index');
+  }
+  return normalized.replaceAll(RegExp(r'[\s\-_/\\–—]+'), '');
+}
+
 class AttendanceBehaviorNotifier
     extends StateNotifier<AttendanceBehaviorState> {
   AttendanceBehaviorNotifier(this._repository)
@@ -111,8 +121,21 @@ class AttendanceBehaviorNotifier
   final PerseveranceRepository _repository;
   int _contextRevision = 0;
   int _latestLoadRequest = 0;
+  int? _requestedClassId;
+  String? _requestedClassName;
+  String? _requestedSession;
+  String? _requestedSessionLabel;
 
-  Future<void> load() async {
+  Future<void> load({
+    int? initialClassId,
+    String? initialClassName,
+    String? initialSession,
+    String? initialSessionLabel,
+  }) async {
+    _requestedClassId = initialClassId ?? _requestedClassId;
+    _requestedClassName = initialClassName ?? _requestedClassName;
+    _requestedSession = initialSession ?? _requestedSession;
+    _requestedSessionLabel = initialSessionLabel ?? _requestedSessionLabel;
     final contextRevision = ++_contextRevision;
     state = state.copyWith(loading: true, saving: false, errorMessage: null);
     try {
@@ -134,16 +157,16 @@ class AttendanceBehaviorNotifier
         return;
       }
 
-      final classId = availableClasses.any(
-        (item) => item.id == state.selectedClassId,
-      )
-          ? state.selectedClassId!
-          : availableClasses.first.id!;
-      final session = filters.sessions.any(
-        (item) => item.value == state.selectedSession,
-      )
-          ? state.selectedSession!
-          : filters.sessions.first.value;
+      final classId = _resolveClassId(
+        availableClasses,
+        initialClassId: _requestedClassId,
+        initialClassName: _requestedClassName,
+      );
+      final session = _resolveSession(
+        filters.sessions,
+        initialSession: _requestedSession,
+        initialSessionLabel: _requestedSessionLabel,
+      );
       state = state.copyWith(
         filters: filters,
         selectedAttendanceStatus: _initialAttendanceStatus(filters),
@@ -163,6 +186,49 @@ class AttendanceBehaviorNotifier
         errorMessage: perseveranceErrorMessage(error),
       );
     }
+  }
+
+  int _resolveClassId(
+    List<PerseveranceClassOption> classes, {
+    int? initialClassId,
+    String? initialClassName,
+  }) {
+    if (initialClassId != null &&
+        classes.any((item) => item.id == initialClassId)) {
+      return initialClassId;
+    }
+
+    final classNameKey = _filterKey(initialClassName);
+    if (classNameKey.isNotEmpty) {
+      for (final item in classes) {
+        if (_filterKey(item.name) == classNameKey) return item.id!;
+      }
+    }
+
+    if (classes.any((item) => item.id == state.selectedClassId)) {
+      return state.selectedClassId!;
+    }
+    return classes.first.id!;
+  }
+
+  String _resolveSession(
+    List<PerseveranceSessionOption> sessions, {
+    String? initialSession,
+    String? initialSessionLabel,
+  }) {
+    final sessionKey = _filterKey(initialSession);
+    final labelKey = _filterKey(initialSessionLabel);
+    for (final item in sessions) {
+      if ((sessionKey.isNotEmpty && _filterKey(item.value) == sessionKey) ||
+          (labelKey.isNotEmpty && _filterKey(item.label) == labelKey)) {
+        return item.value;
+      }
+    }
+
+    if (sessions.any((item) => item.value == state.selectedSession)) {
+      return state.selectedSession!;
+    }
+    return sessions.first.value;
   }
 
   Future<void> changeContext({

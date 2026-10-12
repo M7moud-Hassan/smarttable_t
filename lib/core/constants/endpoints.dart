@@ -18,6 +18,10 @@ class Endpoints {
   static const String homeMenus = 'teacher-mobile/v2/app_features/menus/';
   static const String masterTable = 'teacher-mobile/v2/master-table/';
   static const String teacherTable = 'teacher-mobile/v2/teacher-table/';
+  static const String lessonAchievements =
+      'teacher-mobile/v2/lesson-achievements/';
+  static String lessonAchievement(int achievementId) =>
+      'teacher-mobile/v2/lesson-achievements/$achievementId/';
   static const String waitingClasses = 'teacher-mobile/v2/waiting-classes/';
   static String secureClassSubstitutes(int cellNumber) =>
       'teacher-mobile/v2/secure-class/lessons/$cellNumber/substitutes/';

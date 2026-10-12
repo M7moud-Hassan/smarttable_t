@@ -13,7 +13,20 @@ export 'attendance_panel.dart' show AttendancePanel;
 export 'behavior_panel.dart' show BehaviorPanel;
 
 class AttendanceBehaviorView extends ConsumerStatefulWidget {
-  const AttendanceBehaviorView({super.key});
+  const AttendanceBehaviorView({
+    super.key,
+    this.initialClassId,
+    this.initialClassName,
+    this.initialSession,
+    this.initialSessionLabel,
+    this.showFilterOnOpen = false,
+  });
+
+  final int? initialClassId;
+  final String? initialClassName;
+  final String? initialSession;
+  final String? initialSessionLabel;
+  final bool showFilterOnOpen;
 
   @override
   ConsumerState<AttendanceBehaviorView> createState() =>
@@ -30,6 +43,31 @@ class _AttendanceBehaviorViewState
   String? _reportSession;
   String _searchQuery = '';
   bool _showSearch = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(_initialize);
+  }
+
+  Future<void> _initialize() async {
+    await ref.read(attendanceBehaviorProvider.notifier).load(
+          initialClassId: widget.initialClassId,
+          initialClassName: widget.initialClassName,
+          initialSession: widget.initialSession,
+          initialSessionLabel: widget.initialSessionLabel,
+        );
+    if (!mounted || !widget.showFilterOnOpen) return;
+    final state = ref.read(attendanceBehaviorProvider);
+    if (state.filters == null || state.errorMessage != null) return;
+    await _showFilterSheet();
+  }
+
+  Future<void> _showFilterSheet() => showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        builder: (_) => const AttendanceBehaviorFilterSheet(),
+      );
 
   @override
   void dispose() {
@@ -63,11 +101,7 @@ class _AttendanceBehaviorViewState
                       () => _reportIndex = reportType == 'attendance' ? 0 : 1);
                 }
               } else {
-                showModalBottomSheet<void>(
-                  context: context,
-                  isScrollControlled: true,
-                  builder: (_) => const AttendanceBehaviorFilterSheet(),
-                );
+                await _showFilterSheet();
               }
             },
             icon: const Icon(Icons.tune_rounded, color: Colors.white),

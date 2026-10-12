@@ -13,6 +13,7 @@ class LessonModel {
   String? originalTeacherName;
   String? teacherImageUrl;
   int? secureCellNumber;
+  int? classroomId;
 
   LessonModel({
     required this.dayId,
@@ -29,6 +30,7 @@ class LessonModel {
     this.originalTeacherName,
     this.teacherImageUrl,
     this.secureCellNumber,
+    this.classroomId,
   });
 
   factory LessonModel.fromJson(Map<String, dynamic> json) {
@@ -78,6 +80,12 @@ class LessonModel {
             ],
           ),
       secureCellNumber: _tryParseInt(json["cell_number"]),
+      classroomId: _tryParseInt(
+        json["classroom_id"] ??
+            json["class_id"] ??
+            cellTextJson["classroom_id"] ??
+            cellTextJson["class_id"],
+      ),
     );
   }
 
@@ -97,6 +105,7 @@ class LessonModel {
           "original_teacher_name": originalTeacherName,
         if (teacherImageUrl != null) "teacher_image_url": teacherImageUrl,
         if (secureCellNumber != null) "cell_number": secureCellNumber,
+        if (classroomId != null) "classroom_id": classroomId,
       };
 
   /// factory for init LessonModel
@@ -128,6 +137,7 @@ class LessonModel {
     String? originalTeacherName,
     String? teacherImageUrl,
     int? secureCellNumber,
+    int? classroomId,
   }) {
     return LessonModel(
       dayId: dayId ?? this.dayId,
@@ -144,6 +154,7 @@ class LessonModel {
       originalTeacherName: originalTeacherName ?? this.originalTeacherName,
       teacherImageUrl: teacherImageUrl ?? this.teacherImageUrl,
       secureCellNumber: secureCellNumber ?? this.secureCellNumber,
+      classroomId: classroomId ?? this.classroomId,
     );
   }
 
@@ -179,6 +190,18 @@ class LessonModel {
   /// waiting assignments. Empty timetable cells are never eligible.
   bool get canBeSecured =>
       !isWaitingSlot && subjectName.isNotEmpty && cellNumber != null;
+
+  /// Only real, non-waiting timetable lessons have enough context to open
+  /// attendance and behavior for their classroom and session.
+  bool get canManageClass =>
+      !isWaitingSlot &&
+      subjectName.isNotEmpty &&
+      (classroomId != null || classroomName.isNotEmpty) &&
+      classNumber.trim().isNotEmpty;
+
+  /// A lesson achievement is attached to the timetable cell, including an
+  /// assigned waiting lesson taught by the current teacher.
+  bool get canRecordAchievement => subjectName.isNotEmpty && cellNumber != null;
 
   /// Waiting assignments use their original confirmation flow and must not
   /// open the secure-class substitute picker.

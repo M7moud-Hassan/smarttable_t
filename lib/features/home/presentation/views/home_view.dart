@@ -190,7 +190,9 @@ class _HomeViewState extends ConsumerState<HomeView> {
                         return _AttendanceBehaviorHomeCard(
                           isTablet: isTablet,
                           onTap: () => context.push(
-                            const AttendanceBehaviorView(),
+                            const AttendanceBehaviorView(
+                              showFilterOnOpen: true,
+                            ),
                           ),
                         );
                       }
@@ -232,7 +234,9 @@ class _HomeViewState extends ConsumerState<HomeView> {
                             : () {
                                 if (_isAttendanceBehaviorMenu(item)) {
                                   context.push(
-                                    const AttendanceBehaviorView(),
+                                    const AttendanceBehaviorView(
+                                      showFilterOnOpen: true,
+                                    ),
                                   );
                                   return;
                                 }
