@@ -107,4 +107,16 @@ class Endpoints {
       'teacher-mobile/v2/perseverance/reports/export/';
   static const String perseveranceReportOptions =
       'teacher-mobile/v2/perseverance/reports/options/';
+  static const String sessionToolsPresentStudents =
+      'teacher-mobile/v2/session-tools/present-students/';
+  static const String sessionToolsQuickQuestion =
+      'teacher-mobile/v2/session-tools/quick-question/';
+  static const String sessionToolsQuickQuestionRate =
+      'teacher-mobile/v2/session-tools/quick-question/rate/';
+  static const String sessionToolsRandomPick =
+      'teacher-mobile/v2/session-tools/random-pick/';
+  static const String sessionToolsSeats =
+      'teacher-mobile/v2/session-tools/seats/';
+  static const String sessionToolsSummary =
+      'teacher-mobile/v2/session-tools/summary/';
 }

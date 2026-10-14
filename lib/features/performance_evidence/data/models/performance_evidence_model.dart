@@ -36,7 +36,42 @@ class PerformanceEvidenceModel {
       'type_file': typeFile,
     };
   }
+
+  PerformanceEvidenceFileKind get fileKind {
+    final path = Uri.tryParse(file ?? '')?.path.toLowerCase() ?? '';
+
+    if (path.endsWith('.pdf')) return PerformanceEvidenceFileKind.pdf;
+    if (_imageExtensions.any(path.endsWith)) {
+      return PerformanceEvidenceFileKind.image;
+    }
+    if (_documentExtensions.any(path.endsWith)) {
+      return PerformanceEvidenceFileKind.document;
+    }
+
+    return switch (typeFile.toLowerCase()) {
+      'p' => PerformanceEvidenceFileKind.pdf,
+      'i' => PerformanceEvidenceFileKind.image,
+      _ => PerformanceEvidenceFileKind.document,
+    };
+  }
+
+  static const _imageExtensions = <String>[
+    '.jpg',
+    '.jpeg',
+    '.png',
+    '.gif',
+    '.webp',
+    '.bmp',
+  ];
+  static const _documentExtensions = <String>[
+    '.doc',
+    '.docx',
+    '.xls',
+    '.xlsx',
+  ];
 }
+
+enum PerformanceEvidenceFileKind { image, pdf, document }
 
 class EvidenceCategoryModel {
   final int? id;

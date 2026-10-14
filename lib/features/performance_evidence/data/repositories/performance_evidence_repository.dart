@@ -7,16 +7,16 @@ import 'package:smart_table_app/core/providers/api_service_provider.dart';
 import 'package:smart_table_app/core/service/api_service.dart';
 import 'package:smart_table_app/features/performance_evidence/data/models/performance_evidence_model.dart';
 
-final performanceEvidenceRepoProvider = Provider<PerformanceEvidenceRepository>((ref) {
+final performanceEvidenceRepoProvider =
+    Provider<PerformanceEvidenceRepository>((ref) {
   return PerformanceEvidenceRepository(ref);
 });
 
 class PerformanceEvidenceRepository {
-  final Ref _ref;
   final ApiService _apiService;
 
-  PerformanceEvidenceRepository(this._ref)
-      : _apiService = _ref.read(apiServiceProvider);
+  PerformanceEvidenceRepository(Ref ref)
+      : _apiService = ref.read(apiServiceProvider);
 
   Future<PaginationModel<PerformanceEvidenceModel>> getEvidences(
       int page) async {
@@ -33,7 +33,8 @@ class PerformanceEvidenceRepository {
   }
 
   Future<List<EvidenceCategoryModel>> getCategories() async {
-    final response = await _apiService.get(Endpoints.performanceEvidenceCategories);
+    final response =
+        await _apiService.get(Endpoints.performanceEvidenceCategories);
     if (response.success ?? false) {
       final List<dynamic> data = response.data is List ? response.data : [];
       return data.map((e) => EvidenceCategoryModel.fromJson(e)).toList();
@@ -58,7 +59,8 @@ class PerformanceEvidenceRepository {
   }
 
   Future<bool> deleteEvidence(int id) async {
-    final response = await _apiService.delete('${Endpoints.performanceEvidence}$id/');
+    final response =
+        await _apiService.delete('${Endpoints.performanceEvidence}$id/');
     return response.success ?? false;
   }
 }

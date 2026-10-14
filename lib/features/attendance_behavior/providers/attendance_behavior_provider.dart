@@ -571,6 +571,54 @@ class AttendanceBehaviorNotifier
     }
   }
 
+  Future<void> assignBehaviorNote({
+    required Iterable<int> studentIds,
+    required int noteId,
+  }) async {
+    final classId = state.selectedClassId;
+    final session = state.selectedSession;
+    final date = state.selectedDate;
+    final contextRevision = _contextRevision;
+    if (classId == null || session == null) return;
+    if (!state.behaviorNotes.any((note) => note.id == noteId)) return;
+
+    final requestedIds = studentIds.toSet();
+    final assignments = <int, List<int>>{};
+    for (final student in state.students) {
+      if (!requestedIds.contains(student.id) || !_canChangeBehavior(student)) {
+        continue;
+      }
+      assignments[student.id] = {...student.behaviorNoteIds, noteId}.toList();
+    }
+    if (assignments.isEmpty) {
+      throw ServerException('لا يمكنك تعديل ملاحظات الطلاب المحددين');
+    }
+
+    state = state.copyWith(saving: true, errorMessage: null);
+    try {
+      await _repository.saveBehavior(
+        classId: classId,
+        session: session,
+        studentNoteIds: assignments,
+        date: date,
+      );
+      if (contextRevision != _contextRevision) return;
+      await _loadData(
+        classId: classId,
+        session: session,
+        date: date,
+        contextRevision: contextRevision,
+      );
+    } catch (error) {
+      if (contextRevision != _contextRevision) rethrow;
+      state = state.copyWith(
+        saving: false,
+        errorMessage: perseveranceErrorMessage(error),
+      );
+      rethrow;
+    }
+  }
+
   Future<void> updateStudentBehavior({
     required int studentId,
     required List<int> noteIds,

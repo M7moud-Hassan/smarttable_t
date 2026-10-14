@@ -439,6 +439,138 @@ class CountBadge extends StatelessWidget {
   }
 }
 
+class ClassroomStudentCard extends StatelessWidget {
+  const ClassroomStudentCard({
+    super.key,
+    required this.student,
+    required this.footer,
+    this.badge,
+    this.menu,
+    this.onTap,
+    this.selected = false,
+    this.enabled = true,
+    this.accentColor = AppColors.primaryColor,
+  });
+
+  final AttendanceBehaviorStudent student;
+  final Widget footer;
+  final Widget? badge;
+  final Widget? menu;
+  final VoidCallback? onTap;
+  final bool selected;
+  final bool enabled;
+  final Color accentColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: enabled ? 1 : .48,
+      child: Material(
+        color: selected ? const Color(0xFFF0FCFC) : Colors.white,
+        elevation: selected ? 0 : 2,
+        shadowColor: Colors.black.withValues(alpha: .12),
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: enabled ? onTap : null,
+          child: Stack(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(8, 15, 8, 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: selected
+                        ? accentColor
+                        : accentColor.withValues(alpha: .16),
+                    width: selected ? 2 : 1,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    StudentAvatar(name: student.name, radius: 27),
+                    const SizedBox(height: 8),
+                    Text(
+                      student.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.2,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    footer,
+                  ],
+                ),
+              ),
+              if (badge != null)
+                PositionedDirectional(top: 7, start: 7, child: badge!),
+              if (selected)
+                PositionedDirectional(
+                  top: 7,
+                  end: 7,
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: accentColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_rounded,
+                      color: Colors.white,
+                      size: 17,
+                    ),
+                  ),
+                )
+              else if (menu != null)
+                PositionedDirectional(top: 1, end: 0, child: menu!),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PointBadge extends StatelessWidget {
+  const PointBadge({super.key, required this.points});
+
+  final int points;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = points > 0
+        ? attendanceGreen
+        : points < 0
+            ? attendanceRed
+            : const Color(0xFF777777);
+    final label = points > 0 ? '+$points' : '$points';
+    return Container(
+      constraints: const BoxConstraints(minWidth: 34),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
 class StudentDetailHeader extends StatelessWidget {
   const StudentDetailHeader({super.key, required this.student});
 

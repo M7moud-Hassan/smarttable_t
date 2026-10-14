@@ -162,90 +162,119 @@ class AttendancePanel extends ConsumerWidget {
         const SizedBox(height: 12),
         if (students.isEmpty)
           const NoSearchResults()
-        else
-          ...students.map(
-            (student) {
+        else ...[
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: students.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: .58,
+            ),
+            itemBuilder: (_, index) {
+              final student = students[index];
               final selected = state.selectedAttendanceIds.contains(student.id);
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Column(
-                  children: [
-                    StudentSummaryCard(
-                      student: student,
-                      subtitle: AttendanceStatusBadge(
-                        status: student.attendanceStatus,
-                      ),
-                      attendanceNote: !recording
-                          ? student.attendanceNote
-                          : selected
-                              ? state.attendanceNoteDrafts
-                                      .containsKey(student.id)
-                                  ? state.attendanceNoteDrafts[student.id]!.note
-                                  : student.attendanceNote
-                              : null,
-                      trailing: recording
-                          ? Checkbox(
-                              value: selected,
-                              onChanged: (_) => ref
-                                  .read(attendanceBehaviorProvider.notifier)
-                                  .toggleAttendanceStudent(student.id),
-                            )
-                          : StudentMoreMenu(
-                              onSelected: (action) => _openAttendanceAction(
-                                context,
-                                ref,
-                                student,
-                                action,
-                              ),
-                            ),
-                    ),
-                    if (recording && selected)
-                      _AttendanceNoteEditor(
-                        studentId: student.id,
-                        noteCodes: state.attendanceNoteCodes,
-                        draft: state.attendanceNoteDrafts[student.id],
-                        onSelect: (value) {
-                          final notifier =
-                              ref.read(attendanceBehaviorProvider.notifier);
-                          final draft = state.attendanceNoteDrafts[student.id];
-                          if (value == _noAttendanceNote) {
-                            notifier.setAttendanceNoteCode(
-                              studentId: student.id,
-                              noteCode: null,
-                            );
-                            return;
-                          }
-                          if (value == _customAttendanceNote) {
-                            notifier.setAttendanceNoteCode(
-                              studentId: student.id,
-                              noteCode: null,
-                              note: draft?.note ?? '',
-                              isCustom: true,
-                            );
-                            return;
-                          }
-                          for (final option in state.attendanceNoteCodes) {
-                            if (option.value != value) continue;
-                            notifier.setAttendanceNoteCode(
-                              studentId: student.id,
-                              noteCode: option.value,
-                              note: option.label,
-                            );
-                            return;
-                          }
-                        },
-                        onTextChanged: (note) => ref
-                            .read(attendanceBehaviorProvider.notifier)
-                            .setAttendanceNoteText(
-                              studentId: student.id,
-                              note: note,
-                            ),
-                      ),
-                  ],
+              return ClassroomStudentCard(
+                student: student,
+                selected: selected,
+                accentColor: attendanceStatusColor(student.attendanceStatus),
+                footer: AttendanceStatusBadge(
+                  status: student.attendanceStatus,
                 ),
+                badge: student.attendanceNote.trim().isEmpty
+                    ? null
+                    : Container(
+                        width: 25,
+                        height: 25,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF0FCFC),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.sticky_note_2_outlined,
+                          size: 14,
+                          color: AppColors.secondryColor,
+                        ),
+                      ),
+                menu: recording
+                    ? null
+                    : StudentMoreMenu(
+                        onSelected: (action) => _openAttendanceAction(
+                          context,
+                          ref,
+                          student,
+                          action,
+                        ),
+                      ),
+                onTap: recording
+                    ? () => ref
+                        .read(attendanceBehaviorProvider.notifier)
+                        .toggleAttendanceStudent(student.id)
+                    : () => _showAttendanceEditDialog(context, ref, student),
               );
             },
           ),
+          if (recording && state.selectedAttendanceIds.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            const Text(
+              'ملاحظات الطلاب المحددين',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            ...students
+                .where(
+                  (student) => state.selectedAttendanceIds.contains(student.id),
+                )
+                .map(
+                  (student) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _AttendanceNoteEditor(
+                      studentId: student.id,
+                      noteCodes: state.attendanceNoteCodes,
+                      draft: state.attendanceNoteDrafts[student.id],
+                      onSelect: (value) {
+                        final notifier =
+                            ref.read(attendanceBehaviorProvider.notifier);
+                        final draft = state.attendanceNoteDrafts[student.id];
+                        if (value == _noAttendanceNote) {
+                          notifier.setAttendanceNoteCode(
+                            studentId: student.id,
+                            noteCode: null,
+                          );
+                          return;
+                        }
+                        if (value == _customAttendanceNote) {
+                          notifier.setAttendanceNoteCode(
+                            studentId: student.id,
+                            noteCode: null,
+                            note: draft?.note ?? '',
+                            isCustom: true,
+                          );
+                          return;
+                        }
+                        for (final option in state.attendanceNoteCodes) {
+                          if (option.value != value) continue;
+                          notifier.setAttendanceNoteCode(
+                            studentId: student.id,
+                            noteCode: option.value,
+                            note: option.label,
+                          );
+                          return;
+                        }
+                      },
+                      onTextChanged: (note) => ref
+                          .read(attendanceBehaviorProvider.notifier)
+                          .setAttendanceNoteText(
+                            studentId: student.id,
+                            note: note,
+                          ),
+                    ),
+                  ),
+                ),
+          ],
+        ],
         if (recording) ...[
           const SizedBox(height: 10),
           PrimaryActionButton(

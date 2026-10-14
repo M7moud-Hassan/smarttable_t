@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:smart_table_app/features/attendance_behavior/data/models/attendance_behavior_models.dart';
 import 'package:smart_table_app/features/attendance_behavior/presentation/views/attendance_behavior_filter_sheet.dart';
 import 'package:smart_table_app/features/attendance_behavior/presentation/views/attendance_panel.dart';
 import 'package:smart_table_app/features/attendance_behavior/presentation/views/behavior_panel.dart';
 import 'package:smart_table_app/features/attendance_behavior/presentation/views/attendance_behavior_reports_view.dart';
+import 'package:smart_table_app/features/attendance_behavior/presentation/widgets/attendance_behavior_state_widgets.dart';
 import 'package:smart_table_app/features/attendance_behavior/presentation/widgets/attendance_behavior_widgets.dart';
 import 'package:smart_table_app/features/attendance_behavior/providers/attendance_behavior_provider.dart';
+import 'package:smart_table_app/features/teacher_tools/data/models/teacher_tools_ui_models.dart';
+import 'package:smart_table_app/features/teacher_tools/presentation/views/teacher_tools_view.dart';
 
 export 'attendance_behavior_filter_sheet.dart'
     show AttendanceBehaviorFilterSheet;
@@ -69,6 +73,54 @@ class _AttendanceBehaviorViewState
         builder: (_) => const AttendanceBehaviorFilterSheet(),
       );
 
+  TeacherToolsContext? _teacherToolsContext(AttendanceBehaviorState state) {
+    final attendance = state.attendanceRoster;
+    final behavior = state.behaviorRoster;
+    final classId = state.selectedClassId;
+    final session = state.selectedSession;
+    if (classId == null || session == null) return null;
+
+    final selectedClass =
+        state.filters?.classes.where((item) => item.id == classId).firstOrNull;
+    final selectedSession = state.filters?.sessions
+        .where((item) => item.value == session)
+        .firstOrNull;
+    final rawDate = attendance?.date ?? behavior?.date ?? state.selectedDate;
+    final hasRecordedAttendance = state.students.any(
+      (student) => student.attendanceStatus != AttendanceStatus.notRecorded,
+    );
+    final availableStudents = hasRecordedAttendance
+        ? state.students.where(
+            (student) => student.attendanceStatus == AttendanceStatus.present,
+          )
+        : state.students;
+
+    return TeacherToolsContext(
+      classId: classId,
+      className: attendance?.className ??
+          behavior?.className ??
+          selectedClass?.name ??
+          '',
+      session: session,
+      sessionLabel: attendance?.sessionLabel ??
+          behavior?.sessionLabel ??
+          selectedSession?.label ??
+          session,
+      subject: '',
+      date: DateTime.tryParse(rawDate ?? '') ?? DateTime.now(),
+      fallbackToPreviewStudents: false,
+      students: availableStudents
+          .map(
+            (student) => TeacherToolStudent(
+              id: student.id,
+              name: student.name,
+              number: student.numberStudent,
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -77,6 +129,7 @@ class _AttendanceBehaviorViewState
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(attendanceBehaviorProvider);
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -98,7 +151,8 @@ class _AttendanceBehaviorViewState
                 if (!mounted) return;
                 if (reportType == 'attendance' || reportType == 'behavior') {
                   setState(
-                      () => _reportIndex = reportType == 'attendance' ? 0 : 1);
+                    () => _reportIndex = reportType == 'attendance' ? 0 : 1,
+                  );
                 }
               } else {
                 await _showFilterSheet();
@@ -112,7 +166,12 @@ class _AttendanceBehaviorViewState
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 8, 18, 10),
               child: FeatureSegmentedControl(
-                labels: const ['المواظبة', 'السلوك', 'التقارير والإحصائيات'],
+                labels: const [
+                  'المواظبة',
+                  'السلوك',
+                  'التقارير',
+                  'أدوات الحصة',
+                ],
                 selectedIndex: _sectionIndex,
                 onSelected: (index) {
                   setState(() {
@@ -128,7 +187,7 @@ class _AttendanceBehaviorViewState
                 },
               ),
             ),
-            if (_showSearch && _sectionIndex != 2)
+            if (_showSearch && _sectionIndex < 2)
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 0, 18, 8),
                 child: SearchField(
@@ -138,16 +197,16 @@ class _AttendanceBehaviorViewState
                   ),
                 ),
               ),
-            Expanded(child: _buildSection()),
+            Expanded(child: _buildSection(state)),
           ],
         ),
         bottomNavigationBar:
-            _sectionIndex == 2 ? null : _buildBottomNavigation(),
+            _sectionIndex >= 2 ? null : _buildBottomNavigation(),
       ),
     );
   }
 
-  Widget _buildSection() {
+  Widget _buildSection(AttendanceBehaviorState state) {
     return switch (_sectionIndex) {
       0 => AttendancePanel(
           recording: _attendanceMode == 1,
@@ -159,12 +218,29 @@ class _AttendanceBehaviorViewState
           searchQuery: _searchQuery,
           onFinishedRecording: () => setState(() => _behaviorMode = 0),
         ),
-      _ => AttendanceBehaviorReportsPanel(
+      2 => AttendanceBehaviorReportsPanel(
           reportIndex: _reportIndex,
           initialSession: _reportSession,
           onReportChanged: (index) => setState(() => _reportIndex = index),
         ),
+      _ => _buildTeacherToolsSection(state),
     };
+  }
+
+  Widget _buildTeacherToolsSection(AttendanceBehaviorState state) {
+    final lessonContext = _teacherToolsContext(state);
+    if (lessonContext == null) {
+      if (state.loading) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      return const FeatureEmptyState(
+        message: 'اختر الفصل والحصة لعرض أدوات الحصة',
+      );
+    }
+    return TeacherToolsView.withContext(
+      lessonContext: lessonContext,
+      embedded: true,
+    );
   }
 
   Widget _buildBottomNavigation() {

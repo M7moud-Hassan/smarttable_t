@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -8,6 +9,7 @@ import 'package:smart_table_app/core/widgets/confirm_dialog_widget.dart';
 import 'package:smart_table_app/core/widgets/pagination_grid_view.dart';
 import 'package:smart_table_app/features/performance_evidence/data/models/performance_evidence_model.dart';
 import 'package:smart_table_app/features/performance_evidence/presentation/views/add_performance_evidence_view.dart';
+import 'package:smart_table_app/features/performance_evidence/presentation/views/performance_evidence_preview_view.dart';
 import 'package:smart_table_app/features/performance_evidence/providers/performance_evidence_provider.dart';
 
 class PerformanceEvidenceView extends HookConsumerWidget {
@@ -159,39 +161,61 @@ class PerformanceEvidenceView extends HookConsumerWidget {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(11),
-              child: Stack(
-                children: [
-                  Center(
-                    child: Image.asset(
-                      item.typeFile == 'p'
-                          ? PngAssets.pdf
-                          : PngAssets.pdf, // Use PDF placeholder for now
-                      width: 50,
-                      fit: BoxFit.contain,
-                    ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  key: ValueKey('performance-evidence-preview-${item.id}'),
+                  onTap: () => context.push(
+                    PerformanceEvidencePreviewView(evidence: item),
                   ),
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: IconButton(
-                      icon:
-                          const Icon(Icons.delete, color: Colors.red, size: 20),
-                      onPressed: () async {
-                        showDialog(
-                          context: context,
-                          builder: (context) => ConfirmDialogWidget(
-                            title: 'هل أنت متأكد من حذف هذا الشاهد؟',
-                            onConfirm: () {
-                              ref
-                                  .read(performanceEvidenceProvider.notifier)
-                                  .deleteEvidence(item.id);
-                            },
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _buildFileThumbnail(item),
+                      PositionedDirectional(
+                        bottom: 6,
+                        start: 6,
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.55),
+                            shape: BoxShape.circle,
                           ),
-                        );
-                      },
-                    ),
+                          child: const Icon(
+                            Icons.visibility_outlined,
+                            color: Colors.white,
+                            size: 17,
+                          ),
+                        ),
+                      ),
+                      PositionedDirectional(
+                        top: 0,
+                        end: 0,
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.delete,
+                            color: Colors.red,
+                            size: 20,
+                          ),
+                          onPressed: () async {
+                            showDialog(
+                              context: context,
+                              builder: (context) => ConfirmDialogWidget(
+                                title: 'هل أنت متأكد من حذف هذا الشاهد؟',
+                                onConfirm: () {
+                                  ref
+                                      .read(
+                                          performanceEvidenceProvider.notifier)
+                                      .deleteEvidence(item.id);
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -216,6 +240,43 @@ class PerformanceEvidenceView extends HookConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildFileThumbnail(PerformanceEvidenceModel item) {
+    final url = item.file?.trim() ?? '';
+
+    if (item.fileKind == PerformanceEvidenceFileKind.image && url.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: url,
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => const Center(
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+        errorWidget: (_, __, ___) => const Center(
+          child: Icon(
+            Icons.broken_image_outlined,
+            color: AppColors.primaryColor,
+            size: 48,
+          ),
+        ),
+      );
+    }
+
+    return Center(
+      child: item.fileKind == PerformanceEvidenceFileKind.pdf
+          ? Image.asset(
+              PngAssets.pdf,
+              width: 50,
+              fit: BoxFit.contain,
+            )
+          : const Icon(
+              Icons.description_outlined,
+              color: AppColors.primaryColor,
+              size: 52,
+            ),
     );
   }
 }

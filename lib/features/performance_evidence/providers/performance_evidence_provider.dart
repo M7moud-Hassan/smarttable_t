@@ -5,8 +5,6 @@ import 'package:smart_table_app/features/performance_evidence/data/repositories/
 
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:smart_table_app/core/models/pagination_model.dart';
-import 'package:smart_table_app/features/performance_evidence/data/models/performance_evidence_model.dart';
-import 'package:smart_table_app/features/performance_evidence/data/repositories/performance_evidence_repository.dart';
 
 final performanceEvidenceProvider =
     StateNotifierProvider<PerformanceEvidenceNotifier, AsyncValue<void>>(
@@ -22,7 +20,8 @@ class PerformanceEvidenceNotifier extends StateNotifier<AsyncValue<void>> {
 
   List<PerformanceEvidenceModel> _allEvidences = [];
 
-  Future<PaginationModel<PerformanceEvidenceModel>> getEvidences(int page) async {
+  Future<PaginationModel<PerformanceEvidenceModel>> getEvidences(
+      int page) async {
     final response =
         await ref.read(performanceEvidenceRepoProvider).getEvidences(page);
     if (page == 1) {
@@ -80,9 +79,9 @@ final evidenceCategoriesProvider =
   return ref.watch(performanceEvidenceRepoProvider).getCategories();
 });
 
-final performanceEvidenceSearchQueryProvider = StateProvider<String>((ref) => '');
+final performanceEvidenceSearchQueryProvider =
+    StateProvider<String>((ref) => '');
 
-final filteredPerformanceEvidenceProvider =
-    Provider<AsyncValue<void>>((ref) {
+final filteredPerformanceEvidenceProvider = Provider<AsyncValue<void>>((ref) {
   return ref.watch(performanceEvidenceProvider);
 });
