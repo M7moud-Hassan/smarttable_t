@@ -139,7 +139,7 @@ class _BehaviorNotePickerSheetState extends State<_BehaviorNotePickerSheet> {
                         crossAxisCount: 2,
                         crossAxisSpacing: 11,
                         mainAxisSpacing: 11,
-                        childAspectRatio: .9,
+                        mainAxisExtent: 148,
                       ),
                       itemBuilder: (_, index) {
                         final note = filteredNotes[index];
@@ -162,29 +162,33 @@ class _BehaviorNotePickerSheetState extends State<_BehaviorNotePickerSheet> {
                                 children: [
                                   Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
-                                      Container(
-                                        width: 58,
-                                        height: 58,
-                                        decoration: BoxDecoration(
-                                          color: color.withValues(alpha: .1),
-                                          borderRadius:
-                                              BorderRadius.circular(17),
-                                        ),
-                                        child: Icon(
-                                          behaviorIcon(note.iconKey),
-                                          color: color,
-                                          size: 30,
+                                      Align(
+                                        child: Container(
+                                          width: 48,
+                                          height: 48,
+                                          decoration: BoxDecoration(
+                                            color: color.withValues(alpha: .1),
+                                            borderRadius:
+                                                BorderRadius.circular(14),
+                                          ),
+                                          child: Icon(
+                                            behaviorIcon(note.iconKey),
+                                            color: color,
+                                            size: 26,
+                                          ),
                                         ),
                                       ),
-                                      const SizedBox(height: 12),
+                                      const SizedBox(height: 8),
                                       Text(
                                         note.name,
-                                        maxLines: 3,
+                                        maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                         textAlign: TextAlign.center,
                                         style: const TextStyle(
-                                          fontSize: 14,
+                                          fontSize: 13,
                                           height: 1.25,
                                           fontWeight: FontWeight.w800,
                                         ),
@@ -204,9 +208,9 @@ class _BehaviorNotePickerSheetState extends State<_BehaviorNotePickerSheet> {
                                         borderRadius: BorderRadius.circular(14),
                                       ),
                                       child: Text(
-                                        note.points > 0
-                                            ? '+${note.points}'
-                                            : '${note.points}',
+                                        note.signedPoints > 0
+                                            ? '+${note.signedPoints}'
+                                            : '${note.signedPoints}',
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 11,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/constants/constants.dart';
+import 'package:smart_table_app/core/utils/student_name_formatter.dart';
 import 'package:smart_table_app/features/attendance_behavior/providers/attendance_behavior_provider.dart';
 import 'package:smart_table_app/features/teacher_tools/data/models/teacher_tools_api_models.dart';
 import 'package:smart_table_app/features/teacher_tools/data/models/teacher_tools_ui_models.dart';
@@ -329,7 +330,7 @@ class _RandomPickViewState extends ConsumerState<RandomPickView> {
                                     radius: 14,
                                   ),
                                   label: Text(
-                                    student.name.split(' ').take(2).join(' '),
+                                    compactStudentName(student.name),
                                     style: const TextStyle(fontSize: 12),
                                   ),
                                   side: BorderSide.none,
@@ -366,7 +367,7 @@ class _PickedStudentCard extends StatelessWidget {
           const SizedBox(width: 11),
           Expanded(
             child: Text(
-              student.name,
+              compactStudentName(student.name),
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
             ),
           ),

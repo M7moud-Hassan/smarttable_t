@@ -33,11 +33,13 @@ class BehaviorNoteModel {
   });
 
   factory BehaviorNoteModel.fromJson(Map<String, dynamic> json) {
+    final type = BehaviorNoteType.fromApi(json['note_type']);
+    final points = readJsonInt(json['points']);
     return BehaviorNoteModel(
       id: readJsonInt(json['id']),
       name: readJsonString(json['title']),
-      points: readJsonInt(json['points']),
-      type: BehaviorNoteType.fromApi(json['note_type']),
+      points: type == BehaviorNoteType.positive ? points.abs() : -points.abs(),
+      type: type,
       iconKey: readJsonString(json['icon'], fallback: 'smile'),
       usageCount: readJsonInt(json['usage_count']),
     );
@@ -50,9 +52,12 @@ class BehaviorNoteModel {
   final String iconKey;
   final int usageCount;
 
+  int get signedPoints =>
+      type == BehaviorNoteType.positive ? points.abs() : -points.abs();
+
   Map<String, dynamic> toWriteJson() => {
         'title': name,
-        'points': points,
+        'points': signedPoints,
         'note_type': type.apiValue,
         if (iconKey.isNotEmpty) 'icon': iconKey,
       };
@@ -90,6 +95,7 @@ class BehaviorRosterStudentData {
 
   factory BehaviorRosterStudentData.fromJson(Map<String, dynamic> json) {
     final rawNotes = json['notes'];
+    final notes = readJsonList(rawNotes, BehaviorNoteModel.fromJson);
     final firstNote = rawNotes is List && rawNotes.isNotEmpty
         ? readJsonMap(rawNotes.first)
         : const <String, dynamic>{};
@@ -98,12 +104,14 @@ class BehaviorRosterStudentData {
       name: readJsonString(json['name']),
       numberStudent: readJsonString(json['number_student']),
       recordId: readNullableJsonInt(json['record_id']),
-      notes: readJsonList(json['notes'], BehaviorNoteModel.fromJson),
+      notes: notes,
       teacherCanModify: readJsonBool(
         json['teacher_can_modify'] ?? firstNote['teacher_can_modify'],
       ),
       additionalNotes: readJsonString(json['additional_notes']),
-      totalPoints: readJsonInt(json['total_points']),
+      totalPoints: notes.isEmpty
+          ? readJsonInt(json['total_points'])
+          : notes.fold(0, (total, note) => total + note.signedPoints),
       proceduresCount: readJsonInt(json['procedures_count']),
     );
   }

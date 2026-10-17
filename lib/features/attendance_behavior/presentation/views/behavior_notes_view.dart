@@ -125,7 +125,7 @@ class _BehaviorNoteCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      '${note.points} نقاط',
+                      '${note.signedPoints} نقاط',
                       style: const TextStyle(fontSize: 12),
                     ),
                     if (note.usageCount > 0)

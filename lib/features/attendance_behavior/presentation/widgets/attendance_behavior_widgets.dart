@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smart_table_app/core/constants/constants.dart';
+import 'package:smart_table_app/core/utils/student_name_formatter.dart';
 import 'package:smart_table_app/features/attendance_behavior/data/models/attendance_behavior_models.dart';
 
 const Color attendanceGreen = Color(0xFF39B83F);
@@ -493,7 +494,7 @@ class ClassroomStudentCard extends StatelessWidget {
                     StudentAvatar(name: student.name, radius: 27),
                     const SizedBox(height: 8),
                     Text(
-                      student.name,
+                      compactStudentName(student.name),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,

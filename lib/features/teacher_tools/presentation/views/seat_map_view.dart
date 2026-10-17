@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/constants/constants.dart';
 import 'package:smart_table_app/core/extensions/context_extensions.dart';
+import 'package:smart_table_app/core/utils/student_name_formatter.dart';
 import 'package:smart_table_app/features/attendance_behavior/providers/attendance_behavior_provider.dart';
 import 'package:smart_table_app/features/teacher_tools/data/models/teacher_tools_api_models.dart';
 import 'package:smart_table_app/features/teacher_tools/data/models/teacher_tools_ui_models.dart';
@@ -368,7 +369,7 @@ class _SeatMapViewState extends ConsumerState<SeatMapView> {
                               .map(
                                 (student) => Chip(
                                   label: Text(
-                                    student.name.split(' ').take(2).join(' '),
+                                    compactStudentName(student.name),
                                     style: const TextStyle(fontSize: 12),
                                   ),
                                   avatar: TeacherToolsStudentAvatar(
@@ -566,7 +567,7 @@ class _SeatCell extends StatelessWidget {
                         constraints.maxHeight < 54 || constraints.maxWidth < 54;
                     return Center(
                       child: Text(
-                        student!.name,
+                        compactStudentName(student!.name),
                         maxLines: compact ? 2 : 3,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
@@ -656,7 +657,7 @@ class _StudentPickerTile extends StatelessWidget {
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
       leading: TeacherToolsStudentAvatar(name: student.name, radius: 20),
       title: Text(
-        student.name,
+        compactStudentName(student.name),
         style: const TextStyle(fontWeight: FontWeight.w700),
       ),
       subtitle: Text('الرقم ${student.number}'),

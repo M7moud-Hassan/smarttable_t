@@ -207,7 +207,7 @@ class _TodayEntryCard extends StatelessWidget {
               ],
             ),
           ),
-          PointBadge(points: note.points),
+          PointBadge(points: note.signedPoints),
         ],
       ),
     );

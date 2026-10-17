@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/constants/constants.dart';
 import 'package:smart_table_app/core/extensions/context_extensions.dart';
+import 'package:smart_table_app/core/utils/student_name_formatter.dart';
 import 'package:smart_table_app/features/attendance_behavior/providers/attendance_behavior_provider.dart';
 import 'package:smart_table_app/features/teacher_tools/data/models/teacher_tools_api_models.dart';
 import 'package:smart_table_app/features/teacher_tools/data/models/teacher_tools_ui_models.dart';
@@ -428,7 +429,7 @@ class _StudentSelectionStep extends StatelessWidget {
               crossAxisCount: constraints.maxWidth >= 650 ? 5 : 3,
               crossAxisSpacing: 9,
               mainAxisSpacing: 9,
-              childAspectRatio: .74,
+              mainAxisExtent: 116,
             ),
             itemBuilder: (_, index) {
               final student = students[index];
@@ -493,13 +494,14 @@ class _SelectableStudentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
+      key: ValueKey('quick-question-student-${student.id}'),
       color: selected ? const Color(0xFFE9FAFA) : Colors.white,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.fromLTRB(7, 14, 7, 9),
+          padding: const EdgeInsets.fromLTRB(7, 10, 7, 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
@@ -509,24 +511,27 @@ class _SelectableStudentCard extends StatelessWidget {
             ),
           ),
           child: Stack(
+            fit: StackFit.expand,
             children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  TeacherToolsStudentAvatar(name: student.name, radius: 24),
-                  const SizedBox(height: 8),
-                  Text(
-                    student.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      height: 1.2,
-                      fontWeight: FontWeight.w800,
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TeacherToolsStudentAvatar(name: student.name, radius: 22),
+                    const SizedBox(height: 7),
+                    Text(
+                      compactStudentName(student.name),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        height: 1.2,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               if (selectionOrder != null)
                 PositionedDirectional(
@@ -694,7 +699,7 @@ class _StudentRatingCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  student.name,
+                  compactStudentName(student.name),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(

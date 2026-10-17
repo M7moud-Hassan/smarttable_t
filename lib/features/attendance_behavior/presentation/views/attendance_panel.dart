@@ -232,6 +232,7 @@ class AttendancePanel extends ConsumerWidget {
                     padding: const EdgeInsets.only(bottom: 10),
                     child: _AttendanceNoteEditor(
                       studentId: student.id,
+                      studentName: student.name,
                       noteCodes: state.attendanceNoteCodes,
                       draft: state.attendanceNoteDrafts[student.id],
                       onSelect: (value) {
@@ -424,6 +425,7 @@ const _noAttendanceNote = '__no_attendance_note__';
 class _AttendanceNoteEditor extends StatelessWidget {
   const _AttendanceNoteEditor({
     required this.studentId,
+    required this.studentName,
     required this.noteCodes,
     required this.draft,
     required this.onSelect,
@@ -431,6 +433,7 @@ class _AttendanceNoteEditor extends StatelessWidget {
   });
 
   final int studentId;
+  final String studentName;
   final List<PerseveranceOption> noteCodes;
   final AttendanceNoteDraft? draft;
   final ValueChanged<String?> onSelect;
@@ -460,7 +463,19 @@ class _AttendanceNoteEditor extends StatelessWidget {
     return Padding(
       padding: const EdgeInsetsDirectional.only(start: 18, end: 18, top: 8),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Text(
+            'ملاحظة الطالب: $studentName',
+            key: ValueKey('attendance-note-student-$studentId'),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
           SlidingDropdown<String>(
             value: selectedValue,
             hint: const Text('ملاحظة المواظبة (اختياري)'),

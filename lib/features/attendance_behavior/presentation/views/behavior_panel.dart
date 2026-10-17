@@ -157,7 +157,7 @@ class BehaviorPanel extends ConsumerWidget {
                 .map(
                   (note) => DropdownMenuItem(
                     value: note.id,
-                    child: Text('${note.name} (${note.points} نقاط)'),
+                    child: Text('${note.name} (${note.signedPoints} نقاط)'),
                   ),
                 )
                 .toList(growable: false),
@@ -401,7 +401,7 @@ class BehaviorPanel extends ConsumerWidget {
                         contentPadding: EdgeInsets.zero,
                         value: selectedNoteIds.contains(behaviorNote.id),
                         title: Text(behaviorNote.name),
-                        subtitle: Text('${behaviorNote.points} نقاط'),
+                        subtitle: Text('${behaviorNote.signedPoints} نقاط'),
                         secondary: Icon(
                           behaviorIcon(behaviorNote.iconKey),
                           color: behaviorNoteColor(behaviorNote),

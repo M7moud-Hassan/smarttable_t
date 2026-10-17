@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/utils/exceptions.dart';
 import 'package:smart_table_app/core/utils/token_storage.dart';
+import 'package:smart_table_app/core/widgets/app_text_scale_boundary.dart';
 import 'package:smart_table_app/features/auth/presentation/views/login_view.dart';
 import 'package:smart_table_app/generated/l10n/app_localizations.dart';
 
@@ -121,7 +122,9 @@ class App extends ConsumerWidget {
       navigatorKey: ref.watch(navigatorKeyProvider).navigatorKey,
       debugShowCheckedModeBanner: false,
       builder: (_, child) {
-        return _Unfocus(child: child!);
+        return AppTextScaleBoundary(
+          child: _Unfocus(child: child!),
+        );
       },
       title: 'Smart Table',
       theme: AppThemes().appTheme(),
