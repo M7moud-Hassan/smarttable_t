@@ -177,9 +177,9 @@ class _HomeViewState extends ConsumerState<HomeView> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 10),
                     gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 280,
-                      childAspectRatio: 1.45,
+                        SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: isTablet ? 3 : 2,
+                      mainAxisExtent: isTablet ? 150 : 125,
                       mainAxisSpacing: 15,
                       crossAxisSpacing: 15,
                     ),
