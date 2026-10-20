@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/constants/constants.dart';
-import 'package:smart_table_app/core/widgets/sliding_dropdown.dart';
 import 'package:smart_table_app/core/extensions/context_extensions.dart';
 import 'package:smart_table_app/features/attendance_behavior/data/models/attendance_behavior_models.dart';
 import 'package:smart_table_app/features/attendance_behavior/presentation/views/behavior_note_picker_sheet.dart';
@@ -17,11 +16,13 @@ class BehaviorPanel extends ConsumerWidget {
     required this.recording,
     required this.searchQuery,
     required this.onFinishedRecording,
+    required this.onSelectionStarted,
   });
 
   final bool recording;
   final String searchQuery;
   final VoidCallback onFinishedRecording;
+  final VoidCallback onSelectionStarted;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -55,14 +56,6 @@ class BehaviorPanel extends ConsumerWidget {
         assignableStudents.every(
           (student) => state.selectedBehaviorIds.contains(student.id),
         );
-    final selectedNoteId = state.behaviorNotes.any(
-      (note) => note.id == state.selectedBehaviorNoteId,
-    )
-        ? state.selectedBehaviorNoteId
-        : state.behaviorNotes.isEmpty
-            ? null
-            : state.behaviorNotes.first.id;
-
     final totalPoints = state.students.fold<int>(
       0,
       (sum, student) => sum + student.totalBehaviorPoints,
@@ -111,66 +104,40 @@ class BehaviorPanel extends ConsumerWidget {
           children: [
             const Icon(Icons.groups_2_outlined, color: AppColors.primaryColor),
             const SizedBox(width: 8),
-            Expanded(
+            const Expanded(
               child: Text(
-                recording ? 'تسجيل سلوك الطلاب' : 'أسماء الطلاب',
+                'سلوك الطلاب',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                 ),
               ),
             ),
-            if (recording)
-              Row(
+            Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text('تحديد الكل'),
                   Checkbox(
                     value: allSelected,
-                    onChanged: (selected) => ref
-                        .read(attendanceBehaviorProvider.notifier)
-                        .toggleAllBehaviorStudents(selected ?? false),
+                    onChanged: state.saving || assignableStudents.isEmpty
+                        ? null
+                        : (selected) {
+                            onSelectionStarted();
+                            ref.read(attendanceBehaviorProvider.notifier)
+                                .toggleAllBehaviorStudents(selected ?? false);
+                          },
                   ),
                 ],
               ),
           ],
         ),
-        if (recording && state.behaviorNotes.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          SlidingDropdown<int>(
-            value: selectedNoteId,
-            menuMaxHeight: 240,
-            decoration: InputDecoration(
-              labelText: 'اختر ملاحظة السلوك',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: AppColors.primaryColor),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: AppColors.primaryColor),
-              ),
-            ),
-            items: state.behaviorNotes
-                .map(
-                  (note) => DropdownMenuItem(
-                    value: note.id,
-                    child: Text('${note.name} (${note.signedPoints} نقاط)'),
-                  ),
-                )
-                .toList(growable: false),
-            onChanged: (noteId) => ref
-                .read(attendanceBehaviorProvider.notifier)
-                .selectBehaviorNote(noteId!),
-          ),
-        ],
         const SizedBox(height: 12),
         if (students.isEmpty)
           const NoSearchResults()
         else ...[
-          if (!recording) ...[
+          ...[
             _WholeClassBehaviorCard(
               points: totalPoints,
               enabled: assignableStudents.isNotEmpty && !state.saving,
@@ -201,7 +168,7 @@ class BehaviorPanel extends ConsumerWidget {
               return ClassroomStudentCard(
                 student: student,
                 selected: state.selectedBehaviorIds.contains(student.id),
-                enabled: !recording || canChange,
+                enabled: !state.saving,
                 badge: PointBadge(points: student.totalBehaviorPoints),
                 footer: Text(
                   note?.name ?? 'منح ملاحظة',
@@ -216,32 +183,32 @@ class BehaviorPanel extends ConsumerWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                menu: recording
+                menu: StudentMoreMenu(
+                  behavior: true,
+                  canModifyBehavior: student.behaviorRecordId != null &&
+                      student.teacherCanModifyBehavior,
+                  onSelected: (action) => _openBehaviorAction(
+                    context,
+                    ref,
+                    student,
+                    note,
+                    action,
+                  ),
+                ),
+                onTap: state.saving
                     ? null
-                    : StudentMoreMenu(
-                        behavior: true,
-                        canModifyBehavior: student.behaviorRecordId != null &&
-                            student.teacherCanModifyBehavior,
-                        onSelected: (action) => _openBehaviorAction(
-                          context,
-                          ref,
-                          student,
-                          note,
-                          action,
-                        ),
-                      ),
-                onTap: recording
-                    ? () => ref
-                        .read(attendanceBehaviorProvider.notifier)
-                        .toggleBehaviorStudent(student.id)
-                    : canChange
-                        ? () => _giveBehaviorNote(
-                              context,
-                              ref,
-                              studentName: student.name,
-                              studentIds: [student.id],
-                            )
-                        : () => _showReadOnlyMessage(context),
+                    : recording && canChange
+                        ? () => ref
+                            .read(attendanceBehaviorProvider.notifier)
+                            .toggleBehaviorStudent(student.id)
+                        : canChange
+                            ? () => _giveBehaviorNote(
+                                  context,
+                                  ref,
+                                  studentName: student.name,
+                                  studentIds: [student.id],
+                                )
+                            : () => _showReadOnlyMessage(context),
               );
             },
           ),
@@ -249,39 +216,21 @@ class BehaviorPanel extends ConsumerWidget {
         if (recording) ...[
           const SizedBox(height: 10),
           PrimaryActionButton(
-            label: 'حفظ البيانات',
-            onPressed: state.selectedBehaviorIds.isEmpty ||
-                    selectedNoteId == null ||
-                    state.saving
+            label: 'منح ملاحظة للمحددين (${state.selectedBehaviorIds.length})',
+            onPressed: state.selectedBehaviorIds.isEmpty || state.saving
                 ? null
                 : () async {
-                    if (state.selectedBehaviorNoteId != selectedNoteId) {
-                      ref
-                          .read(attendanceBehaviorProvider.notifier)
-                          .selectBehaviorNote(selectedNoteId);
-                    }
-                    try {
-                      await ref
-                          .read(attendanceBehaviorProvider.notifier)
-                          .saveBehaviorAssignment();
-                    } catch (error) {
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(perseveranceErrorMessage(error)),
-                        ),
-                      );
-                      return;
-                    }
-                    if (!context.mounted) return;
-                    onFinishedRecording();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const FeatureSuccessView(
-                          title: 'تم إضافة ملاحظة السلوك بنجاح',
-                        ),
-                      ),
+                    final saved = await _giveBehaviorNote(
+                      context,
+                      ref,
+                      studentName: 'الطلاب المحددون',
+                      studentIds: state.selectedBehaviorIds.toList(),
                     );
+                    if (!saved || !context.mounted) return;
+                    ref
+                        .read(attendanceBehaviorProvider.notifier)
+                        .toggleAllBehaviorStudents(false);
+                    onFinishedRecording();
                   },
           ),
         ],
@@ -289,7 +238,7 @@ class BehaviorPanel extends ConsumerWidget {
     );
   }
 
-  Future<void> _giveBehaviorNote(
+  Future<bool> _giveBehaviorNote(
     BuildContext context,
     WidgetRef ref, {
     required String studentName,
@@ -300,28 +249,30 @@ class BehaviorPanel extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('لا توجد ملاحظات سلوك متاحة')),
       );
-      return;
+      return false;
     }
     final note = await showBehaviorNotePickerSheet(
       context,
       studentName: studentName,
       notes: state.behaviorNotes,
     );
-    if (note == null || !context.mounted) return;
+    if (note == null || !context.mounted) return false;
     try {
       await ref.read(attendanceBehaviorProvider.notifier).assignBehaviorNote(
             studentIds: studentIds,
             noteId: note.id,
           );
-      if (!context.mounted) return;
+      if (!context.mounted) return false;
       context.showSnackbarSuccess(
         'تم منح ${note.name} إلى $studentName',
       );
+      return true;
     } catch (error) {
-      if (!context.mounted) return;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(perseveranceErrorMessage(error))),
       );
+      return false;
     }
   }
 

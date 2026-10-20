@@ -259,15 +259,15 @@ class ProfileView extends ConsumerWidget {
                 icon: SvgAssets.solarShareBold,
                 onTap: () {
                   shareText('''
-                      **اكتشف تطبيق Smartble P – مساعدك الذكي في إدارة العملية التعليمية**  
+                      **اكتشف تطبيق Smartble T – مساعدك الذكي في إدارة العملية التعليمية**
                       
-                      صُمم تطبيق **Smartble P** خصيصًا للمعلمين لمساعدتهم على إدارة مهامهم وتنظيم جداولهم بكل سهولة وفعالية. الآن يمكنك التركيز على التعليم بينما يقوم التطبيق بالباقي!  
+                      صُمم تطبيق **Smartble T** خصيصًا للمعلمين لمساعدتهم على إدارة مهامهم وتنظيم جداولهم بكل سهولة وفعالية. الآن يمكنك التركيز على التعليم بينما يقوم التطبيق بالباقي!
                       
                       🌟 **روابط التحميل**:  
-                      - 📱 **لأجهزة الآيفون (App Store)**: [Smartble P على App Store](https://apps.apple.com/us/app/smartble-p/id6478277343)  
-                      - 🤖 **لأجهزة الأندرويد (Google Play)**: [Smartble P على Google Play](https://play.google.com/store/apps/details?id=com.smartable.tables&hl=ar&pli=1)  
+                      - 📱 **لأجهزة الآيفون (App Store)**: [Smartble T على App Store](https://apps.apple.com/id/app/smartble-t/id1565596183)
+                      - 🤖 **لأجهزة الأندرويد (Google Play)**: [Smartble T على Google Play](https://play.google.com/store/apps/details?id=com.optimalsoft.smartble&hl=ar)
                       
-                      ابدأ باستخدام **Smartble P** اليوم، واجعل إدارة فصولك الدراسية أكثر سهولة وتنظيمًا! ✨  
+                      ابدأ باستخدام **Smartble T** اليوم، واجعل إدارة فصولك الدراسية أكثر سهولة وتنظيمًا! ✨
                       ''');
                 },
               ),

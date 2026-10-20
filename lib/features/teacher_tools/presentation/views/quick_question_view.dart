@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:smart_table_app/core/constants/constants.dart';
-import 'package:smart_table_app/core/extensions/context_extensions.dart';
 import 'package:smart_table_app/core/utils/student_name_formatter.dart';
 import 'package:smart_table_app/features/attendance_behavior/providers/attendance_behavior_provider.dart';
 import 'package:smart_table_app/features/teacher_tools/data/models/teacher_tools_api_models.dart';
@@ -10,789 +8,514 @@ import 'package:smart_table_app/features/teacher_tools/data/repositories/teacher
 import 'package:smart_table_app/features/teacher_tools/presentation/widgets/teacher_tools_widgets.dart';
 
 class QuickQuestionView extends ConsumerStatefulWidget {
-  const QuickQuestionView({
-    super.key,
-    required this.lessonContext,
-  });
-
+  const QuickQuestionView({super.key, required this.lessonContext});
   final TeacherToolsContext lessonContext;
-
   @override
   ConsumerState<QuickQuestionView> createState() => _QuickQuestionViewState();
 }
 
 class _QuickQuestionViewState extends ConsumerState<QuickQuestionView> {
-  final _questionController = TextEditingController();
-  final _noteController = TextEditingController();
-  final Set<int> _selectedIds = {};
-  final Map<int, QuickQuestionRating> _ratings = {};
   List<TeacherToolStudent> _students = const [];
-  int _step = 0;
-  bool _loading = true;
-  bool _saving = false;
-  String? _errorMessage;
-
-  List<TeacherToolStudent> get _selectedStudents => _students
-      .where((student) => _selectedIds.contains(student.id))
-      .toList(growable: false);
+  final Set<int> _selected = {};
+  QuickQuestionGame? _game;
+  bool _busy = true;
+  String? _error;
+  int _randomCount = 4;
+  TeacherToolsContext get _slot => widget.lessonContext;
+  TeacherToolsRepository get _repository =>
+      ref.read(teacherToolsRepositoryProvider);
+  bool get _started => _game?.players.isNotEmpty == true;
 
   @override
   void initState() {
     super.initState();
-    _students = widget.lessonContext.availableStudents;
     Future.microtask(_load);
   }
 
-  @override
-  void dispose() {
-    _questionController.dispose();
-    _noteController.dispose();
-    super.dispose();
-  }
-
-  void _toggleStudent(int studentId) {
-    setState(() {
-      if (_selectedIds.remove(studentId)) {
-        _ratings.remove(studentId);
-        return;
-      }
-      if (_selectedIds.length >= 6) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('يمكن اختيار ٦ طلاب كحد أقصى')),
-        );
-        return;
-      }
-      _selectedIds.add(studentId);
-    });
-  }
-
-  void _selectRandomStudents() {
-    final shuffled = [..._students]..shuffle();
-    final count = shuffled.length < 4 ? shuffled.length : 4;
-    setState(() {
-      _selectedIds
-        ..clear()
-        ..addAll(shuffled.take(count).map((student) => student.id));
-      _ratings.clear();
-    });
-  }
-
   Future<void> _load() async {
-    final classId = widget.lessonContext.classId;
-    if (classId == null) {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final classId = _slot.classId;
+      if (classId == null) throw StateError('تعذر تحديد الفصل لهذه الحصة');
+      final results = await Future.wait<Object>([
+        _repository.getPresentStudents(
+            classId: classId, session: _slot.session, date: _slot.apiDate),
+        _repository.getQuickQuestionGame(
+            classId: classId, session: _slot.session, date: _slot.apiDate),
+      ]);
+      if (!mounted) return;
       setState(() {
-        _loading = false;
-        _errorMessage = 'تعذر تحديد الفصل لهذه الحصة';
+        _students = (results[0] as PresentStudentsData).students;
+        _game = results[1] as QuickQuestionGame;
+        _selected
+            .removeWhere((id) => !_students.any((student) => student.id == id));
       });
+    } catch (error) {
+      if (mounted) setState(() => _error = perseveranceErrorMessage(error));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _mutate(
+      {String? action, int? studentId, bool finish = false}) async {
+    if (_busy || _error != null || _slot.classId == null) return;
+    setState(() => _busy = true);
+    try {
+      final QuickQuestionGame result;
+      if (finish) {
+        result = await _repository.finishQuickQuestionGame(
+            classId: _slot.classId!,
+            session: _slot.session,
+            date: _slot.apiDate);
+      } else if (action != null) {
+        result = await _repository.scoreQuickQuestionGame(
+            classId: _slot.classId!,
+            session: _slot.session,
+            date: _slot.apiDate,
+            action: action,
+            studentId: studentId);
+      } else {
+        result = await _repository.startQuickQuestionGame(
+            classId: _slot.classId!,
+            session: _slot.session,
+            date: _slot.apiDate,
+            studentIds: _selected.toList());
+        if (result.players.isEmpty) throw StateError('تعذر استعادة المشاركين');
+      }
+      if (mounted) setState(() => _game = result);
+    } catch (error) {
+      // The write may have succeeded. Require a state refresh before another action.
+      if (mounted) {
+        setState(() => _error =
+            'تعذر تأكيد حالة المسابقة. أعد التحميل قبل المتابعة.\n${perseveranceErrorMessage(error)}');
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  static const _teal = Color(0xFF259CA6);
+  static const _ink = Color(0xFF213D46);
+
+  void _toggle(TeacherToolStudent student) {
+    if (_started) {
+      _mutate(action: 'award', studentId: student.id);
+      return;
+    }
+    if (!_selected.contains(student.id) && _selected.length >= 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('يمكن اختيار ٦ طلاب كحد أقصى')));
       return;
     }
     setState(() {
-      _loading = true;
-      _errorMessage = null;
+      if (!_selected.remove(student.id)) _selected.add(student.id);
     });
-    try {
-      final repository = ref.read(teacherToolsRepositoryProvider);
-      final results = await Future.wait<dynamic>([
-        repository.getPresentStudents(
-          classId: classId,
-          session: widget.lessonContext.session,
-          date: widget.lessonContext.apiDate,
-        ),
-        repository.getQuickQuestion(
-          classId: classId,
-          session: widget.lessonContext.session,
-          date: widget.lessonContext.apiDate,
-        ),
-      ]);
-      final roster = results[0] as PresentStudentsData;
-      final question = results[1] as QuickQuestionData;
-      if (!mounted) return;
-      setState(() {
-        _students = roster.students;
-        _selectedIds
-          ..clear()
-          ..addAll(question.students.map((item) => item.student.id));
-        _ratings
-          ..clear()
-          ..addEntries(
-            question.students
-                .where((item) => item.rating != null)
-                .map((item) => MapEntry(item.student.id, item.rating!)),
-          );
-        _questionController.text = question.question;
-        _noteController.text = question.note;
-        _loading = false;
-      });
-    } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _errorMessage = perseveranceErrorMessage(error);
-      });
-    }
-  }
-
-  Future<void> _saveSelection() async {
-    final classId = widget.lessonContext.classId;
-    if (classId == null || _selectedIds.isEmpty || _saving) return;
-    setState(() => _saving = true);
-    try {
-      final result = await ref
-          .read(teacherToolsRepositoryProvider)
-          .selectQuickQuestionStudents(
-            classId: classId,
-            session: widget.lessonContext.session,
-            date: widget.lessonContext.apiDate,
-            studentIds: _selectedIds.toList(growable: false),
-            question: _questionController.text,
-            note: _noteController.text,
-          );
-      if (!mounted) return;
-      setState(() {
-        _ratings
-          ..clear()
-          ..addEntries(
-            result.students
-                .where((item) => item.rating != null)
-                .map((item) => MapEntry(item.student.id, item.rating!)),
-          );
-        _saving = false;
-        _step = 1;
-      });
-    } catch (error) {
-      if (!mounted) return;
-      setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(perseveranceErrorMessage(error))),
-      );
-    }
-  }
-
-  Future<void> _saveRatings() async {
-    final classId = widget.lessonContext.classId;
-    if (classId == null || _ratings.length != _selectedIds.length || _saving) {
-      return;
-    }
-    setState(() => _saving = true);
-    try {
-      await ref.read(teacherToolsRepositoryProvider).rateQuickQuestion(
-            classId: classId,
-            session: widget.lessonContext.session,
-            date: widget.lessonContext.apiDate,
-            ratings: _ratings,
-          );
-      if (!mounted) return;
-      setState(() => _saving = false);
-      context.showSnackbarSuccess('تم اعتماد تقييم الفهم بنجاح');
-    } catch (error) {
-      if (!mounted) return;
-      setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(perseveranceErrorMessage(error))),
-      );
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final finished = _game?.finished == true;
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: TeacherToolsAppBar(
-          title: 'السؤال السريع',
-          action: _step == 1
-              ? TextButton(
-                  onPressed: () => setState(() => _step = 0),
-                  child: const Text(
-                    'تعديل الاختيار',
-                    style: TextStyle(
-                      color: AppColors.secondryColor,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                )
-              : null,
-        ),
-        body: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : _errorMessage != null
-                ? TeacherToolsLoadError(
-                    message: _errorMessage!,
-                    onRetry: _load,
-                  )
-                : Column(
-                    children: [
+        backgroundColor: const Color(0xFFF5F9FA),
+        appBar: const TeacherToolsAppBar(title: 'السؤال السريع'),
+        body: _error != null
+            ? TeacherToolsLoadError(message: _error!, onRetry: _load)
+            : _busy && _game == null
+                ? const Center(child: CircularProgressIndicator())
+                : CustomScrollView(slivers: [
+                    SliverToBoxAdapter(
+                        child: Column(children: [
+                      SizedBox(
+                          height: 3,
+                          child:
+                              _busy ? const LinearProgressIndicator() : null),
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(18, 8, 18, 10),
-                        child: Column(
-                          children: [
-                            TeacherToolsContextCard(
-                              lessonContext: widget.lessonContext,
-                              compact: true,
-                            ),
-                            const SizedBox(height: 14),
-                            _QuestionProgress(currentStep: _step),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 220),
-                          child: _step == 0
-                              ? _StudentSelectionStep(
-                                  key: const ValueKey('select-students'),
-                                  selectedIds: _selectedIds,
-                                  students: _students,
-                                  questionController: _questionController,
-                                  noteController: _noteController,
-                                  onToggle: _toggleStudent,
-                                  onRandomSelect: _selectRandomStudents,
-                                )
-                              : _RatingStep(
-                                  key: const ValueKey('rate-students'),
-                                  students: _selectedStudents,
-                                  ratings: _ratings,
-                                  onRated: (studentId, rating) => setState(
-                                    () => _ratings[studentId] = rating,
-                                  ),
-                                ),
-                        ),
-                      ),
-                    ],
-                  ),
-        bottomNavigationBar: SafeArea(
-          top: false,
-          minimum: const EdgeInsets.fromLTRB(18, 8, 18, 14),
-          child: TeacherToolsPrimaryButton(
-            label: _step == 0 ? 'التالي: تقييم الفهم' : 'اعتماد التقييم',
-            icon: _step == 0 ? null : Icons.check_circle_outline_rounded,
-            onPressed: _loading || _errorMessage != null || _saving
-                ? null
-                : _step == 0
-                    ? _selectedIds.isEmpty
-                        ? null
-                        : _saveSelection
-                    : _ratings.length != _selectedIds.length
-                        ? null
-                        : _saveRatings,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _QuestionProgress extends StatelessWidget {
-  const _QuestionProgress({required this.currentStep});
-
-  final int currentStep;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        _ProgressStep(
-          number: '١',
-          label: 'اختيار الطلاب',
-          active: currentStep == 0,
-          complete: currentStep > 0,
-        ),
-        Expanded(
-          child: Container(
-            height: 2,
-            color: currentStep > 0
-                ? AppColors.primaryColor
-                : const Color(0xFFE3E3E3),
-          ),
-        ),
-        _ProgressStep(
-          number: '٢',
-          label: 'تقييم الفهم',
-          active: currentStep == 1,
-          complete: false,
-        ),
-      ],
-    );
-  }
-}
-
-class _ProgressStep extends StatelessWidget {
-  const _ProgressStep({
-    required this.number,
-    required this.label,
-    required this.active,
-    required this.complete,
-  });
-
-  final String number;
-  final String label;
-  final bool active;
-  final bool complete;
-
-  @override
-  Widget build(BuildContext context) {
-    final highlighted = active || complete;
-    return SizedBox(
-      width: 105,
-      child: Column(
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            width: 32,
-            height: 32,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: highlighted ? AppColors.primaryColor : Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: highlighted
-                    ? AppColors.primaryColor
-                    : const Color(0xFFD5D5D5),
-              ),
-            ),
-            child: complete
-                ? const Icon(Icons.check_rounded, color: Colors.white, size: 19)
-                : Text(
-                    number,
-                    style: TextStyle(
-                      color: active ? Colors.white : const Color(0xFF777777),
-                      fontWeight: FontWeight.w800,
+                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                          child: _contextStrip()),
+                      Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: _header(finished)),
+                      if (!_started)
+                        Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                            child: _selectionControls()),
+                      if (!_started && _students.isEmpty)
+                        const Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Text('لا يوجد طلاب حاضرون لهذه الحصة')),
+                    ])),
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+                      sliver:
+                          SliverLayoutBuilder(builder: (context, constraints) {
+                        final students = _started
+                            ? _game!.players.map((p) => p.student).toList()
+                            : _students;
+                        final columns =
+                            constraints.crossAxisExtent >= 600 ? 3 : 2;
+                        final textScale =
+                            MediaQuery.textScalerOf(context).scale(14) / 14;
+                        return SliverGrid(
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: columns,
+                                  mainAxisExtent: (_started ? 190 : 116) +
+                                      (textScale - 1).clamp(0, 2) * 60,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12),
+                          delegate: SliverChildBuilderDelegate(
+                              (context, index) => _studentCard(
+                                  students[index], index, finished),
+                              childCount: students.length),
+                        );
+                      }),
                     ),
-                  ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: highlighted
-                  ? AppColors.secondryColor
-                  : const Color(0xFF777777),
-              fontSize: 12,
-              fontWeight: highlighted ? FontWeight.w800 : FontWeight.w500,
-            ),
-          ),
-        ],
+                  ]),
+        bottomNavigationBar: _error != null || finished ? null : _footer(),
       ),
     );
   }
-}
 
-class _StudentSelectionStep extends StatelessWidget {
-  const _StudentSelectionStep({
-    super.key,
-    required this.selectedIds,
-    required this.students,
-    required this.questionController,
-    required this.noteController,
-    required this.onToggle,
-    required this.onRandomSelect,
-  });
-
-  final Set<int> selectedIds;
-  final List<TeacherToolStudent> students;
-  final TextEditingController questionController;
-  final TextEditingController noteController;
-  final ValueChanged<int> onToggle;
-  final VoidCallback onRandomSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(18, 4, 18, 16),
-      children: [
-        PresentStudentsNotice(count: students.length),
-        const SizedBox(height: 17),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TeacherToolSectionTitle(
-              title: 'من تريد أن تسأل؟',
-              subtitle: 'تم اختيار ${selectedIds.length} طلاب',
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: onRandomSelect,
-              icon: const Icon(Icons.casino_outlined, size: 18),
-              label: const Text('اختيار عشوائي'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        LayoutBuilder(
-          builder: (context, constraints) => GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: students.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: constraints.maxWidth >= 650 ? 5 : 3,
-              crossAxisSpacing: 9,
-              mainAxisSpacing: 9,
-              mainAxisExtent: 116,
-            ),
-            itemBuilder: (_, index) {
-              final student = students[index];
-              final selectedIndex = selectedIds.toList().indexOf(student.id);
-              return _SelectableStudentCard(
-                student: student,
-                selected: selectedIndex >= 0,
-                selectionOrder: selectedIndex >= 0 ? selectedIndex + 1 : null,
-                onTap: () => onToggle(student.id),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 10),
-        const TeacherToolSectionTitle(
-          title: 'تفاصيل السؤال',
-          subtitle: 'اختياري — يمكنك كتابتها الآن أو الاكتفاء بالتقييم',
-        ),
-        const SizedBox(height: 10),
-        TextField(
-          controller: questionController,
-          maxLines: 2,
-          decoration: InputDecoration(
-            labelText: 'نص السؤال',
-            hintText: 'مثال: ما الفكرة الرئيسة في الدرس؟',
-            prefixIcon: const Icon(Icons.help_outline_rounded),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: noteController,
-          maxLines: 2,
-          decoration: InputDecoration(
-            labelText: 'ملاحظة للمعلم',
-            prefixIcon: const Icon(Icons.sticky_note_2_outlined),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SelectableStudentCard extends StatelessWidget {
-  const _SelectableStudentCard({
-    required this.student,
-    required this.selected,
-    required this.selectionOrder,
-    required this.onTap,
-  });
-
-  final TeacherToolStudent student;
-  final bool selected;
-  final int? selectionOrder;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      key: ValueKey('quick-question-student-${student.id}'),
-      color: selected ? const Color(0xFFE9FAFA) : Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(7, 10, 7, 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color:
-                  selected ? AppColors.primaryColor : const Color(0xFFE5E5E5),
-              width: selected ? 2 : 1,
-            ),
-          ),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TeacherToolsStudentAvatar(name: student.name, radius: 22),
-                    const SizedBox(height: 7),
-                    Text(
-                      compactStudentName(student.name),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        height: 1.2,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (selectionOrder != null)
-                PositionedDirectional(
-                  top: 0,
-                  start: 0,
-                  child: Container(
-                    width: 25,
-                    height: 25,
-                    alignment: Alignment.center,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primaryColor,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      '$selectionOrder',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RatingStep extends StatelessWidget {
-  const _RatingStep({
-    super.key,
-    required this.students,
-    required this.ratings,
-    required this.onRated,
-  });
-
-  final List<TeacherToolStudent> students;
-  final Map<int, QuickQuestionRating> ratings;
-  final void Function(int studentId, QuickQuestionRating rating) onRated;
-
-  @override
-  Widget build(BuildContext context) {
-    final understood = ratings.values
-        .where((rating) => rating == QuickQuestionRating.understood)
-        .length;
-    final partial = ratings.values
-        .where((rating) => rating == QuickQuestionRating.partial)
-        .length;
-    final notUnderstood = ratings.values
-        .where((rating) => rating == QuickQuestionRating.notUnderstood)
-        .length;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(18, 4, 18, 16),
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _RatingCount(
-                count: understood,
-                label: 'فهم',
-                color: teacherToolsGreen,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _RatingCount(
-                count: partial,
-                label: 'فهم جزئي',
-                color: teacherToolsAmber,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _RatingCount(
-                count: notUnderstood,
-                label: 'لم يفهم',
-                color: teacherToolsRed,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 18),
-        const TeacherToolSectionTitle(
-          title: 'قيّم إجابة كل طالب',
-          subtitle: 'اختر مستوى الفهم بعد سماع الإجابة',
-        ),
-        const SizedBox(height: 10),
-        ...students.map(
-          (student) => _StudentRatingCard(
-            student: student,
-            rating: ratings[student.id],
-            onRated: (rating) => onRated(student.id, rating),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _RatingCount extends StatelessWidget {
-  const _RatingCount({
-    required this.count,
-    required this.label,
-    required this.color,
-  });
-
-  final int count;
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: .08),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        children: [
-          Text(
-            '$count',
-            style: TextStyle(
-              color: color,
-              fontSize: 21,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          Text(label, style: TextStyle(color: color, fontSize: 11)),
-        ],
-      ),
-    );
-  }
-}
-
-class _StudentRatingCard extends StatelessWidget {
-  const _StudentRatingCard({
-    required this.student,
-    required this.rating,
-    required this.onRated,
-  });
-
-  final TeacherToolStudent student;
-  final QuickQuestionRating? rating;
-  final ValueChanged<QuickQuestionRating> onRated;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 11),
-      padding: const EdgeInsets.all(13),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: const Color(0xFFE5E5E5)),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              TeacherToolsStudentAvatar(name: student.name, radius: 22),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  compactStudentName(student.name),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _RatingChoice(
-                  label: 'فهم',
-                  icon: Icons.sentiment_satisfied_alt_rounded,
-                  color: teacherToolsGreen,
-                  selected: rating == QuickQuestionRating.understood,
-                  onTap: () => onRated(QuickQuestionRating.understood),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: _RatingChoice(
-                  label: 'جزئي',
-                  icon: Icons.sentiment_neutral_rounded,
-                  color: teacherToolsAmber,
-                  selected: rating == QuickQuestionRating.partial,
-                  onTap: () => onRated(QuickQuestionRating.partial),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: _RatingChoice(
-                  label: 'لم يفهم',
-                  icon: Icons.sentiment_dissatisfied_rounded,
-                  color: teacherToolsRed,
-                  selected: rating == QuickQuestionRating.notUnderstood,
-                  onTap: () => onRated(QuickQuestionRating.notUnderstood),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RatingChoice extends StatelessWidget {
-  const _RatingChoice({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final Color color;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 3),
+  Widget _contextStrip() => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: selected ? color : color.withValues(alpha: .08),
-          borderRadius: BorderRadius.circular(12),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2ECEE))),
+        child: Row(children: [
+          const Icon(Icons.school_outlined, color: _teal, size: 19),
+          const SizedBox(width: 8),
+          Expanded(
+              child: Text('${_slot.className} · ${_slot.sessionLabel}',
+                  style: const TextStyle(
+                      fontSize: 12, color: _ink, fontWeight: FontWeight.w700),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis)),
+          const SizedBox(width: 8),
+          Text(_slot.apiDate.replaceAll('-', '/'),
+              style: const TextStyle(fontSize: 11, color: Color(0xFF73858B))),
+        ]),
+      );
+
+  Widget _header(bool finished) =>
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(
+              padding: const EdgeInsets.all(9),
+              decoration: BoxDecoration(
+                  color: const Color(0xFFE1F2F2),
+                  borderRadius: BorderRadius.circular(12)),
+              child: Icon(
+                  finished
+                      ? Icons.emoji_events_rounded
+                      : _started
+                          ? Icons.bolt_rounded
+                          : Icons.groups_2_outlined,
+                  color: _teal,
+                  size: 24)),
+          const SizedBox(width: 10),
+          Expanded(
+              child: Text(
+                  finished
+                      ? 'نتيجة المسابقة'
+                      : _started
+                          ? 'من الأسرع؟'
+                          : 'اختر المشاركين في المسابقة',
+                  style: const TextStyle(
+                      fontSize: 19,
+                      height: 1.4,
+                      fontWeight: FontWeight.w800,
+                      color: _ink))),
+          if (_started && !finished)
+            Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                    color: const Color(0xFFE2F4EB),
+                    borderRadius: BorderRadius.circular(20)),
+                child: const Text('جارية',
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF27835A),
+                        fontWeight: FontWeight.bold))),
+        ]),
+        const SizedBox(height: 10),
+        Text(
+            _started
+                ? (finished
+                    ? 'انتهت المسابقة — النتائج أدناه'
+                    : 'اضغط اسم أول طالب يجيب لمنحه نقطة')
+                : 'اختر حتى ٦ طلاب، أو دع الاختيار لنا',
+            style: const TextStyle(
+                fontSize: 12, height: 1.6, color: Color(0xFF73858B))),
+        if (finished && _game!.winnerIds.isNotEmpty)
+          Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                  'الفائز: ${_game!.players.where((p) => _game!.winnerIds.contains(p.student.id)).map((p) => p.student.name).join('، ')}',
+                  style: const TextStyle(
+                      color: _ink, fontWeight: FontWeight.bold))),
+        if (finished && _game!.message.isNotEmpty) Text(_game!.message),
+      ]);
+
+  Widget _selectionControls() => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFE2ECEE))),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.check_circle_outline, size: 17, color: _teal),
+            const SizedBox(width: 6),
+            Expanded(
+                child: Text('تم اختيار ${_selected.length} طلاب',
+                    style: const TextStyle(
+                        color: _ink,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700))),
+            Text('${_selected.length} / 6',
+                style: const TextStyle(
+                    color: _teal, fontSize: 12, fontWeight: FontWeight.bold)),
+          ]),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+              builder: (context, constraints) => Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          decoration: BoxDecoration(
+                              color: const Color(0xFFF2F7F8),
+                              borderRadius: BorderRadius.circular(10)),
+                          child: DropdownButtonHideUnderline(
+                              child: DropdownButton<int>(
+                            value: _randomCount,
+                            isDense: true,
+                            style: const TextStyle(
+                                fontSize: 12,
+                                color: _ink,
+                                fontWeight: FontWeight.w700),
+                            borderRadius: BorderRadius.circular(12),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            items: [
+                              for (final count in [2, 3, 4, 5, 6])
+                                DropdownMenuItem(
+                                    value: count, child: Text('$count طلاب'))
+                            ],
+                            onChanged: _busy
+                                ? null
+                                : (value) =>
+                                    setState(() => _randomCount = value!),
+                          )),
+                        ),
+                        TextButton.icon(
+                            style: TextButton.styleFrom(
+                                foregroundColor: _teal,
+                                textStyle: const TextStyle(
+                                    fontSize: 12, fontWeight: FontWeight.w700)),
+                            onPressed: _busy || _students.isEmpty
+                                ? null
+                                : () {
+                                    final shuffled = [..._students]..shuffle();
+                                    setState(() {
+                                      _selected.clear();
+                                      _selected.addAll(shuffled
+                                          .take(_randomCount)
+                                          .map((s) => s.id));
+                                    });
+                                  },
+                            icon: const Icon(Icons.shuffle_rounded, size: 18),
+                            label: const Text('اختيار عشوائي')),
+                      ])),
+        ]),
+      );
+
+  Widget _studentCard(TeacherToolStudent student, int index, bool finished) {
+    final selected = !_started && _selected.contains(student.id);
+    final winner = finished && _game!.winnerIds.contains(student.id);
+    final score = _started ? _game!.players[index].score : 0;
+    final highScore = _started
+        ? _game!.players
+            .fold<int>(0, (best, p) => p.score > best ? p.score : best)
+        : 0;
+    final leading = !finished && highScore > 0 && score == highScore;
+    final accent = winner || leading ? const Color(0xFFB88220) : _teal;
+    return Semantics(
+      selected: selected,
+      button: !finished,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        decoration: BoxDecoration(
+          color: winner || leading
+              ? const Color(0xFFFFF9EB)
+              : selected
+                  ? const Color(0xFFE7F5F4)
+                  : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+              color: winner || leading
+                  ? const Color(0xFFE9CC88)
+                  : selected
+                      ? _teal
+                      : const Color(0xFFE1EAED),
+              width: selected ? 1.6 : 1),
         ),
-        child: Column(
-          children: [
-            Icon(icon, color: selected ? Colors.white : color, size: 22),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              maxLines: 1,
-              style: TextStyle(
-                color: selected ? Colors.white : color,
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
-        ),
+        child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              key: ValueKey('quick-question-student-${student.id}'),
+              borderRadius: BorderRadius.circular(20),
+              onTap: _busy || finished ? null : () => _toggle(student),
+              child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(children: [
+                          Container(
+                              width: 36,
+                              height: 36,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                  color: accent.withValues(alpha: .09),
+                                  borderRadius: BorderRadius.circular(12)),
+                              child: Icon(
+                                  winner || leading
+                                      ? Icons.emoji_events_outlined
+                                      : Icons.person_outline_rounded,
+                                  color: accent,
+                                  size: 22)),
+                          const Spacer(),
+                          if (!_started)
+                            Icon(
+                                selected
+                                    ? Icons.check_circle_rounded
+                                    : Icons.radio_button_unchecked_rounded,
+                                color:
+                                    selected ? _teal : const Color(0xFFCCDADD),
+                                size: 21),
+                          if (_started && !finished)
+                            Icon(Icons.add_circle_outline_rounded,
+                                color: accent.withValues(alpha: .6), size: 21),
+                        ]),
+                        const SizedBox(height: 10),
+                        Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(compactStudentName(student.name),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontSize: 13,
+                                    height: 1.5,
+                                    color: _ink,
+                                    fontWeight: FontWeight.w700))),
+                        if (_started) ...[
+                          const Spacer(),
+                          Row(
+                              crossAxisAlignment: CrossAxisAlignment.baseline,
+                              textBaseline: TextBaseline.alphabetic,
+                              children: [
+                                AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 200),
+                                    child: Text('$score',
+                                        key: ValueKey(score),
+                                        semanticsLabel:
+                                            '${student.name}: $score نقطة',
+                                        style: TextStyle(
+                                            fontSize: 38,
+                                            height: 1.1,
+                                            color: accent,
+                                            fontWeight: FontWeight.w800))),
+                                const SizedBox(width: 6),
+                                const Text('نقطة',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        color: Color(0xFF73858B))),
+                              ]),
+                          if (winner || leading)
+                            Align(
+                                alignment: Alignment.centerRight,
+                                child: Text(winner ? 'الفائز' : 'في الصدارة',
+                                    style: TextStyle(
+                                        fontSize: 10,
+                                        color: accent,
+                                        fontWeight: FontWeight.w700))),
+                        ],
+                      ])),
+            )),
       ),
     );
   }
+
+  Widget _footer() => Container(
+        decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Color(0xFFE2ECEE)))),
+        child: SafeArea(
+          top: false,
+          minimum: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            if (_started) ...[
+              Row(children: [
+                Expanded(
+                    child: _secondaryAction('تراجع', Icons.undo_rounded,
+                        () => _mutate(action: 'undo'))),
+                const SizedBox(width: 10),
+                Expanded(
+                    child: _secondaryAction(
+                        'تخطي السؤال',
+                        Icons.skip_next_rounded,
+                        () => _mutate(action: 'skip'))),
+              ]),
+              const SizedBox(height: 12),
+            ],
+            SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                      backgroundColor: _teal,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: const Color(0xFFDBE7E9),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 15, horizontal: 16),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      textStyle: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w800)),
+                  onPressed: _busy || (!_started && _selected.isEmpty)
+                      ? null
+                      : () => _mutate(finish: _started),
+                  icon: Icon(
+                      _started ? Icons.flag_outlined : Icons.play_arrow_rounded,
+                      size: 21),
+                  label: Text(_started ? 'إنهاء المسابقة' : 'بدء المسابقة'),
+                )),
+          ]),
+        ),
+      );
+
+  Widget _secondaryAction(String label, IconData icon, VoidCallback onTap) =>
+      OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+            foregroundColor: _ink,
+            backgroundColor: const Color(0xFFF7FAFB),
+            side: const BorderSide(color: Color(0xFFE0EAED)),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            textStyle:
+                const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+        onPressed: _busy ? null : onTap,
+        icon: Icon(icon, size: 18),
+        label: Text(label),
+      );
 }

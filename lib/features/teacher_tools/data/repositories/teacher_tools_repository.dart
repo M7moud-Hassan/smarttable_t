@@ -10,6 +10,22 @@ final teacherToolsRepositoryProvider = Provider<TeacherToolsRepository>((ref) {
 });
 
 abstract class TeacherToolsRepository {
+  Future<QuickQuestionGame> getQuickQuestionGame(
+      {required int classId, required String session, required String date});
+  Future<QuickQuestionGame> startQuickQuestionGame(
+      {required int classId,
+      required String session,
+      required String date,
+      required List<int> studentIds});
+  Future<QuickQuestionGame> scoreQuickQuestionGame(
+      {required int classId,
+      required String session,
+      required String date,
+      required String action,
+      int? studentId});
+  Future<QuickQuestionGame> finishQuickQuestionGame(
+      {required int classId, required String session, required String date});
+
   Future<PresentStudentsData> getPresentStudents({
     required int classId,
     required String session,
@@ -81,6 +97,63 @@ class ApiTeacherToolsRepository implements TeacherToolsRepository {
   ApiTeacherToolsRepository(this._apiService);
 
   final ApiService _apiService;
+
+  @override
+  Future<QuickQuestionGame> getQuickQuestionGame(
+      {required int classId,
+      required String session,
+      required String date}) async {
+    final response = await _apiService.get(
+        Endpoints.sessionToolsQuickQuestionGame,
+        parameters: _slotParameters(classId, session, date));
+    _ensureSuccess(response.success, response.message);
+    return QuickQuestionGame.fromJson(_asMap(response.data));
+  }
+
+  Future<QuickQuestionGame> _mutateGame(String endpoint, int classId,
+      String session, String date, Map<String, dynamic> body) async {
+    final response = await _apiService
+        .post(endpoint, {..._slotParameters(classId, session, date), ...body});
+    _ensureSuccess(response.success, response.message);
+    // Fetch the authoritative state even when the mutation only returns an acknowledgement.
+    return getQuickQuestionGame(classId: classId, session: session, date: date);
+  }
+
+  @override
+  Future<QuickQuestionGame> startQuickQuestionGame(
+          {required int classId,
+          required String session,
+          required String date,
+          required List<int> studentIds}) =>
+      _mutateGame(Endpoints.sessionToolsQuickQuestionGame, classId, session,
+          date, {'student_ids': studentIds});
+
+  @override
+  Future<QuickQuestionGame> scoreQuickQuestionGame(
+      {required int classId,
+      required String session,
+      required String date,
+      required String action,
+      int? studentId}) {
+    if (!{'award', 'skip', 'undo'}.contains(action) ||
+        (action == 'award' && studentId == null)) {
+      throw ArgumentError('Invalid quick question action');
+    }
+    return _mutateGame(
+        Endpoints.sessionToolsQuickQuestionScore,
+        classId,
+        session,
+        date,
+        {'action': action, if (studentId != null) 'student_id': studentId});
+  }
+
+  @override
+  Future<QuickQuestionGame> finishQuickQuestionGame(
+          {required int classId,
+          required String session,
+          required String date}) =>
+      _mutateGame(Endpoints.sessionToolsQuickQuestionFinish, classId, session,
+          date, {});
 
   @override
   Future<PresentStudentsData> getPresentStudents({

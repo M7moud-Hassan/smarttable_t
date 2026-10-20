@@ -106,13 +106,6 @@ class TeacherToolsContextCard extends StatelessWidget {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const Text(
-                        'كل الأدوات مرتبطة بهذه الحصة',
-                        style: TextStyle(
-                          color: Color(0xFF6F7777),
-                          fontSize: 12,
-                        ),
-                      ),
                     ],
                   ),
                 ),

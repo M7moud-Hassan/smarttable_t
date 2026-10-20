@@ -109,6 +109,12 @@ class Endpoints {
       'teacher-mobile/v2/perseverance/reports/options/';
   static const String sessionToolsPresentStudents =
       'teacher-mobile/v2/session-tools/present-students/';
+  static const String sessionToolsQuickQuestionGame =
+      'teacher-mobile/v2/session-tools/quick-question/game/';
+  static const String sessionToolsQuickQuestionScore =
+      'teacher-mobile/v2/session-tools/quick-question/game/score/';
+  static const String sessionToolsQuickQuestionFinish =
+      'teacher-mobile/v2/session-tools/quick-question/game/finish/';
   static const String sessionToolsQuickQuestion =
       'teacher-mobile/v2/session-tools/quick-question/';
   static const String sessionToolsQuickQuestionRate =

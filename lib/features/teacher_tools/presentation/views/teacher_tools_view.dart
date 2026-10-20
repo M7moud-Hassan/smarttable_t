@@ -37,7 +37,6 @@ class TeacherToolsView extends StatelessWidget {
     final tools = <_ToolDefinition>[
       _ToolDefinition(
         title: 'السؤال السريع',
-        description: 'اختر طلابًا وقيّم مستوى الفهم',
         icon: Icons.quiz_outlined,
         color: AppColors.primaryColor,
         badge: 'خطوتان',
@@ -45,7 +44,6 @@ class TeacherToolsView extends StatelessWidget {
       ),
       _ToolDefinition(
         title: 'اختيار عشوائي',
-        description: 'اختيار عادل دون تكرار في اليوم',
         icon: Icons.casino_outlined,
         color: teacherToolsBlue,
         badge: 'أثناء الحصة',
@@ -53,7 +51,6 @@ class TeacherToolsView extends StatelessWidget {
       ),
       _ToolDefinition(
         title: 'مخطط المقاعد',
-        description: 'رتّب الطلاب داخل الفصل بصريًا',
         icon: Icons.event_seat_outlined,
         color: teacherToolsAmber,
         badge: 'للفصل',
@@ -61,7 +58,6 @@ class TeacherToolsView extends StatelessWidget {
       ),
       _ToolDefinition(
         title: 'ملخص الحصة',
-        description: 'راجع النتائج واحفظها كشاهد أداء',
         icon: Icons.assessment_outlined,
         color: teacherToolsGreen,
         badge: 'نهاية الحصة',
@@ -69,7 +65,6 @@ class TeacherToolsView extends StatelessWidget {
       ),
       const _ToolDefinition(
         title: 'مؤقت الحصة',
-        description: 'اضبط وقت النشاط ونبّه الطلاب عند انتهائه',
         icon: Icons.timer_outlined,
         color: AppColors.secondryColor,
         badge: 'محلي',
@@ -86,7 +81,6 @@ class TeacherToolsView extends StatelessWidget {
           const SizedBox(height: 22),
           const TeacherToolSectionTitle(
             title: 'ماذا تريد أن تفعل؟',
-            subtitle: 'اختر أداة وستبقى بيانات الحصة محددة تلقائيًا',
           ),
           const SizedBox(height: 14),
           LayoutBuilder(
@@ -100,7 +94,7 @@ class TeacherToolsView extends StatelessWidget {
                   crossAxisCount: columns,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
-                  childAspectRatio: columns == 4 ? .9 : .92,
+                  mainAxisExtent: 154,
                 ),
                 itemBuilder: (_, index) => _TeacherToolCard(
                   definition: tools[index],
@@ -156,7 +150,6 @@ class TeacherToolsView extends StatelessWidget {
 class _ToolDefinition {
   const _ToolDefinition({
     required this.title,
-    required this.description,
     required this.icon,
     required this.color,
     required this.badge,
@@ -164,7 +157,6 @@ class _ToolDefinition {
   });
 
   final String title;
-  final String description;
   final IconData icon;
   final Color color;
   final String badge;
@@ -189,7 +181,7 @@ class _TeacherToolCard extends StatelessWidget {
           MaterialPageRoute(builder: (_) => definition.page),
         ),
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: definition.color.withValues(alpha: .22)),
@@ -200,8 +192,8 @@ class _TeacherToolCard extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    width: 47,
-                    height: 47,
+                    width: 42,
+                    height: 42,
                     decoration: BoxDecoration(
                       color: definition.color.withValues(alpha: .12),
                       borderRadius: BorderRadius.circular(15),
@@ -209,7 +201,7 @@ class _TeacherToolCard extends StatelessWidget {
                     child: Icon(
                       definition.icon,
                       color: definition.color,
-                      size: 27,
+                      size: 25,
                     ),
                   ),
                   const Spacer(),
@@ -221,7 +213,7 @@ class _TeacherToolCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -244,17 +236,6 @@ class _TeacherToolCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style:
                     const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                definition.description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Color(0xFF737373),
-                  fontSize: 12,
-                  height: 1.35,
-                ),
               ),
             ],
           ),

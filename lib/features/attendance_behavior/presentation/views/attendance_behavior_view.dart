@@ -166,26 +166,27 @@ class _AttendanceBehaviorViewState
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 8, 18, 10),
               child: FeatureSegmentedControl(
-                labels: const [
-                  'المواظبة',
-                  'السلوك',
-                  'التقارير',
-                  'أدوات الحصة',
-                ],
-                selectedIndex: _sectionIndex,
-                onSelected: (index) {
-                  setState(() {
-                    if (index == 2 && _sectionIndex != 2) {
-                      _reportSession =
-                          ref.read(attendanceBehaviorProvider).selectedSession;
-                    }
-                    _sectionIndex = index;
-                    _showSearch = false;
-                    _searchController.clear();
-                    _searchQuery = '';
-                  });
-                },
-              ),
+                      labels: const [
+                        'المواظبة',
+                        'السلوك',
+                        'التقارير',
+                        'أدوات الحصة',
+                      ],
+                      selectedIndex: _sectionIndex,
+                      onSelected: (index) {
+                        setState(() {
+                          if (index == 2 && _sectionIndex != 2) {
+                            _reportSession = ref
+                                .read(attendanceBehaviorProvider)
+                                .selectedSession;
+                          }
+                          _sectionIndex = index;
+                          _showSearch = false;
+                          _searchController.clear();
+                          _searchQuery = '';
+                        });
+                      },
+                    ),
             ),
             if (_showSearch && _sectionIndex < 2)
               Padding(
@@ -214,6 +215,7 @@ class _AttendanceBehaviorViewState
           onFinishedRecording: () => setState(() => _attendanceMode = 0),
         ),
       1 => BehaviorPanel(
+          onSelectionStarted: () => setState(() => _behaviorMode = 1),
           recording: _behaviorMode == 1,
           searchQuery: _searchQuery,
           onFinishedRecording: () => setState(() => _behaviorMode = 0),
@@ -245,7 +247,6 @@ class _AttendanceBehaviorViewState
 
   Widget _buildBottomNavigation() {
     final isAttendance = _sectionIndex == 0;
-    final selected = isAttendance ? _attendanceMode : _behaviorMode;
     return SafeArea(
       top: false,
       minimum: const EdgeInsets.fromLTRB(18, 8, 18, 12),
@@ -261,24 +262,16 @@ class _AttendanceBehaviorViewState
               child: const Icon(Icons.search_rounded, color: Colors.white),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: FeatureSegmentedControl(
-              labels: isAttendance
-                  ? const ['قائمة الطلاب', 'تسجيل الحضور']
-                  : const ['سلوك الطلاب', 'تسجيل السلوك'],
-              selectedIndex: selected,
-              onSelected: (index) {
-                setState(() {
-                  if (isAttendance) {
-                    _attendanceMode = index;
-                  } else {
-                    _behaviorMode = index;
-                  }
-                });
-              },
+          if (isAttendance) ...[
+            const SizedBox(width: 12),
+            Expanded(
+              child: FeatureSegmentedControl(
+                labels: const ['قائمة الطلاب', 'تسجيل الحضور'],
+                selectedIndex: _attendanceMode,
+                onSelected: (index) => setState(() => _attendanceMode = index),
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

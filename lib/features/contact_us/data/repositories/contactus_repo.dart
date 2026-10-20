@@ -25,8 +25,8 @@ class ContactUsRepository {
       "name": name,
       "phone_number": phone,
       "email": email,
-      "title": title,
-      "message": message,
+      "title": 'رسالة من تطبيق الجدول الذكي للمعلم',
+      "message": 'نوع الرسالة: ${title.trim()}\n\n${message.trim()}',
     });
     if (response.success!) {
       return response.message ?? '';

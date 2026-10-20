@@ -405,6 +405,17 @@ class _SessionSummaryViewState extends ConsumerState<SessionSummaryView> {
                       ],
                       DropdownButtonFormField<int>(
                         initialValue: _categoryId,
+                        isExpanded: true,
+                        itemHeight: null,
+                        selectedItemBuilder: (context) => _categories
+                            .map(
+                              (category) => Text(
+                                category.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            )
+                            .toList(growable: false),
                         decoration: InputDecoration(
                           labelText: 'تصنيف شاهد الأداء',
                           prefixIcon: const Icon(Icons.folder_outlined),
@@ -416,7 +427,11 @@ class _SessionSummaryViewState extends ConsumerState<SessionSummaryView> {
                             .map(
                               (category) => DropdownMenuItem(
                                 value: category.id,
-                                child: Text(category.name),
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
+                                  child: Text(category.name),
+                                ),
                               ),
                             )
                             .toList(growable: false),

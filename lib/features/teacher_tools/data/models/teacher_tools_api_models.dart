@@ -417,3 +417,58 @@ List<Map<String, dynamic>> readMapList(dynamic value) => readList(value)
     .whereType<Map>()
     .map((item) => Map<String, dynamic>.from(item))
     .toList(growable: false);
+
+/// Game responses are authoritative; missing score data must not reset the board.
+class QuickQuestionGame {
+  const QuickQuestionGame(
+      {required this.players,
+      required this.status,
+      this.winnerIds = const [],
+      this.message = ''});
+
+  factory QuickQuestionGame.fromJson(Map<String, dynamic> json) {
+    final data = json['game'] is Map ? readMap(json['game']) : json;
+    final rawPlayers = data['players'] ?? data['students'];
+    if (rawPlayers != null && rawPlayers is! List) {
+      throw const FormatException('Invalid quick question players');
+    }
+    final players = readMapList(rawPlayers).map((item) {
+      final student = TeacherToolStudent.fromJson(
+          item['student'] is Map ? readMap(item['student']) : item);
+      final score = item['score'] ?? item['points'];
+      if (student.id <= 0 || score == null) {
+        throw const FormatException('Missing quick question player score');
+      }
+      return QuickQuestionPlayer(student: student, score: readInt(score));
+    }).toList(growable: false);
+    final status = readString(data['status']);
+    if (players.isEmpty &&
+        status.isNotEmpty &&
+        status != 'not_started' &&
+        status != 'idle') {
+      throw const FormatException('Missing quick question players');
+    }
+    return QuickQuestionGame(
+      players: players,
+      status: status.isEmpty
+          ? (players.isEmpty ? 'not_started' : 'active')
+          : status,
+      winnerIds: [
+        for (final winner in readMapList(data['winners']))
+          readInt(winner['student_id'] ?? winner['id'])
+      ],
+      message: readString(json['message'] ?? data['message']),
+    );
+  }
+  final List<QuickQuestionPlayer> players;
+  final String status;
+  final List<int> winnerIds;
+  final String message;
+  bool get finished => status == 'finished' || status == 'completed';
+}
+
+class QuickQuestionPlayer {
+  const QuickQuestionPlayer({required this.student, required this.score});
+  final TeacherToolStudent student;
+  final int score;
+}

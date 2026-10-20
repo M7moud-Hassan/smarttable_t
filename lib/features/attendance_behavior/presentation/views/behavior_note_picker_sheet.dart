@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smart_table_app/core/constants/constants.dart';
+import 'package:smart_table_app/core/utils/student_name_formatter.dart';
 import 'package:smart_table_app/features/attendance_behavior/data/models/attendance_behavior_models.dart';
 import 'package:smart_table_app/features/attendance_behavior/presentation/widgets/attendance_behavior_widgets.dart';
 
@@ -70,7 +71,7 @@ class _BehaviorNotePickerSheetState extends State<_BehaviorNotePickerSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.studentName,
+                        compactStudentName(widget.studentName),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
