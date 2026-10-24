@@ -201,8 +201,21 @@ class _AttendanceBehaviorViewState
             Expanded(child: _buildSection(state)),
           ],
         ),
+        floatingActionButton: _sectionIndex == 1
+            ? SizedBox(
+                width: 52,
+                height: 52,
+                child: FloatingActionButton(
+                heroTag: 'attendance-behavior-search',
+                elevation: 0,
+                onPressed: () => setState(() => _showSearch = !_showSearch),
+                child: const Icon(Icons.search_rounded, color: Colors.white),
+                ),
+              )
+            : null,
+        floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
         bottomNavigationBar:
-            _sectionIndex >= 2 ? null : _buildBottomNavigation(),
+            _sectionIndex == 0 ? _buildBottomNavigation() : null,
       ),
     );
   }

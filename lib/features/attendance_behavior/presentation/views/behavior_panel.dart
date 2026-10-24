@@ -45,13 +45,7 @@ class BehaviorPanel extends ConsumerWidget {
     final students = state.students
         .where((student) => student.name.toLowerCase().contains(searchQuery))
         .toList(growable: false);
-    final assignableStudents = state.students
-        .where(
-          (student) =>
-              student.behaviorRecordId == null ||
-              student.teacherCanModifyBehavior,
-        )
-        .toList(growable: false);
+    final assignableStudents = state.students;
     final allSelected = assignableStudents.isNotEmpty &&
         assignableStudents.every(
           (student) => state.selectedBehaviorIds.contains(student.id),
@@ -100,37 +94,34 @@ class BehaviorPanel extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Row(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.groups_2_outlined, color: AppColors.primaryColor),
-            const SizedBox(width: 8),
-            const Expanded(
-              child: Text(
-                'سلوك الطلاب',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-            Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('تحديد الكل'),
-                  Checkbox(
-                    value: allSelected,
-                    onChanged: state.saving || assignableStudents.isEmpty
-                        ? null
-                        : (selected) {
-                            onSelectionStarted();
-                            ref.read(attendanceBehaviorProvider.notifier)
-                                .toggleAllBehaviorStudents(selected ?? false);
-                          },
+            const Row(
+              children: [
+                Icon(Icons.groups_2_outlined, color: AppColors.primaryColor),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'سلوك الطلاب',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('تحديد الكل'),
+              value: allSelected,
+              onChanged: state.saving || assignableStudents.isEmpty
+                  ? null
+                  : (selected) {
+                      onSelectionStarted();
+                      ref
+                          .read(attendanceBehaviorProvider.notifier)
+                          .toggleAllBehaviorStudents(selected ?? false);
+                    },
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -150,68 +141,79 @@ class BehaviorPanel extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
           ],
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: students.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: .58,
-            ),
-            itemBuilder: (_, index) {
-              final student = students[index];
-              final note = _noteForStudent(state, student);
-              final canChange = student.behaviorRecordId == null ||
-                  student.teacherCanModifyBehavior;
-              return ClassroomStudentCard(
-                student: student,
-                selected: state.selectedBehaviorIds.contains(student.id),
-                enabled: !state.saving,
-                badge: PointBadge(points: student.totalBehaviorPoints),
-                footer: Text(
-                  note?.name ?? 'منح ملاحظة',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: note == null
-                        ? AppColors.secondryColor
-                        : behaviorNoteColor(note),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                  ),
+          ...students.map((student) {
+            final note = _noteForStudent(state, student);
+            final notes = [
+              for (final id in student.behaviorNoteIds)
+                for (final item in state.behaviorNotes)
+                  if (item.id == id) item,
+            ];
+            return _BehaviorStudentCard(
+              student: student,
+              selected: state.selectedBehaviorIds.contains(student.id),
+              enabled: !state.saving,
+              badge: PointBadge(points: student.totalBehaviorPoints),
+              footer: notes.isEmpty
+                  ? const Text(
+                      'منح ملاحظة',
+                      style: TextStyle(
+                        color: AppColors.secondryColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    )
+                  : Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final item in notes)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: behaviorNoteColor(item)
+                                  .withValues(alpha: .09),
+                              borderRadius: BorderRadius.circular(9),
+                            ),
+                            child: Text(
+                              item.name,
+                              style: TextStyle(
+                                color: behaviorNoteColor(item),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+              menu: StudentMoreMenu(
+                behavior: true,
+                canModifyBehavior: student.behaviorRecordId != null &&
+                    student.teacherCanModifyBehavior,
+                onSelected: (action) => _openBehaviorAction(
+                  context,
+                  ref,
+                  student,
+                  note,
+                  action,
                 ),
-                menu: StudentMoreMenu(
-                  behavior: true,
-                  canModifyBehavior: student.behaviorRecordId != null &&
-                      student.teacherCanModifyBehavior,
-                  onSelected: (action) => _openBehaviorAction(
-                    context,
-                    ref,
-                    student,
-                    note,
-                    action,
-                  ),
-                ),
-                onTap: state.saving
-                    ? null
-                    : recording && canChange
-                        ? () => ref
-                            .read(attendanceBehaviorProvider.notifier)
-                            .toggleBehaviorStudent(student.id)
-                        : canChange
-                            ? () => _giveBehaviorNote(
-                                  context,
-                                  ref,
-                                  studentName: student.name,
-                                  studentIds: [student.id],
-                                )
-                            : () => _showReadOnlyMessage(context),
-              );
-            },
-          ),
+              ),
+              onTap: state.saving
+                  ? null
+                  : recording
+                      ? () => ref
+                          .read(attendanceBehaviorProvider.notifier)
+                          .toggleBehaviorStudent(student.id)
+                      : () => _giveBehaviorNote(
+                            context,
+                            ref,
+                            studentName: student.name,
+                            studentIds: [student.id],
+                          ),
+            );
+          }),
         ],
         if (recording) ...[
           const SizedBox(height: 10),
@@ -276,14 +278,6 @@ class BehaviorPanel extends ConsumerWidget {
     }
   }
 
-  void _showReadOnlyMessage(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('هذه الملاحظة غير قابلة للتعديل حسب صلاحيات المعلم'),
-      ),
-    );
-  }
-
   BehaviorNoteModel? _noteForStudent(
     AttendanceBehaviorState state,
     AttendanceBehaviorStudent student,
@@ -331,58 +325,146 @@ class BehaviorPanel extends ConsumerWidget {
   ) async {
     final originalNoteIds = student.behaviorNoteIds.toSet();
     final selectedNoteIds = {...originalNoteIds};
-    final result = await showDialog<Set<int>>(
+    final result = await showModalBottomSheet<Set<int>>(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: Colors.white,
-          title: const Text('تعديل ملاحظة السلوك'),
-          content: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.sizeOf(context).height * .55,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: ref
-                    .read(attendanceBehaviorProvider)
-                    .behaviorNotes
-                    .map(
-                      (behaviorNote) => CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        value: selectedNoteIds.contains(behaviorNote.id),
-                        title: Text(behaviorNote.name),
-                        subtitle: Text('${behaviorNote.signedPoints} نقاط'),
-                        secondary: Icon(
-                          behaviorIcon(behaviorNote.iconKey),
-                          color: behaviorNoteColor(behaviorNote),
-                        ),
-                        onChanged: (selected) => setDialogState(() {
-                          if (selected == true) {
-                            selectedNoteIds.add(behaviorNote.id);
-                          } else {
-                            selectedNoteIds.remove(behaviorNote.id);
-                          }
-                        }),
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          final changed = selectedNoteIds.length != originalNoteIds.length ||
+              !selectedNoteIds.every(originalNoteIds.contains);
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: SafeArea(
+              top: false,
+              child: SizedBox(
+                height: MediaQuery.sizeOf(context).height * .85,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 10),
+                    Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDDDDDD),
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                    )
-                    .toList(growable: false),
+                    ),
+                    Padding(
+                      padding:
+                          const EdgeInsetsDirectional.fromSTEB(18, 8, 6, 8),
+                      child: Row(
+                        children: [
+                          const Spacer(),
+                          IconButton(
+                            tooltip: 'إغلاق',
+                            onPressed: () => Navigator.of(sheetContext).pop(),
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: ListView(
+                        padding: const EdgeInsets.all(16),
+                        children: [
+                          const Text(
+                            'تعديل ملاحظة السلوك',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.w800),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            student.name,
+                            style: const TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.w800),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'حدد الملاحظات التي تريد الاحتفاظ بها أو إضافتها',
+                            style: TextStyle(
+                                fontSize: 12, color: Color(0xFF686868)),
+                          ),
+                          const SizedBox(height: 14),
+                          for (final note in ref
+                              .read(attendanceBehaviorProvider)
+                              .behaviorNotes)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Material(
+                                color: selectedNoteIds.contains(note.id)
+                                    ? AppColors.primaryColor
+                                        .withValues(alpha: .06)
+                                    : Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(
+                                    color: selectedNoteIds.contains(note.id)
+                                        ? AppColors.primaryColor
+                                        : const Color(0xFFE6EEEE),
+                                  ),
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: CheckboxListTile(
+                                  key:
+                                      ValueKey('behavior-edit-note-${note.id}'),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 4),
+                                  value: selectedNoteIds.contains(note.id),
+                                  title: Text(
+                                    note.name,
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700),
+                                  ),
+                                  subtitle: Text(
+                                    'النقاط: ${note.signedPoints > 0 ? '+' : ''}${note.signedPoints}',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: behaviorNoteColor(note)),
+                                  ),
+                                  onChanged: (selected) => setSheetState(() {
+                                    if (selected == true) {
+                                      selectedNoteIds.add(note.id);
+                                    } else {
+                                      selectedNoteIds.remove(note.id);
+                                    }
+                                  }),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: selectedNoteIds.isEmpty || !changed
+                              ? null
+                              : () => Navigator.of(sheetContext)
+                                  .pop(selectedNoteIds),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 10),
+                            child: Text('حفظ التعديل',
+                                style: TextStyle(fontSize: 14)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('إلغاء'),
-            ),
-            FilledButton(
-              onPressed: selectedNoteIds.isEmpty
-                  ? null
-                  : () => Navigator.of(dialogContext).pop(selectedNoteIds),
-              child: const Text('حفظ التعديل'),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
     if (result == null ||
@@ -447,6 +529,83 @@ class BehaviorPanel extends ConsumerWidget {
   }
 }
 
+class _BehaviorStudentCard extends StatelessWidget {
+  const _BehaviorStudentCard({
+    required this.student,
+    required this.selected,
+    required this.enabled,
+    required this.badge,
+    required this.footer,
+    required this.menu,
+    required this.onTap,
+  });
+
+  final AttendanceBehaviorStudent student;
+  final bool selected;
+  final bool enabled;
+  final Widget badge;
+  final Widget footer;
+  final Widget menu;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Opacity(
+        opacity: enabled ? 1 : .48,
+        child: Material(
+          color: selected ? const Color(0xFFF0FCFC) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color:
+                  AppColors.primaryColor.withValues(alpha: selected ? 1 : .18),
+              width: selected ? 2 : 1,
+            ),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: enabled ? onTap : null,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      if (selected)
+                        const Icon(Icons.check_circle_rounded,
+                            color: AppColors.primaryColor, size: 32)
+                      else
+                        StudentAvatar(name: student.name, radius: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          student.name,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      IntrinsicWidth(child: badge),
+                      menu,
+                    ],
+                  ),
+                  footer,
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _BehaviorScoreBanner extends StatelessWidget {
   const _BehaviorScoreBanner({
     required this.points,
@@ -500,12 +659,14 @@ class _BehaviorScoreBanner extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              Text(
-                '$positivePercent% إيجابي',
-                style: const TextStyle(
-                  color: attendanceGreen,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
+              Flexible(
+                child: Text(
+                  '$positivePercent% إيجابي',
+                  style: const TextStyle(
+                    color: attendanceGreen,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ],

@@ -95,8 +95,6 @@ class AttendancePanel extends ConsumerWidget {
             Expanded(
               child: Text(
                 recording ? 'تسجيل حالة الطلاب' : 'أسماء الطلاب',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
@@ -104,10 +102,11 @@ class AttendancePanel extends ConsumerWidget {
               ),
             ),
             if (recording)
-              Row(
+              Flexible(
+                  child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('تحديد الكل'),
+                  const Flexible(child: Text('تحديد الكل')),
                   Checkbox(
                     value: allSelected,
                     onChanged: (selected) => ref
@@ -115,7 +114,7 @@ class AttendancePanel extends ConsumerWidget {
                         .toggleAllAttendanceStudents(selected ?? false),
                   ),
                 ],
-              ),
+              )),
           ],
         ),
         if (recording) ...[
@@ -163,20 +162,11 @@ class AttendancePanel extends ConsumerWidget {
         if (students.isEmpty)
           const NoSearchResults()
         else ...[
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: students.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: .58,
-            ),
-            itemBuilder: (_, index) {
-              final student = students[index];
-              final selected = state.selectedAttendanceIds.contains(student.id);
-              return ClassroomStudentCard(
+          ...students.map((student) {
+            final selected = state.selectedAttendanceIds.contains(student.id);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: ClassroomStudentCard(
                 student: student,
                 selected: selected,
                 accentColor: attendanceStatusColor(student.attendanceStatus),
@@ -208,73 +198,57 @@ class AttendancePanel extends ConsumerWidget {
                           action,
                         ),
                       ),
+                details: recording && selected
+                    ? _AttendanceNoteEditor(
+                        studentId: student.id,
+                        noteCodes: state.attendanceNoteCodes,
+                        draft: state.attendanceNoteDrafts[student.id],
+                        onSelect: (value) {
+                          final notifier =
+                              ref.read(attendanceBehaviorProvider.notifier);
+                          final draft = state.attendanceNoteDrafts[student.id];
+                          if (value == _noAttendanceNote) {
+                            notifier.setAttendanceNoteCode(
+                              studentId: student.id,
+                              noteCode: null,
+                            );
+                            return;
+                          }
+                          if (value == _customAttendanceNote) {
+                            notifier.setAttendanceNoteCode(
+                              studentId: student.id,
+                              noteCode: null,
+                              note: draft?.note ?? '',
+                              isCustom: true,
+                            );
+                            return;
+                          }
+                          for (final option in state.attendanceNoteCodes) {
+                            if (option.value != value) continue;
+                            notifier.setAttendanceNoteCode(
+                              studentId: student.id,
+                              noteCode: option.value,
+                              note: option.label,
+                            );
+                            return;
+                          }
+                        },
+                        onTextChanged: (note) => ref
+                            .read(attendanceBehaviorProvider.notifier)
+                            .setAttendanceNoteText(
+                              studentId: student.id,
+                              note: note,
+                            ),
+                      )
+                    : null,
                 onTap: recording
                     ? () => ref
                         .read(attendanceBehaviorProvider.notifier)
                         .toggleAttendanceStudent(student.id)
                     : () => _showAttendanceEditDialog(context, ref, student),
-              );
-            },
-          ),
-          if (recording && state.selectedAttendanceIds.isNotEmpty) ...[
-            const SizedBox(height: 18),
-            const Text(
-              'ملاحظات الطلاب المحددين',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 8),
-            ...students
-                .where(
-                  (student) => state.selectedAttendanceIds.contains(student.id),
-                )
-                .map(
-                  (student) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: _AttendanceNoteEditor(
-                      studentId: student.id,
-                      studentName: student.name,
-                      noteCodes: state.attendanceNoteCodes,
-                      draft: state.attendanceNoteDrafts[student.id],
-                      onSelect: (value) {
-                        final notifier =
-                            ref.read(attendanceBehaviorProvider.notifier);
-                        final draft = state.attendanceNoteDrafts[student.id];
-                        if (value == _noAttendanceNote) {
-                          notifier.setAttendanceNoteCode(
-                            studentId: student.id,
-                            noteCode: null,
-                          );
-                          return;
-                        }
-                        if (value == _customAttendanceNote) {
-                          notifier.setAttendanceNoteCode(
-                            studentId: student.id,
-                            noteCode: null,
-                            note: draft?.note ?? '',
-                            isCustom: true,
-                          );
-                          return;
-                        }
-                        for (final option in state.attendanceNoteCodes) {
-                          if (option.value != value) continue;
-                          notifier.setAttendanceNoteCode(
-                            studentId: student.id,
-                            noteCode: option.value,
-                            note: option.label,
-                          );
-                          return;
-                        }
-                      },
-                      onTextChanged: (note) => ref
-                          .read(attendanceBehaviorProvider.notifier)
-                          .setAttendanceNoteText(
-                            studentId: student.id,
-                            note: note,
-                          ),
-                    ),
-                  ),
-                ),
-          ],
+              ),
+            );
+          }),
         ],
         if (recording) ...[
           const SizedBox(height: 10),
@@ -425,7 +399,6 @@ const _noAttendanceNote = '__no_attendance_note__';
 class _AttendanceNoteEditor extends StatelessWidget {
   const _AttendanceNoteEditor({
     required this.studentId,
-    required this.studentName,
     required this.noteCodes,
     required this.draft,
     required this.onSelect,
@@ -433,7 +406,6 @@ class _AttendanceNoteEditor extends StatelessWidget {
   });
 
   final int studentId;
-  final String studentName;
   final List<PerseveranceOption> noteCodes;
   final AttendanceNoteDraft? draft;
   final ValueChanged<String?> onSelect;
@@ -461,15 +433,13 @@ class _AttendanceNoteEditor extends StatelessWidget {
     ];
 
     return Padding(
-      padding: const EdgeInsetsDirectional.only(start: 18, end: 18, top: 8),
+      padding: const EdgeInsets.only(top: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'ملاحظة الطالب: $studentName',
+            'ملاحظة المواظبة',
             key: ValueKey('attendance-note-student-$studentId'),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,

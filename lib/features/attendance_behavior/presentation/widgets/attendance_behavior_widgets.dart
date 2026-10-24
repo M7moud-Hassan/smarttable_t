@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:smart_table_app/core/constants/constants.dart';
-import 'package:smart_table_app/core/utils/student_name_formatter.dart';
 import 'package:smart_table_app/features/attendance_behavior/data/models/attendance_behavior_models.dart';
 
 const Color attendanceGreen = Color(0xFF39B83F);
@@ -446,6 +445,7 @@ class ClassroomStudentCard extends StatelessWidget {
     required this.student,
     required this.footer,
     this.badge,
+    this.details,
     this.menu,
     this.onTap,
     this.selected = false,
@@ -456,6 +456,7 @@ class ClassroomStudentCard extends StatelessWidget {
   final AttendanceBehaviorStudent student;
   final Widget footer;
   final Widget? badge;
+  final Widget? details;
   final Widget? menu;
   final VoidCallback? onTap;
   final bool selected;
@@ -474,64 +475,57 @@ class ClassroomStudentCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
           onTap: enabled ? onTap : null,
-          child: Stack(
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(8, 15, 8, 10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: selected
-                        ? accentColor
-                        : accentColor.withValues(alpha: .16),
-                    width: selected ? 2 : 1,
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color:
+                    selected ? accentColor : accentColor.withValues(alpha: .16),
+                width: selected ? 2 : 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
                   children: [
-                    StudentAvatar(name: student.name, radius: 27),
-                    const SizedBox(height: 8),
-                    Text(
-                      compactStudentName(student.name),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        height: 1.2,
-                        fontWeight: FontWeight.w800,
+                    if (selected)
+                      Icon(Icons.check_circle_rounded,
+                          color: accentColor, size: 32)
+                    else
+                      StudentAvatar(name: student.name, radius: 16),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            student.name,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [footer, if (badge != null) badge!],
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    footer,
+                    if (menu != null) menu!,
                   ],
                 ),
-              ),
-              if (badge != null)
-                PositionedDirectional(top: 7, start: 7, child: badge!),
-              if (selected)
-                PositionedDirectional(
-                  top: 7,
-                  end: 7,
-                  child: Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: accentColor,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check_rounded,
-                      color: Colors.white,
-                      size: 17,
-                    ),
-                  ),
-                )
-              else if (menu != null)
-                PositionedDirectional(top: 1, end: 0, child: menu!),
-            ],
+                if (details != null) details!,
+              ],
+            ),
           ),
         ),
       ),

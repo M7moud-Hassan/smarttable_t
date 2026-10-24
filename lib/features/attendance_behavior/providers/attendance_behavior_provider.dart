@@ -504,7 +504,7 @@ class AttendanceBehaviorNotifier
 
   void toggleBehaviorStudent(int studentId) {
     final student = _studentById(studentId);
-    if (student == null || !_canChangeBehavior(student)) return;
+    if (student == null) return;
     final selected = {...state.selectedBehaviorIds};
     selected.contains(studentId)
         ? selected.remove(studentId)
@@ -513,10 +513,8 @@ class AttendanceBehaviorNotifier
   }
 
   void toggleAllBehaviorStudents(bool selected) {
-    final assignableStudentIds = state.students
-        .where(_canChangeBehavior)
-        .map((student) => student.id)
-        .toSet();
+    final assignableStudentIds =
+        state.students.map((student) => student.id).toSet();
     state = state.copyWith(
       selectedBehaviorIds: selected ? assignableStudentIds : {},
     );
@@ -541,7 +539,6 @@ class AttendanceBehaviorNotifier
     final assignments = <int, List<int>>{};
     for (final student in state.students) {
       if (!state.selectedBehaviorIds.contains(student.id)) continue;
-      if (!_canChangeBehavior(student)) continue;
       assignments[student.id] = {...student.behaviorNoteIds, noteId}.toList();
     }
     if (assignments.isEmpty) return;
@@ -585,13 +582,13 @@ class AttendanceBehaviorNotifier
     final requestedIds = studentIds.toSet();
     final assignments = <int, List<int>>{};
     for (final student in state.students) {
-      if (!requestedIds.contains(student.id) || !_canChangeBehavior(student)) {
+      if (!requestedIds.contains(student.id)) {
         continue;
       }
       assignments[student.id] = {...student.behaviorNoteIds, noteId}.toList();
     }
     if (assignments.isEmpty) {
-      throw ServerException('لا يمكنك تعديل ملاحظات الطلاب المحددين');
+      throw ServerException('لا يوجد طلاب محددون لإضافة الملاحظة');
     }
 
     state = state.copyWith(saving: true, errorMessage: null);
@@ -695,9 +692,6 @@ class AttendanceBehaviorNotifier
         ) ??
         false;
   }
-
-  bool _canChangeBehavior(AttendanceBehaviorStudent student) =>
-      student.behaviorRecordId == null || student.teacherCanModifyBehavior;
 
   Future<void> _changeBehaviorRecord({
     required int studentId,
