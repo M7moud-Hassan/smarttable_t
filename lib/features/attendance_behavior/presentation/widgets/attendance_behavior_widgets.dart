@@ -342,9 +342,10 @@ class StudentSummaryCard extends StatelessWidget {
 }
 
 class AttendanceStatusBadge extends StatelessWidget {
-  const AttendanceStatusBadge({super.key, required this.status});
+  const AttendanceStatusBadge({super.key, required this.status, this.label});
 
   final AttendanceStatus status;
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
@@ -356,7 +357,7 @@ class AttendanceStatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
       ),
       child: Text(
-        status.label,
+        label?.trim().isNotEmpty == true ? label! : status.label,
         style: TextStyle(
           color: color,
           fontSize: 13,

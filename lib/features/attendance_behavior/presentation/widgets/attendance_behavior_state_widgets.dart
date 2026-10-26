@@ -7,11 +7,13 @@ class StudentMoreMenu extends StatelessWidget {
     super.key,
     required this.onSelected,
     this.behavior = false,
+    this.canModifyAttendance = true,
     this.canModifyBehavior = false,
   });
 
   final ValueChanged<String> onSelected;
   final bool behavior;
+  final bool canModifyAttendance;
   final bool canModifyBehavior;
 
   @override
@@ -21,7 +23,7 @@ class StudentMoreMenu extends StatelessWidget {
       tooltip: 'خيارات الطالب',
       onSelected: onSelected,
       itemBuilder: (_) => [
-        if (!behavior)
+        if (!behavior && canModifyAttendance)
           const PopupMenuItem(
             value: 'edit-attendance',
             child: Text('تعديل حالة الحضور'),

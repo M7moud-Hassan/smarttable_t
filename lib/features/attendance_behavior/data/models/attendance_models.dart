@@ -6,11 +6,19 @@ class AttendanceNoteDraft {
     required this.note,
     this.noteCode,
     this.isCustom = false,
+    this.excuseStatus,
   });
 
   final String note;
   final String? noteCode;
   final bool isCustom;
+  final String? excuseStatus;
+
+  Map<String, dynamic> toWriteJson() => {
+        'note': note.trim(),
+        'note_code': noteCode ?? '',
+        'excuse_status': excuseStatus ?? '',
+      };
 }
 
 class AttendanceBehaviorStudent {
@@ -23,6 +31,10 @@ class AttendanceBehaviorStudent {
     this.classId,
     this.attendanceRecordId,
     this.attendanceNote = '',
+    this.attendanceNoteCode = '',
+    this.attendanceNoteCodeLabel = '',
+    this.excuseStatusLabel = '',
+    this.excuseStatus = '',
     this.behaviorRecordId,
     this.teacherCanModifyBehavior = false,
     this.behaviorNoteIds = const [],
@@ -39,6 +51,10 @@ class AttendanceBehaviorStudent {
   final AttendanceStatus attendanceStatus;
   final int? attendanceRecordId;
   final String attendanceNote;
+  final String attendanceNoteCode;
+  final String attendanceNoteCodeLabel;
+  final String excuseStatusLabel;
+  final String excuseStatus;
   final int? behaviorRecordId;
   final bool teacherCanModifyBehavior;
   final List<int> behaviorNoteIds;
@@ -46,12 +62,20 @@ class AttendanceBehaviorStudent {
   final int totalBehaviorPoints;
   final int proceduresCount;
 
+  bool get canModifyAttendance =>
+      attendanceStatus == AttendanceStatus.present ||
+      attendanceStatus == AttendanceStatus.notRecorded;
+
   int? get behaviorNoteId =>
       behaviorNoteIds.isEmpty ? null : behaviorNoteIds.first;
 }
 
 class PerseveranceOption {
-  const PerseveranceOption({required this.value, required this.label});
+  const PerseveranceOption(
+      {required this.value,
+      required this.label,
+      this.attendance = '',
+      this.excusable = false});
 
   factory PerseveranceOption.fromJson(Map<String, dynamic> json) {
     return PerseveranceOption(
@@ -63,6 +87,8 @@ class PerseveranceOption {
             json['note_code'] ??
             json['attendance'],
       ),
+      attendance: readJsonString(json['attendance']),
+      excusable: readJsonBool(json['excusable']),
       label: readJsonString(
         json['label'] ??
             json['name'] ??
@@ -77,6 +103,8 @@ class PerseveranceOption {
 
   final String value;
   final String label;
+  final String attendance;
+  final bool excusable;
 }
 
 class PerseveranceClassOption {
@@ -136,6 +164,7 @@ class PerseveranceFilters {
     required this.classes,
     required this.sessions,
     required this.attendanceStates,
+    this.noteCodes = const [],
   });
 
   factory PerseveranceFilters.fromJson(Map<String, dynamic> json) {
@@ -148,6 +177,7 @@ class PerseveranceFilters {
         json['sessions'],
         PerseveranceSessionOption.fromJson,
       ),
+      noteCodes: readJsonList(json['note_codes'], PerseveranceOption.fromJson),
       attendanceStates: readJsonList(
         json['attendance_states'],
         PerseveranceOption.fromJson,
@@ -158,6 +188,7 @@ class PerseveranceFilters {
   final List<PerseveranceClassOption> classes;
   final List<PerseveranceSessionOption> sessions;
   final List<PerseveranceOption> attendanceStates;
+  final List<PerseveranceOption> noteCodes;
 
   List<PerseveranceOption> get allowedAttendanceStates {
     final seen = <AttendanceStatus>{};
@@ -230,6 +261,11 @@ class AttendanceRosterData {
           attendanceRecordId: readNullableJsonInt(studentJson['record_id']),
           attendanceStatus: AttendanceStatus.fromApi(studentJson['attendance']),
           attendanceNote: readJsonString(studentJson['note']),
+          attendanceNoteCode: readJsonString(studentJson['note_code']),
+          attendanceNoteCodeLabel:
+              readJsonString(studentJson['note_code_label']),
+          excuseStatusLabel: readJsonString(studentJson['excuse_status_label']),
+          excuseStatus: readJsonString(studentJson['excuse_status']),
           proceduresCount: readJsonInt(studentJson['procedures_count']),
         );
       }),

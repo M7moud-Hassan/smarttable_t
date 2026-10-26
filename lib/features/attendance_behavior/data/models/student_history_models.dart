@@ -44,11 +44,16 @@ class AttendanceHistoryEntry {
     required this.courseName,
     required this.status,
     required this.note,
+    this.attendanceLabel = '',
+    this.noteCode = '',
+    this.noteCodeLabel = '',
+    this.excuseStatus = '',
+    this.excuseStatusLabel = '',
   });
 
   factory AttendanceHistoryEntry.fromJson(Map<String, dynamic> json) {
     return AttendanceHistoryEntry(
-      recordId: readNullableJsonInt(json['record_id']),
+      recordId: readNullableJsonInt(json['id'] ?? json['record_id']),
       date: readJsonString(json['date']),
       dateHijri: readJsonString(json['date_hijri']),
       dayName: readJsonString(json['day_name']),
@@ -59,6 +64,11 @@ class AttendanceHistoryEntry {
       courseName: readJsonString(json['course_name']),
       status: AttendanceStatus.fromApi(json['attendance']),
       note: readJsonString(json['note']),
+      attendanceLabel: readJsonString(json['attendance_label']),
+      noteCode: readJsonString(json['note_code']),
+      noteCodeLabel: readJsonString(json['note_code_label']),
+      excuseStatus: readJsonString(json['excuse_status']),
+      excuseStatusLabel: readJsonString(json['excuse_status_label']),
     );
   }
 
@@ -73,6 +83,11 @@ class AttendanceHistoryEntry {
   final String courseName;
   final AttendanceStatus status;
   final String note;
+  final String attendanceLabel;
+  final String noteCode;
+  final String noteCodeLabel;
+  final String excuseStatus;
+  final String excuseStatusLabel;
 }
 
 class StudentAttendanceHistory {

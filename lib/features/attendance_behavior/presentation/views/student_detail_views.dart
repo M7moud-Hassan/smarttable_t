@@ -148,34 +148,100 @@ class _AttendanceDayCard extends StatelessWidget {
                 padding: const EdgeInsets.all(13),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  border: Border.all(color: const Color(0xFFB4B4B4)),
+                  border: Border.all(color: const Color(0xFFE2EAEA)),
                   borderRadius: BorderRadius.circular(13),
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            entry.sessionLabel,
-                            style: const TextStyle(fontWeight: FontWeight.w800),
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 12,
+                      runSpacing: 8,
+                      children: [
+                        Text(
+                          entry.sessionLabel.isNotEmpty
+                              ? entry.sessionLabel
+                              : 'الحصة ${entry.session}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.secondryColor,
                           ),
-                          if (entry.startTime.isNotEmpty ||
-                              entry.endTime.isNotEmpty)
-                            Text(
-                              '${entry.startTime} - ${entry.endTime}',
+                        ),
+                        AttendanceStatusBadge(
+                          status: entry.status,
+                          label: entry.attendanceLabel,
+                        ),
+                      ],
+                    ),
+                    if (entry.courseName.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        entry.courseName,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                    if (entry.startTime.isNotEmpty ||
+                        entry.endTime.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.schedule_rounded,
+                              size: 16, color: AppColors.primaryColor),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              [entry.startTime, entry.endTime]
+                                  .where((time) => time.isNotEmpty)
+                                  .join(' – '),
+                              textDirection: TextDirection.ltr,
                               style: const TextStyle(
                                 color: AppColors.primaryColor,
                                 fontSize: 12,
                               ),
                             ),
+                          ),
                         ],
                       ),
-                    ),
-                    Text(entry.courseName),
-                    const SizedBox(width: 12),
-                    AttendanceStatusBadge(status: entry.status),
+                    ],
+                    if (entry.noteCodeLabel.isNotEmpty ||
+                        entry.excuseStatusLabel.isNotEmpty ||
+                        entry.note.isNotEmpty) ...[
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 10),
+                        child: Divider(height: 1, color: Color(0xFFE9EEEE)),
+                      ),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          if (entry.noteCodeLabel.isNotEmpty)
+                            _HistoryDetailTag(
+                              icon: Icons.sticky_note_2_outlined,
+                              label: entry.noteCodeLabel,
+                            ),
+                          if (entry.excuseStatusLabel.isNotEmpty)
+                            _HistoryDetailTag(
+                              icon: Icons.info_outline_rounded,
+                              label: entry.excuseStatusLabel,
+                            ),
+                        ],
+                      ),
+                      if (entry.note.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(entry.note,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              height: 1.6,
+                              color: Color(0xFF58656B),
+                            )),
+                      ],
+                    ],
                   ],
                 ),
               ),
@@ -184,6 +250,35 @@ class _AttendanceDayCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _HistoryDetailTag extends StatelessWidget {
+  const _HistoryDetailTag({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0F7F7),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text.rich(
+            TextSpan(children: [
+              WidgetSpan(
+                alignment: PlaceholderAlignment.middle,
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.only(end: 5),
+                  child: Icon(icon, size: 14, color: AppColors.secondryColor),
+                ),
+              ),
+              TextSpan(text: label),
+            ]),
+            style:
+                const TextStyle(fontSize: 12, color: AppColors.secondryColor)),
+      );
 }
 
 class StudentBehaviorHistoryView extends ConsumerStatefulWidget {

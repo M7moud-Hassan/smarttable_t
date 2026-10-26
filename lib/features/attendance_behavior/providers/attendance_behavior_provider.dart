@@ -313,7 +313,9 @@ class AttendanceBehaviorNotifier
       behaviorRoster: behavior,
       students: _mergeStudents(attendance, behavior),
       behaviorNotes: notes,
-      attendanceNoteCodes: attendanceNoteCodes,
+      attendanceNoteCodes: attendanceNoteCodes.isNotEmpty
+          ? attendanceNoteCodes
+          : state.filters?.noteCodes ?? const [],
       selectedDate: attendance.date,
       selectedBehaviorNoteId:
           notes.isEmpty ? null : state.selectedBehaviorNoteId ?? notes.first.id,
@@ -346,6 +348,10 @@ class AttendanceBehaviorNotifier
         attendanceStatus: student.attendanceStatus,
         attendanceRecordId: student.attendanceRecordId,
         attendanceNote: student.attendanceNote,
+        attendanceNoteCode: student.attendanceNoteCode,
+        attendanceNoteCodeLabel: student.attendanceNoteCodeLabel,
+        excuseStatus: student.excuseStatus,
+        excuseStatusLabel: student.excuseStatusLabel,
         behaviorRecordId: behaviorStudent?.recordId,
         teacherCanModifyBehavior: behaviorStudent?.teacherCanModify ?? false,
         behaviorNoteIds:
@@ -360,6 +366,9 @@ class AttendanceBehaviorNotifier
   }
 
   void toggleAttendanceStudent(int studentId) {
+    if (state.saving || _studentById(studentId)?.canModifyAttendance != true) {
+      return;
+    }
     final selected = {...state.selectedAttendanceIds};
     selected.contains(studentId)
         ? selected.remove(studentId)
@@ -368,15 +377,34 @@ class AttendanceBehaviorNotifier
   }
 
   void toggleAllAttendanceStudents(bool selected) {
+    if (state.saving) return;
     state = state.copyWith(
-      selectedAttendanceIds:
-          selected ? state.students.map((student) => student.id).toSet() : {},
+      selectedAttendanceIds: selected
+          ? state.students
+              .where((student) => student.canModifyAttendance)
+              .map((student) => student.id)
+              .toSet()
+          : {},
     );
   }
 
   void setAttendanceStatus(AttendanceStatus status) {
     if (!_isAttendanceStatusAllowed(status)) return;
-    state = state.copyWith(selectedAttendanceStatus: status);
+    if (status == state.selectedAttendanceStatus) return;
+    state = state.copyWith(
+      selectedAttendanceStatus: status,
+      attendanceNoteDrafts: {
+        for (final entry in state.attendanceNoteDrafts.entries)
+          entry.key: AttendanceNoteDraft(note: entry.value.note),
+      },
+    );
+  }
+
+  void setAttendanceNoteDraft(int studentId, AttendanceNoteDraft draft) {
+    state = state.copyWith(attendanceNoteDrafts: {
+      ...state.attendanceNoteDrafts,
+      studentId: draft,
+    });
   }
 
   void setAttendanceNoteCode({
@@ -385,29 +413,26 @@ class AttendanceBehaviorNotifier
     String note = '',
     bool isCustom = false,
   }) {
-    final drafts = {...state.attendanceNoteDrafts};
-    if (noteCode == null && !isCustom && note.isEmpty) {
-      drafts.remove(studentId);
-    } else {
-      drafts[studentId] = AttendanceNoteDraft(
-        note: note,
-        noteCode: noteCode,
-        isCustom: isCustom,
-      );
-    }
-    state = state.copyWith(attendanceNoteDrafts: drafts);
+    setAttendanceNoteDraft(
+        studentId,
+        AttendanceNoteDraft(
+          note: note,
+          noteCode: noteCode,
+          isCustom: isCustom,
+          excuseStatus: state.attendanceNoteDrafts[studentId]?.excuseStatus,
+        ));
   }
 
-  void setAttendanceNoteText({
-    required int studentId,
-    required String note,
-  }) {
-    setAttendanceNoteCode(
-      studentId: studentId,
-      noteCode: null,
-      note: note,
-      isCustom: true,
-    );
+  void setAttendanceNoteText({required int studentId, required String note}) {
+    final previous = state.attendanceNoteDrafts[studentId];
+    setAttendanceNoteDraft(
+        studentId,
+        AttendanceNoteDraft(
+          note: note,
+          noteCode: previous?.noteCode,
+          excuseStatus: previous?.excuseStatus,
+          isCustom: true,
+        ));
   }
 
   Future<void> saveAttendance() async {
@@ -415,10 +440,13 @@ class AttendanceBehaviorNotifier
     final session = state.selectedSession;
     final date = state.selectedDate;
     final contextRevision = _contextRevision;
-    final studentIds = state.selectedAttendanceIds.toList(growable: false);
+    final studentIds = state.selectedAttendanceIds
+        .where((id) => _studentById(id)?.canModifyAttendance == true)
+        .toList(growable: false);
     final status = state.selectedAttendanceStatus;
     final attendanceNoteDrafts = state.attendanceNoteDrafts;
-    if (classId == null ||
+    if (state.saving ||
+        classId == null ||
         session == null ||
         status == null ||
         !_isAttendanceStatusAllowed(status) ||
@@ -466,12 +494,15 @@ class AttendanceBehaviorNotifier
   Future<void> updateStudentAttendance({
     required int studentId,
     required AttendanceStatus status,
+    AttendanceNoteDraft? note,
   }) async {
     final classId = state.selectedClassId;
     final session = state.selectedSession;
     final date = state.selectedDate;
     final contextRevision = _contextRevision;
-    if (classId == null ||
+    if (state.saving ||
+        _studentById(studentId)?.canModifyAttendance != true ||
+        classId == null ||
         session == null ||
         !_isAttendanceStatusAllowed(status)) {
       return;
@@ -483,6 +514,7 @@ class AttendanceBehaviorNotifier
         session: session,
         studentIds: [studentId],
         status: status,
+        notes: {if (note != null) studentId: note},
         date: date,
       );
       if (contextRevision != _contextRevision) return;

@@ -46,8 +46,11 @@ class AttendancePanel extends ConsumerWidget {
         state.attendanceRoster?.summary ?? const AttendanceSummary();
     final attendanceStates =
         state.filters?.allowedAttendanceStates ?? const <PerseveranceOption>[];
-    final allSelected =
-        state.selectedAttendanceIds.length == state.students.length;
+    final editableStudents =
+        state.students.where((student) => student.canModifyAttendance).toList();
+    final allSelected = editableStudents.isNotEmpty &&
+        editableStudents.every(
+            (student) => state.selectedAttendanceIds.contains(student.id));
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(18, 4, 18, 22),
@@ -109,9 +112,11 @@ class AttendancePanel extends ConsumerWidget {
                   const Flexible(child: Text('تحديد الكل')),
                   Checkbox(
                     value: allSelected,
-                    onChanged: (selected) => ref
-                        .read(attendanceBehaviorProvider.notifier)
-                        .toggleAllAttendanceStudents(selected ?? false),
+                    onChanged: state.saving || editableStudents.isEmpty
+                        ? null
+                        : (selected) => ref
+                            .read(attendanceBehaviorProvider.notifier)
+                            .toggleAllAttendanceStudents(selected ?? false),
                   ),
                 ],
               )),
@@ -191,6 +196,7 @@ class AttendancePanel extends ConsumerWidget {
                 menu: recording
                     ? null
                     : StudentMoreMenu(
+                        canModifyAttendance: student.canModifyAttendance,
                         onSelected: (action) => _openAttendanceAction(
                           context,
                           ref,
@@ -203,49 +209,20 @@ class AttendancePanel extends ConsumerWidget {
                         studentId: student.id,
                         noteCodes: state.attendanceNoteCodes,
                         draft: state.attendanceNoteDrafts[student.id],
-                        onSelect: (value) {
-                          final notifier =
-                              ref.read(attendanceBehaviorProvider.notifier);
-                          final draft = state.attendanceNoteDrafts[student.id];
-                          if (value == _noAttendanceNote) {
-                            notifier.setAttendanceNoteCode(
-                              studentId: student.id,
-                              noteCode: null,
-                            );
-                            return;
-                          }
-                          if (value == _customAttendanceNote) {
-                            notifier.setAttendanceNoteCode(
-                              studentId: student.id,
-                              noteCode: null,
-                              note: draft?.note ?? '',
-                              isCustom: true,
-                            );
-                            return;
-                          }
-                          for (final option in state.attendanceNoteCodes) {
-                            if (option.value != value) continue;
-                            notifier.setAttendanceNoteCode(
-                              studentId: student.id,
-                              noteCode: option.value,
-                              note: option.label,
-                            );
-                            return;
-                          }
-                        },
-                        onTextChanged: (note) => ref
+                        status: state.selectedAttendanceStatus,
+                        onChanged: (draft) => ref
                             .read(attendanceBehaviorProvider.notifier)
-                            .setAttendanceNoteText(
-                              studentId: student.id,
-                              note: note,
-                            ),
+                            .setAttendanceNoteDraft(student.id, draft),
                       )
-                    : null,
-                onTap: recording
-                    ? () => ref
-                        .read(attendanceBehaviorProvider.notifier)
-                        .toggleAttendanceStudent(student.id)
-                    : () => _showAttendanceEditDialog(context, ref, student),
+                    : _SavedAttendanceDetails(student: student),
+                onTap: state.saving || !student.canModifyAttendance
+                    ? null
+                    : recording
+                        ? () => ref
+                            .read(attendanceBehaviorProvider.notifier)
+                            .toggleAttendanceStudent(student.id)
+                        : () =>
+                            _showAttendanceEditDialog(context, ref, student),
               ),
             );
           }),
@@ -315,6 +292,10 @@ class AttendancePanel extends ConsumerWidget {
     WidgetRef ref,
     AttendanceBehaviorStudent student,
   ) async {
+    if (!student.canModifyAttendance ||
+        ref.read(attendanceBehaviorProvider).saving) {
+      return;
+    }
     final attendanceStates =
         ref.read(attendanceBehaviorProvider).filters?.allowedAttendanceStates ??
             const <PerseveranceOption>[];
@@ -332,37 +313,60 @@ class AttendancePanel extends ConsumerWidget {
     var selectedStatus = allowedStatuses.contains(student.attendanceStatus)
         ? student.attendanceStatus
         : allowedStatuses.first;
+    var noteDraft = AttendanceNoteDraft(
+      note: student.attendanceNote,
+      noteCode: student.attendanceNoteCode.isEmpty
+          ? null
+          : student.attendanceNoteCode,
+      excuseStatus: student.excuseStatus.isEmpty ? null : student.excuseStatus,
+    );
     final status = await showDialog<AttendanceStatus>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: Colors.white,
           title: const Text('تعديل حالة الحضور'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: attendanceStates.map(
-              (option) {
-                final status = AttendanceStatus.tryFromApi(option.value)!;
-                return ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    option.label.isEmpty ? status.label : option.label,
+          content: SizedBox(
+              width: 400,
+              child: SingleChildScrollView(
+                  child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ...attendanceStates.map(
+                    (option) {
+                      final status = AttendanceStatus.tryFromApi(option.value)!;
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          option.label.isEmpty ? status.label : option.label,
+                        ),
+                        leading: Icon(
+                          selectedStatus == status
+                              ? Icons.check_circle_rounded
+                              : Icons.circle_outlined,
+                          color: selectedStatus == status
+                              ? attendanceStatusColor(status)
+                              : Colors.grey,
+                        ),
+                        onTap: () => setDialogState(() {
+                          selectedStatus = status;
+                          noteDraft = AttendanceNoteDraft(note: noteDraft.note);
+                        }),
+                      );
+                    },
                   ),
-                  leading: Icon(
-                    selectedStatus == status
-                        ? Icons.check_circle_rounded
-                        : Icons.circle_outlined,
-                    color: selectedStatus == status
-                        ? attendanceStatusColor(status)
-                        : Colors.grey,
+                  _AttendanceNoteEditor(
+                    studentId: student.id,
+                    noteCodes: ref
+                        .read(attendanceBehaviorProvider)
+                        .attendanceNoteCodes,
+                    draft: noteDraft,
+                    status: selectedStatus,
+                    onChanged: (draft) =>
+                        setDialogState(() => noteDraft = draft),
                   ),
-                  onTap: () => setDialogState(
-                    () => selectedStatus = status,
-                  ),
-                );
-              },
-            ).toList(growable: false),
-          ),
+                ],
+              ))),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -376,12 +380,13 @@ class AttendancePanel extends ConsumerWidget {
         ),
       ),
     );
-    if (status == null || status == student.attendanceStatus) return;
+    if (status == null) return;
 
     try {
       await ref
           .read(attendanceBehaviorProvider.notifier)
-          .updateStudentAttendance(studentId: student.id, status: status);
+          .updateStudentAttendance(
+              studentId: student.id, status: status, note: noteDraft);
       if (!context.mounted) return;
       context.showSnackbarSuccess('تم تعديل حالة الحضور بنجاح');
     } catch (error) {
@@ -393,97 +398,145 @@ class AttendancePanel extends ConsumerWidget {
   }
 }
 
-const _customAttendanceNote = '__custom_attendance_note__';
-const _noAttendanceNote = '__no_attendance_note__';
-
 class _AttendanceNoteEditor extends StatelessWidget {
   const _AttendanceNoteEditor({
     required this.studentId,
     required this.noteCodes,
     required this.draft,
-    required this.onSelect,
-    required this.onTextChanged,
+    required this.status,
+    required this.onChanged,
   });
 
   final int studentId;
   final List<PerseveranceOption> noteCodes;
   final AttendanceNoteDraft? draft;
-  final ValueChanged<String?> onSelect;
-  final ValueChanged<String> onTextChanged;
+  final AttendanceStatus? status;
+  final ValueChanged<AttendanceNoteDraft> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final selectedValue = draft?.noteCode ??
-        (draft?.isCustom == true ? _customAttendanceNote : null);
-    final items = <DropdownMenuItem<String>>[
-      const DropdownMenuItem(
-        value: _noAttendanceNote,
-        child: Text('بدون ملاحظة'),
-      ),
-      ...noteCodes.map(
-        (option) => DropdownMenuItem(
-          value: option.value,
-          child: Text(option.label),
-        ),
-      ),
-      const DropdownMenuItem(
-        value: _customAttendanceNote,
-        child: Text('كتابة ملاحظة'),
-      ),
-    ];
-
+    final options = noteCodes
+        .where((option) =>
+            option.attendance.isEmpty || option.attendance == status?.apiValue)
+        .toList();
+    final selected =
+        options.where((option) => option.value == draft?.noteCode).firstOrNull;
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'ملاحظة المواظبة',
-            key: ValueKey('attendance-note-student-$studentId'),
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          Text('ملاحظة المواظبة',
+              key: ValueKey('attendance-note-student-$studentId'),
+              style:
+                  const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
           SlidingDropdown<String>(
-            value: selectedValue,
-            hint: const Text('ملاحظة المواظبة (اختياري)'),
-            menuMaxHeight: 220,
-            decoration: InputDecoration(
-              isDense: true,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.primaryColor),
-              ),
-            ),
-            items: items,
-            onChanged: onSelect,
+            value: selected?.value ?? '',
+            decoration: const InputDecoration(
+                isDense: true, border: OutlineInputBorder()),
+            items: [
+              const DropdownMenuItem(value: '', child: Text('بدون ملاحظة')),
+              ...options.map((option) => DropdownMenuItem(
+                  value: option.value, child: Text(option.label))),
+            ],
+            onChanged: (value) {
+              final option =
+                  options.where((option) => option.value == value).firstOrNull;
+              onChanged(AttendanceNoteDraft(
+                note: draft?.note ?? '',
+                noteCode: option?.value,
+                excuseStatus: option?.excusable == true ? 'unexcused' : null,
+              ));
+            },
           ),
-          if (draft?.isCustom == true) ...[
+          if (selected?.excusable == true) ...[
             const SizedBox(height: 8),
-            TextFormField(
-              key: ValueKey('attendance-note-$studentId'),
-              initialValue: draft?.note ?? '',
-              onChanged: onTextChanged,
-              maxLines: 2,
-              textDirection: TextDirection.rtl,
-              decoration: InputDecoration(
-                hintText: 'اكتب الملاحظة',
-                isDense: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                suffixIcon: IconButton(
-                  tooltip: 'مسح الملاحظة',
-                  icon: const Icon(Icons.close_rounded),
-                  onPressed: () => onTextChanged(''),
-                ),
-              ),
+            const Text('حالة العذر'),
+            SlidingDropdown<String>(
+              value: ['excused', 'unexcused'].contains(draft?.excuseStatus)
+                  ? draft!.excuseStatus
+                  : 'unexcused',
+              decoration: const InputDecoration(
+                  isDense: true, border: OutlineInputBorder()),
+              items: const [
+                DropdownMenuItem(value: 'unexcused', child: Text('بدون عذر')),
+                DropdownMenuItem(value: 'excused', child: Text('بعذر')),
+              ],
+              onChanged: (value) => onChanged(AttendanceNoteDraft(
+                note: draft?.note ?? '',
+                noteCode: draft?.noteCode,
+                excuseStatus: value,
+              )),
             ),
+          ],
+          const SizedBox(height: 8),
+          TextFormField(
+            key: ValueKey('attendance-note-$studentId'),
+            initialValue: draft?.note ?? '',
+            onChanged: (value) => onChanged(AttendanceNoteDraft(
+              note: value,
+              noteCode: selected?.value,
+              excuseStatus: selected?.excusable == true
+                  ? draft?.excuseStatus ?? 'unexcused'
+                  : null,
+            )),
+            maxLines: 2,
+            textDirection: TextDirection.rtl,
+            decoration: const InputDecoration(
+                hintText: 'ملاحظات (اختياري)', border: OutlineInputBorder()),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SavedAttendanceDetails extends StatelessWidget {
+  const _SavedAttendanceDetails({required this.student});
+
+  final AttendanceBehaviorStudent student;
+
+  @override
+  Widget build(BuildContext context) {
+    final labels = [
+      student.attendanceNoteCodeLabel.trim(),
+      student.excuseStatusLabel.trim()
+    ].where((label) => label.isNotEmpty).toList();
+    final note = student.attendanceNote.trim();
+    if (labels.isEmpty && note.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (labels.isNotEmpty)
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: labels
+                  .map((label) => Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 9, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0F7F7),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(label,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.secondryColor,
+                            )),
+                      ))
+                  .toList(growable: false),
+            ),
+          if (note.isNotEmpty) ...[
+            if (labels.isNotEmpty) const SizedBox(height: 6),
+            Text(note,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    fontSize: 12, height: 1.5, color: Color(0xFF58656B))),
           ],
         ],
       ),

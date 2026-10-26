@@ -160,10 +160,7 @@ class ApiPerseveranceRepository implements PerseveranceRepository {
             {
               'student_id': studentId,
               'attendance': status.apiValue,
-              if (notes[studentId]?.note.trim().isNotEmpty == true)
-                'note': notes[studentId]!.note.trim(),
-              if (notes[studentId]?.noteCode?.isNotEmpty == true)
-                'note_code': notes[studentId]!.noteCode,
+              if (notes[studentId] != null) ...notes[studentId]!.toWriteJson(),
             },
         ],
       },
