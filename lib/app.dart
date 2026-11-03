@@ -126,7 +126,7 @@ class App extends ConsumerWidget {
           child: _Unfocus(child: child!),
         );
       },
-      title: 'Smart Table',
+      title: 'الجدول الذكي',
       theme: AppThemes().appTheme(),
       localizationsDelegates: const [
         AppLocalizations.delegate,

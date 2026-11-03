@@ -347,6 +347,7 @@ class AttendanceBehaviorNotifier
         className: attendance.className,
         attendanceStatus: student.attendanceStatus,
         attendanceRecordId: student.attendanceRecordId,
+        canModifyAttendance: attendance.isEditable,
         attendanceNote: student.attendanceNote,
         attendanceNoteCode: student.attendanceNoteCode,
         attendanceNoteCodeLabel: student.attendanceNoteCodeLabel,

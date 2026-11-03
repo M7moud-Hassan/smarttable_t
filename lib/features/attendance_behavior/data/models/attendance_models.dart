@@ -31,6 +31,7 @@ class AttendanceBehaviorStudent {
     this.classId,
     this.attendanceRecordId,
     this.attendanceNote = '',
+    this.canModifyAttendance = false,
     this.attendanceNoteCode = '',
     this.attendanceNoteCodeLabel = '',
     this.excuseStatusLabel = '',
@@ -51,6 +52,7 @@ class AttendanceBehaviorStudent {
   final AttendanceStatus attendanceStatus;
   final int? attendanceRecordId;
   final String attendanceNote;
+  final bool canModifyAttendance;
   final String attendanceNoteCode;
   final String attendanceNoteCodeLabel;
   final String excuseStatusLabel;
@@ -61,10 +63,6 @@ class AttendanceBehaviorStudent {
   final String additionalBehaviorNotes;
   final int totalBehaviorPoints;
   final int proceduresCount;
-
-  bool get canModifyAttendance =>
-      attendanceStatus == AttendanceStatus.present ||
-      attendanceStatus == AttendanceStatus.notRecorded;
 
   int? get behaviorNoteId =>
       behaviorNoteIds.isEmpty ? null : behaviorNoteIds.first;
@@ -238,14 +236,17 @@ class AttendanceRosterData {
     required this.dateHijri,
     required this.summary,
     required this.students,
+    this.isEditable = false,
   });
 
   factory AttendanceRosterData.fromJson(Map<String, dynamic> json) {
     final classId = readJsonInt(json['class_id']);
     final className = readJsonString(json['class_name']);
+    final isEditable = readJsonBool(json['is_editable']);
     return AttendanceRosterData(
       classId: classId,
       className: className,
+      isEditable: isEditable,
       session: readJsonString(json['session']),
       sessionLabel: readJsonString(json['session_label']),
       date: readJsonString(json['date']),
@@ -259,6 +260,7 @@ class AttendanceRosterData {
           classId: classId,
           className: className,
           attendanceRecordId: readNullableJsonInt(studentJson['record_id']),
+          canModifyAttendance: isEditable,
           attendanceStatus: AttendanceStatus.fromApi(studentJson['attendance']),
           attendanceNote: readJsonString(studentJson['note']),
           attendanceNoteCode: readJsonString(studentJson['note_code']),
@@ -278,6 +280,7 @@ class AttendanceRosterData {
   final String sessionLabel;
   final String date;
   final String dateHijri;
+  final bool isEditable;
   final AttendanceSummary summary;
   final List<AttendanceBehaviorStudent> students;
 }
