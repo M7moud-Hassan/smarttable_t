@@ -14,6 +14,7 @@ class LessonModel {
   String? teacherImageUrl;
   int? secureCellNumber;
   int? classroomId;
+  final DateTime? date;
 
   LessonModel({
     required this.dayId,
@@ -31,6 +32,7 @@ class LessonModel {
     this.teacherImageUrl,
     this.secureCellNumber,
     this.classroomId,
+    this.date,
   });
 
   factory LessonModel.fromJson(Map<String, dynamic> json) {
@@ -80,6 +82,7 @@ class LessonModel {
             ],
           ),
       secureCellNumber: _tryParseInt(json["cell_number"]),
+      date: DateTime.tryParse(json["date"]?.toString() ?? ""),
       classroomId: _tryParseInt(
         json["classroom_id"] ??
             json["class_id"] ??
@@ -106,6 +109,8 @@ class LessonModel {
         if (teacherImageUrl != null) "teacher_image_url": teacherImageUrl,
         if (secureCellNumber != null) "cell_number": secureCellNumber,
         if (classroomId != null) "classroom_id": classroomId,
+        if (date case final value?)
+          "date": value.toIso8601String().split("T").first,
       };
 
   /// factory for init LessonModel
@@ -138,6 +143,7 @@ class LessonModel {
     String? teacherImageUrl,
     int? secureCellNumber,
     int? classroomId,
+    DateTime? date,
   }) {
     return LessonModel(
       dayId: dayId ?? this.dayId,
@@ -155,6 +161,7 @@ class LessonModel {
       teacherImageUrl: teacherImageUrl ?? this.teacherImageUrl,
       secureCellNumber: secureCellNumber ?? this.secureCellNumber,
       classroomId: classroomId ?? this.classroomId,
+      date: date ?? this.date,
     );
   }
 

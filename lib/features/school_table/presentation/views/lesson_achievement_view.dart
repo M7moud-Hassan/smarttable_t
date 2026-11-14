@@ -8,15 +8,23 @@ import 'package:smart_table_app/features/school_table/data/models/lesson_achieve
 import 'package:smart_table_app/features/school_table/data/models/lesson_model.dart';
 import 'package:smart_table_app/features/school_table/providers/lesson_achievement_provider.dart';
 
+final _demoAchievementsProvider = StateProvider<Map<String, LessonAchievement>>(
+  (ref) => {},
+);
+
 class LessonAchievementView extends ConsumerStatefulWidget {
   const LessonAchievementView({
     super.key,
     required this.lesson,
-    this.initialDate,
+    required this.initialDate,
+    this.timetableDayLabel,
+    this.isDemo = false,
   });
 
   final LessonModel lesson;
   final DateTime? initialDate;
+  final String? timetableDayLabel;
+  final bool isDemo;
 
   @override
   ConsumerState<LessonAchievementView> createState() =>
@@ -28,7 +36,7 @@ class _LessonAchievementViewState extends ConsumerState<LessonAchievementView> {
   final _achievementController = TextEditingController();
   final _homeworkController = TextEditingController();
   final _notesController = TextEditingController();
-  late DateTime _selectedDate;
+  DateTime? _selectedDate;
   LessonAchievement? _existingAchievement;
   Object? _loadError;
   bool _isLoadingAchievement = false;
@@ -37,12 +45,7 @@ class _LessonAchievementViewState extends ConsumerState<LessonAchievementView> {
   @override
   void initState() {
     super.initState();
-    final initialDate = widget.initialDate ?? DateTime.now();
-    _selectedDate = DateTime(
-      initialDate.year,
-      initialDate.month,
-      initialDate.day,
-    );
+    _selectedDate = widget.initialDate;
     Future.microtask(_loadExistingAchievement);
   }
 
@@ -99,7 +102,9 @@ class _LessonAchievementViewState extends ConsumerState<LessonAchievementView> {
                   ),
                 ),
                 child: Text(
-                  _formatDate(_selectedDate),
+                  _selectedDate == null
+                      ? widget.timetableDayLabel ?? 'يحدده النظام عند الحفظ'
+                      : _formatDate(_selectedDate!),
                   style: const TextStyle(
                     color: AppColors.secondryColor,
                     fontSize: 15,
@@ -222,7 +227,19 @@ class _LessonAchievementViewState extends ConsumerState<LessonAchievementView> {
 
   Future<void> _loadExistingAchievement() async {
     final cellNumber = widget.lesson.cellNumber;
+    final date = _selectedDate;
     if (cellNumber == null) return;
+
+    if (widget.isDemo) {
+      final achievement = ref.read(_demoAchievementsProvider)[_demoDateKey];
+      _achievementController.text = achievement?.achievement ?? '';
+      _homeworkController.text = achievement?.homework ?? '';
+      _notesController.text = achievement?.notes ?? '';
+      if (mounted) setState(() => _existingAchievement = achievement);
+      return;
+    }
+
+    if (date == null) return;
 
     final revision = ++_loadRevision;
     if (mounted) {
@@ -237,7 +254,7 @@ class _LessonAchievementViewState extends ConsumerState<LessonAchievementView> {
         lessonAchievementForCellProvider(
           LessonAchievementLookup(
             cellNumber: cellNumber,
-            date: _selectedDate,
+            date: date,
           ),
         ).future,
       );
@@ -267,6 +284,23 @@ class _LessonAchievementViewState extends ConsumerState<LessonAchievementView> {
     final cellNumber = widget.lesson.cellNumber;
     if (cellNumber == null) {
       context.showSnackbarError('لا يوجد رقم خلية لهذه الحصة');
+      return;
+    }
+
+    if (widget.isDemo) {
+      final key = _demoDateKey;
+      ref.read(_demoAchievementsProvider.notifier).update((state) => {
+            ...state,
+            key: LessonAchievement(
+              id: 0,
+              cellNumber: cellNumber,
+              date: _selectedDate,
+              achievement: _achievementController.text,
+              homework: _homeworkController.text,
+              notes: _notesController.text,
+            ),
+          });
+      Navigator.of(context).pop(true);
       return;
     }
 
@@ -319,6 +353,18 @@ class _LessonAchievementViewState extends ConsumerState<LessonAchievementView> {
     );
     if (confirmed != true || !mounted) return;
 
+    if (widget.isDemo) {
+      ref.read(_demoAchievementsProvider.notifier).update((state) {
+        final updated = Map<String, LessonAchievement>.from(state);
+        updated.remove(_demoDateKey);
+        return updated;
+      });
+      setState(() => _existingAchievement = null);
+      _clearFields();
+      context.showSnackbarSuccess('تم حذف إنجاز الحصة التجريبي');
+      return;
+    }
+
     final success = await ref
         .read(lessonAchievementSubmitProvider.notifier)
         .delete(achievement.id);
@@ -341,6 +387,11 @@ class _LessonAchievementViewState extends ConsumerState<LessonAchievementView> {
     _achievementController.clear();
     _homeworkController.clear();
     _notesController.clear();
+  }
+
+  String get _demoDateKey {
+    final date = _selectedDate;
+    return date == null ? widget.timetableDayLabel ?? '' : _formatDate(date);
   }
 
   String _formatDate(DateTime value) {

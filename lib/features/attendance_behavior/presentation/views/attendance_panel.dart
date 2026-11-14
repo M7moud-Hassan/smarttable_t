@@ -193,17 +193,6 @@ class AttendancePanel extends ConsumerWidget {
                           color: AppColors.secondryColor,
                         ),
                       ),
-                menu: recording
-                    ? null
-                    : StudentMoreMenu(
-                        canModifyAttendance: student.canModifyAttendance,
-                        onSelected: (action) => _openAttendanceAction(
-                          context,
-                          ref,
-                          student,
-                          action,
-                        ),
-                      ),
                 details: recording && selected
                     ? _AttendanceNoteEditor(
                         studentId: student.id,
@@ -215,14 +204,14 @@ class AttendancePanel extends ConsumerWidget {
                             .setAttendanceNoteDraft(student.id, draft),
                       )
                     : _SavedAttendanceDetails(student: student),
-                onTap: state.saving || !student.canModifyAttendance
+                onTap: state.saving
                     ? null
                     : recording
-                        ? () => ref
-                            .read(attendanceBehaviorProvider.notifier)
-                            .toggleAttendanceStudent(student.id)
-                        : () =>
-                            _showAttendanceEditDialog(context, ref, student),
+                        ? (student.canModifyAttendance
+                            ? () => ref.read(attendanceBehaviorProvider.notifier)
+                                .toggleAttendanceStudent(student.id)
+                            : null)
+                        : () => _showStudentActions(context, ref, student),
               ),
             );
           }),
@@ -260,14 +249,107 @@ class AttendancePanel extends ConsumerWidget {
     );
   }
 
-  void _openAttendanceAction(
+  Future<void> _showStudentActions(
     BuildContext context,
     WidgetRef ref,
     AttendanceBehaviorStudent student,
-    String action,
-  ) {
-    if (action == 'edit-attendance') {
-      _showAttendanceEditDialog(context, ref, student);
+  ) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: const Color(0xFFF7FAFA),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) {
+        Widget actionTile(IconData icon, String title, String subtitle, String value) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Material(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                leading: Container(
+                  padding: const EdgeInsets.all(9),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryColor.withValues(alpha: .10),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Icon(icon, color: AppColors.primaryColor, size: 21),
+                ),
+                title: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                subtitle: Text(subtitle, style: const TextStyle(fontSize: 11, color: Color(0xFF758484))),
+                trailing: const Icon(Icons.chevron_right_rounded, color: Color(0xFF879797)),
+                onTap: () => Navigator.pop(sheetContext, value),
+              ),
+            ),
+          );
+        }
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(children: [
+                    StudentAvatar(name: student.name, radius: 22),
+                    const SizedBox(width: 12),
+                    Expanded(child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('تفاصيل الطالب', style: TextStyle(fontSize: 11, color: Color(0xFF758484))),
+                        const SizedBox(height: 3),
+                        Text(student.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                      ],
+                    )),
+                    AttendanceStatusBadge(status: student.attendanceStatus),
+                  ]),
+                  const SizedBox(height: 20),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE3EEEE))),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('حالة الحضور', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 12),
+                        AttendanceStatusBadge(status: student.attendanceStatus),
+                        _SavedAttendanceDetails(student: student),
+                        if (student.canModifyAttendance) ...[
+                          const SizedBox(height: 8),
+                          OutlinedButton.icon(
+                            onPressed: () => Navigator.pop(sheetContext, 'edit'),
+                            icon: const Icon(Icons.edit_outlined, size: 16),
+                            label: const Text('تعديل حالة الحضور'),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text('المتابعة والإجراءات', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 10),
+                  actionTile(Icons.history_rounded, 'سجل حضور الطالب', 'عرض سجل الحضور', 'history'),
+                  actionTile(Icons.assignment_outlined, 'اتخاذ إجراء', 'إضافة إجراء للطالب', 'take-action'),
+                  actionTile(Icons.fact_check_outlined, 'الإجراءات المتخذة', 'عرض الإجراءات السابقة', 'actions'),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    if (!context.mounted || action == null) return;
+    if (action == 'edit') {
+      await _showAttendanceEditDialog(context, ref, student);
       return;
     }
     final Widget page = switch (action) {
@@ -284,7 +366,9 @@ class AttendancePanel extends ConsumerWidget {
         ),
       _ => StudentActionsView(student: student),
     };
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+    if (context.mounted) {
+      await Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+    }
   }
 
   Future<void> _showAttendanceEditDialog(
@@ -325,36 +409,51 @@ class AttendancePanel extends ConsumerWidget {
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: Colors.white,
-          title: const Text('تعديل حالة الحضور'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('تعديل حالة الحضور', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 4),
+              Text(student.name, style: const TextStyle(fontSize: 13, color: Color(0xFF758484))),
+            ],
+          ),
           content: SizedBox(
               width: 400,
               child: SingleChildScrollView(
                   child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ...attendanceStates.map(
-                    (option) {
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text('حالة الحضور', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: attendanceStates.map((option) {
                       final status = AttendanceStatus.tryFromApi(option.value)!;
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(
-                          option.label.isEmpty ? status.label : option.label,
-                        ),
-                        leading: Icon(
-                          selectedStatus == status
-                              ? Icons.check_circle_rounded
-                              : Icons.circle_outlined,
-                          color: selectedStatus == status
-                              ? attendanceStatusColor(status)
-                              : Colors.grey,
-                        ),
-                        onTap: () => setDialogState(() {
+                      final selected = selectedStatus == status;
+                      final color = attendanceStatusColor(status);
+                      return ChoiceChip(
+                        label: Text(option.label.isEmpty ? status.label : option.label),
+                        selected: selected,
+                        showCheckmark: false,
+                        avatar: Icon(selected ? Icons.check_circle_rounded : Icons.circle_outlined,
+                            size: 18, color: selected ? color : const Color(0xFF9AA7A7)),
+                        selectedColor: color.withValues(alpha: .1),
+                        backgroundColor: const Color(0xFFF7FAFA),
+                        side: BorderSide(color: selected ? color : const Color(0xFFE1EAEA)),
+                        labelStyle: TextStyle(color: selected ? color : const Color(0xFF444F50), fontWeight: FontWeight.w700),
+                        onSelected: (_) => setDialogState(() {
                           selectedStatus = status;
                           noteDraft = AttendanceNoteDraft(note: noteDraft.note);
                         }),
                       );
-                    },
+                    }).toList(),
                   ),
+                  const SizedBox(height: 12),
                   _AttendanceNoteEditor(
                     studentId: student.id,
                     noteCodes: ref

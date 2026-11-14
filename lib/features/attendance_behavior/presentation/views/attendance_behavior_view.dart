@@ -166,27 +166,26 @@ class _AttendanceBehaviorViewState
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 8, 18, 10),
               child: FeatureSegmentedControl(
-                      labels: const [
-                        'المواظبة',
-                        'السلوك',
-                        'التقارير',
-                        'أدوات الحصة',
-                      ],
-                      selectedIndex: _sectionIndex,
-                      onSelected: (index) {
-                        setState(() {
-                          if (index == 2 && _sectionIndex != 2) {
-                            _reportSession = ref
-                                .read(attendanceBehaviorProvider)
-                                .selectedSession;
-                          }
-                          _sectionIndex = index;
-                          _showSearch = false;
-                          _searchController.clear();
-                          _searchQuery = '';
-                        });
-                      },
-                    ),
+                labels: const [
+                  'المواظبة',
+                  'السلوك',
+                  'التقارير',
+                  'أدوات الحصة',
+                ],
+                selectedIndex: _sectionIndex,
+                onSelected: (index) {
+                  setState(() {
+                    if (index == 2 && _sectionIndex != 2) {
+                      _reportSession =
+                          ref.read(attendanceBehaviorProvider).selectedSession;
+                    }
+                    _sectionIndex = index;
+                    _showSearch = false;
+                    _searchController.clear();
+                    _searchQuery = '';
+                  });
+                },
+              ),
             ),
             if (_showSearch && _sectionIndex < 2)
               Padding(
@@ -201,15 +200,21 @@ class _AttendanceBehaviorViewState
             Expanded(child: _buildSection(state)),
           ],
         ),
-        floatingActionButton: _sectionIndex == 1
+        floatingActionButton: _sectionIndex == 1 && _behaviorMode != 1
             ? SizedBox(
                 width: 52,
                 height: 52,
                 child: FloatingActionButton(
-                heroTag: 'attendance-behavior-search',
-                elevation: 0,
-                onPressed: () => setState(() => _showSearch = !_showSearch),
-                child: const Icon(Icons.search_rounded, color: Colors.white),
+                  heroTag: 'attendance-behavior-search',
+                  elevation: 0,
+                  onPressed: () => setState(() {
+                    _showSearch = !_showSearch;
+                    if (!_showSearch) {
+                      _searchController.clear();
+                      _searchQuery = '';
+                    }
+                  }),
+                  child: const Icon(Icons.search_rounded, color: Colors.white),
                 ),
               )
             : null,
@@ -271,7 +276,13 @@ class _AttendanceBehaviorViewState
             child: FloatingActionButton(
               heroTag: 'attendance-behavior-search',
               elevation: 0,
-              onPressed: () => setState(() => _showSearch = !_showSearch),
+              onPressed: () => setState(() {
+                _showSearch = !_showSearch;
+                if (!_showSearch) {
+                  _searchController.clear();
+                  _searchQuery = '';
+                }
+              }),
               child: const Icon(Icons.search_rounded, color: Colors.white),
             ),
           ),

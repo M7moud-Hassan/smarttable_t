@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:smart_table_app/core/constants/app_colors.dart';
 import 'package:smart_table_app/core/extensions/context_extensions.dart';
@@ -11,24 +10,6 @@ class SecureClassSuccessView extends StatefulWidget {
 }
 
 class _SecureClassSuccessViewState extends State<SecureClassSuccessView> {
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _timer = Timer(const Duration(seconds: 2), () {
-      if (mounted) {
-        Navigator.pop(context);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,12 +58,20 @@ class _SecureClassSuccessViewState extends State<SecureClassSuccessView> {
             const SizedBox(height: 35),
             // Success text matching Mockup 2
             Text(
-              "تم تأمين الحصة بنجاح",
+              "تم إرسال طلب المعلم البديل",
               textAlign: TextAlign.center,
               style: context.textTheme.titleLarge!.copyWith(
                 color: AppColors.primaryColor,
                 fontWeight: FontWeight.bold,
                 fontSize: 26,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                "يمكنك متابعة حالة الطلب من قائمة الطلبات.",
+                textAlign: TextAlign.center,
               ),
             ),
             const Spacer(flex: 4),

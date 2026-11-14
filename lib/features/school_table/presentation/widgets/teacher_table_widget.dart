@@ -148,7 +148,7 @@ class DashedBorderTable extends ConsumerWidget {
             child: AutoSizeText(
               title,
               maxLines: 2,
-              minFontSize: 7,
+              minFontSize: 10,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
@@ -162,7 +162,7 @@ class DashedBorderTable extends ConsumerWidget {
             child: AutoSizeText(
               time,
               maxLines: 1,
-              minFontSize: 6,
+              minFontSize: 9,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 10,
@@ -281,7 +281,8 @@ class DashedBorderTable extends ConsumerWidget {
                 : Colors.white;
     final classroom = lesson.classroomName;
     final displayText = lesson.isWaitingSlot
-        ? lesson.compactTitle
+        ? [lesson.compactTitle, if (isAssignedWaiting) 'اضغط للتفاصيل']
+            .join('\n')
         : [if (classroom.isNotEmpty) classroom, lesson.compactTitle].join('\n');
 
     final cell = Container(
@@ -297,7 +298,7 @@ class DashedBorderTable extends ConsumerWidget {
       child: AutoSizeText(
         displayText,
         maxLines: 2,
-        minFontSize: 8,
+        minFontSize: 10,
         textAlign: TextAlign.center,
         style: TextStyle(
           fontWeight: FontWeight.bold,
@@ -307,11 +308,11 @@ class DashedBorderTable extends ConsumerWidget {
       ),
     );
 
-    if (!isAssignedWaiting) return cell;
+    if (lesson.contentLines.isEmpty) return cell;
 
     return Semantics(
       button: true,
-      label: "تفاصيل حصة الانتظار",
+      label: "تفاصيل الحصة",
       child: Material(
         color: Colors.transparent,
         child: InkWell(

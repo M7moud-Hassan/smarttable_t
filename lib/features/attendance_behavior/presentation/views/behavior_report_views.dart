@@ -29,7 +29,7 @@ class BehaviorReportContent extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
         children: [
           const Text(
-            'نسب السلوك حسب الفصل',
+            'توزيع مستويات السلوك حسب الفصل',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.secondryColor,
@@ -153,6 +153,8 @@ class _BehaviorClassReportCard extends StatelessWidget {
             'الفصل ${report.className}',
             style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
           ),
+          const SizedBox(height: 6),
+          const Text('الأرقام توضح توزيع المستويات'),
           const SizedBox(height: 11),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),

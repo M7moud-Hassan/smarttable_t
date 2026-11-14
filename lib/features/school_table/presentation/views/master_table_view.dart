@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smart_table_app/core/extensions/extensions.dart';
 import 'package:smart_table_app/core/widgets/loading_widget.dart';
+import 'package:smart_table_app/features/school_table/data/models/day_model.dart';
 import 'package:smart_table_app/features/school_table/data/models/lesson_model.dart';
 import 'package:smart_table_app/features/school_table/presentation/widgets/days_list_widget.dart';
 import 'package:smart_table_app/features/school_table/presentation/widgets/lesson_action_button.dart';
 import 'package:smart_table_app/features/school_table/presentation/widgets/lesson_actions_bottom_sheet.dart';
-import 'package:smart_table_app/features/waiting_classes/presentation/views/secure_class_requests_view.dart';
+import 'package:smart_table_app/features/school_table/presentation/widgets/secure_requests_button.dart';
 
 import '../../../../core/constants/constants.dart';
 import '../../../../core/widgets/custom_error_widget.dart';
@@ -34,23 +35,21 @@ class MasterTableView extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back_ios, color: AppColors.primaryColor),
           onPressed: () => context.pop(),
         ),
-        actions: [
-          IconButton(
-            tooltip: 'طلبات تأمين الحصص',
-            onPressed: () => context.push(const SecureClassRequestsView()),
-            icon: const Icon(
-              Icons.assignment_outlined,
-              color: AppColors.primaryColor,
-            ),
-          ),
-        ],
       ),
       body: daysAsync.when(
         data: (days) {
+          final selectedDayId = ref.watch(selectedDayProvider);
           final masterTableASync = ref.watch(masterTableProvider);
           return masterTableASync.when(
             skipLoadingOnReload: true,
             data: (data) {
+              DayModel? timetableDay;
+              for (final day in days) {
+                if (day.dayId == selectedDayId) {
+                  timetableDay = day;
+                  break;
+                }
+              }
               return SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -58,6 +57,8 @@ class MasterTableView extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 20),
+                      const SecureRequestsButton(),
+                      const SizedBox(height: 16),
                       // Featured Card: Current Lesson
                       _buildCurrentLessonCard(context, data),
                       const SizedBox(height: 24),
@@ -115,7 +116,8 @@ class MasterTableView extends ConsumerWidget {
                               ref,
                               lesson,
                               data.masterTable.first.teacherName,
-                              data.masterTable.first.teacherImageUrl);
+                              data.masterTable.first.teacherImageUrl,
+                              timetableDay);
                         }),
                       const SizedBox(height: 30),
                     ],
@@ -225,8 +227,13 @@ class MasterTableView extends ConsumerWidget {
     );
   }
 
-  Widget _buildLessonCard(BuildContext context, WidgetRef ref,
-      LessonModel lesson, String teacherName, String? teacherImageUrl) {
+  Widget _buildLessonCard(
+      BuildContext context,
+      WidgetRef ref,
+      LessonModel lesson,
+      String teacherName,
+      String? teacherImageUrl,
+      DayModel? timetableDay) {
     const assignedWaitingColor = Color(0xFFC44738);
     const availableWaitingColor = Color(0xFFB7791F);
     final isAssignedWaiting = lesson.isWaiting;
@@ -325,17 +332,19 @@ class MasterTableView extends ConsumerWidget {
               lesson: lesson,
               teacherName: teacherName,
               teacherImageUrl: teacherImageUrl,
+              lessonDate: timetableDay?.date,
+              lessonDayLabel: timetableDay == null
+                  ? null
+                  : "${timetableDay.dayName} ${timetableDay.dayNumber}",
             ),
           ),
         ],
       ),
     );
 
-    if (!isAssignedWaiting) return card;
-
     return Semantics(
       button: true,
-      label: "تفاصيل حصة الانتظار",
+      label: "تفاصيل الحصة",
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => showLessonDetailsBottomSheet(

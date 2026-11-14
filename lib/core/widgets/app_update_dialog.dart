@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -10,11 +11,12 @@ Future<void> showAppUpdateDialog(
   BuildContext context,
   AppUpdateInfo update,
 ) {
+  final isRequired = update.isRequired && !kDebugMode;
   return showDialog<void>(
     context: context,
-    barrierDismissible: !update.isRequired,
+    barrierDismissible: !isRequired,
     builder: (dialogContext) => PopScope(
-      canPop: !update.isRequired,
+      canPop: !isRequired,
       child: AlertDialog(
         backgroundColor: dialogContext.theme.scaffoldBackgroundColor,
         content: Column(
@@ -48,7 +50,7 @@ Future<void> showAppUpdateDialog(
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            if (!update.isRequired) ...[
+            if (!isRequired) ...[
               OutlinedButton(
                 onPressed: () => dialogContext.pop(),
                 child: Text(dialogContext.locale.later),
@@ -56,7 +58,7 @@ Future<void> showAppUpdateDialog(
               const SizedBox(height: 10),
             ],
             AppButton(
-              onPressed: () => _openStore(dialogContext, update),
+              onPressed: () => _openStore(dialogContext, update, isRequired),
               child: Text(dialogContext.locale.updateNow),
             ),
           ],
@@ -69,6 +71,7 @@ Future<void> showAppUpdateDialog(
 Future<void> _openStore(
   BuildContext context,
   AppUpdateInfo update,
+  bool isRequired,
 ) async {
   final uri = Uri.tryParse(update.storeUrl ?? '');
   final opened =
@@ -79,5 +82,5 @@ Future<void> _openStore(
     context.showSnackbarError(context.locale.unableToOpenStore);
     return;
   }
-  if (!update.isRequired) context.pop();
+  if (!isRequired) context.pop();
 }

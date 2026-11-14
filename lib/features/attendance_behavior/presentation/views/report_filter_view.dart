@@ -51,7 +51,7 @@ class _ReportFilterViewState extends ConsumerState<ReportFilterView> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: const FeatureTitleAppBar(title: 'فلتر'),
+        appBar: const FeatureTitleAppBar(title: 'تصفية التقرير وتصديره'),
         body: asyncOptions.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => ReportError(
@@ -107,9 +107,13 @@ class _ReportFilterViewState extends ConsumerState<ReportFilterView> {
       return const EmptyReport(message: 'خيارات التقرير غير متاحة حالياً');
     }
 
+    final studentsReady = studentOptions == null || studentOptions.hasValue;
     return ListView(
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
       children: [
+        const Text('اختر نطاق التقرير، ثم استعرضه أو حمّله.',
+            style: TextStyle(fontSize: 15)),
+        const SizedBox(height: 18),
         _FilterDropdown(
           label: 'نوع التقرير',
           value: reportType,
@@ -154,18 +158,26 @@ class _ReportFilterViewState extends ConsumerState<ReportFilterView> {
           options: formats,
           onChanged: (value) => setState(() => _format = value),
         ),
-        const SizedBox(height: 70),
+        if (format == 'json')
+          const Padding(
+            padding: EdgeInsets.only(bottom: 12),
+            child:
+                Text('صيغة JSON متاحة للاستعراض فقط؛ اختر صيغة أخرى للتحميل.'),
+          ),
+        const SizedBox(height: 20),
         Row(
           children: [
             Expanded(
               child: PrimaryActionButton(
                 label: 'استعراض',
-                onPressed: () => _preview(
-                  reportType: reportType,
-                  period: period,
-                  classId: classValue,
-                  studentId: selectedStudentId,
-                ),
+                onPressed: !studentsReady
+                    ? null
+                    : () => _preview(
+                          reportType: reportType,
+                          period: period,
+                          classId: classValue,
+                          studentId: selectedStudentId,
+                        ),
               ),
             ),
             const SizedBox(width: 12),
@@ -173,7 +185,7 @@ class _ReportFilterViewState extends ConsumerState<ReportFilterView> {
               child: PrimaryActionButton(
                 label: _downloading ? 'جارٍ التحميل...' : 'تحميل',
                 icon: Icons.download_rounded,
-                onPressed: _downloading || format == 'json'
+                onPressed: _downloading || !studentsReady || format == 'json'
                     ? null
                     : () => _download(
                           reportType: reportType,
@@ -205,11 +217,16 @@ class _ReportFilterViewState extends ConsumerState<ReportFilterView> {
         options: [PerseveranceOption(value: '', label: 'جارٍ تحميل الطلاب...')],
         onChanged: null,
       ),
-      error: (_, __) => const _FilterDropdown(
-        label: 'اسم الطالب',
-        value: '',
-        options: [PerseveranceOption(value: '', label: 'كل الطلاب')],
-        onChanged: null,
+      error: (_, __) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('تعذر تحميل قائمة الطلاب.'),
+          TextButton.icon(
+            onPressed: () => ref.invalidate(reportStudentsProvider(query)),
+            icon: const Icon(Icons.refresh),
+            label: const Text('إعادة المحاولة'),
+          ),
+        ],
       ),
       data: (items) {
         final options = <PerseveranceOption>[

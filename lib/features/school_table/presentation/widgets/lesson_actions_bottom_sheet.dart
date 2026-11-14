@@ -157,15 +157,18 @@ void showLessonDetailsBottomSheet(
                               fontSize: 18,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "الموافق : ${DateTime.now().year}/${DateTime.now().month}/${DateTime.now().day}",
-                            style: context.textTheme.bodyMedium!.copyWith(
-                              color: AppColors.secondryColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                          if (lesson.timeText.isNotEmpty ||
+                              lesson.startTime.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            _DetailLine(
+                              label: "الوقت",
+                              value: lesson.timeText.isNotEmpty
+                                  ? lesson.timeText
+                                  : [lesson.startTime, lesson.endTime]
+                                      .where((time) => time.isNotEmpty)
+                                      .join(' - '),
                             ),
-                          ),
+                          ],
                           const SizedBox(height: 8),
                           Text(
                             lesson.classNumberText,
@@ -210,13 +213,22 @@ void showLessonDetailsBottomSheet(
                         borderRadius: BorderRadius.circular(18),
                       ),
                     ),
-                    child: const Text(
-                      "تأمين الحصة",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.person_add_alt_1, color: Colors.white),
+                        SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            "طلب معلم بديل",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

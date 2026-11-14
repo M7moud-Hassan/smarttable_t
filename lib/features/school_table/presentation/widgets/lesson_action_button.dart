@@ -13,11 +13,15 @@ class LessonActionButton extends ConsumerWidget {
   final LessonModel lesson;
   final String teacherName;
   final String? teacherImageUrl;
+  final DateTime? lessonDate;
+  final String? lessonDayLabel;
 
   const LessonActionButton({
     super.key,
     required this.lesson,
     required this.teacherName,
+    required this.lessonDate,
+    this.lessonDayLabel,
     this.teacherImageUrl,
   });
 
@@ -60,7 +64,11 @@ class LessonActionButton extends ConsumerWidget {
         } else if (value == 'achievement') {
           final saved = await Navigator.of(context).push<bool>(
             MaterialPageRoute(
-              builder: (_) => LessonAchievementView(lesson: lesson),
+              builder: (_) => LessonAchievementView(
+                lesson: lesson,
+                initialDate: lesson.date ?? lessonDate,
+                timetableDayLabel: lessonDayLabel,
+              ),
             ),
           );
           if (saved == true && context.mounted) {

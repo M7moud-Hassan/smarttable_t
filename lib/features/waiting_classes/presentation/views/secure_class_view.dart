@@ -167,7 +167,7 @@ class _SecureClassViewState extends ConsumerState<SecureClassView> {
     if (cellNumber == null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text("تأمين الحصة"),
+          title: const Text("طلب معلم بديل"),
           centerTitle: true,
         ),
         body: Center(
@@ -204,7 +204,7 @@ class _SecureClassViewState extends ConsumerState<SecureClassView> {
         ),
         centerTitle: true,
         title: Text(
-          "تأمين الحصة",
+          "طلب معلم بديل",
           style: context.textTheme.titleLarge!.copyWith(
             color: AppColors.primaryColor,
             fontWeight: FontWeight.bold,
@@ -240,7 +240,7 @@ class _SecureClassViewState extends ConsumerState<SecureClassView> {
                   const SizedBox(height: 30),
                   // Headline Text
                   Text(
-                    "اختر زميلاً متاحاً لتغطية الحصة المختارة في جدولك",
+                    "اختر معلماً متاحاً، ثم أرسل الطلب وتابع حالته من قائمة الطلبات.",
                     textAlign: TextAlign.right,
                     style: context.textTheme.titleLarge!.copyWith(
                       color: const Color(0xFF1E2F38),
@@ -286,7 +286,7 @@ class _SecureClassViewState extends ConsumerState<SecureClassView> {
                             child: Text(
                               isSelected
                                   ? _selectedTeacher!.name
-                                  : "اختر معلماً...",
+                                  : "اختر المعلم البديل (مطلوب)",
                               textAlign: TextAlign.right,
                               style: context.textTheme.titleMedium!.copyWith(
                                 color: isSelected
@@ -402,7 +402,7 @@ class _SecureClassViewState extends ConsumerState<SecureClassView> {
                         ),
                       ),
                       child: Text(
-                        "تأكيد الاختيار",
+                        "إرسال الطلب",
                         style: TextStyle(
                           color: isButtonActive ? Colors.white : Colors.white70,
                           fontSize: 20,

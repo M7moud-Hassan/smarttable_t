@@ -3,12 +3,14 @@ class DayModel {
   String dayName;
   String dayNumber;
   bool isCurrent;
+  final DateTime? date;
 
   DayModel({
     required this.dayId,
     required this.dayName,
     required this.dayNumber,
     required this.isCurrent,
+    this.date,
   });
 
   factory DayModel.fromJson(Map<String, dynamic> json) => DayModel(
@@ -16,6 +18,7 @@ class DayModel {
         dayName: json["day_name"],
         dayNumber: json["day_number"],
         isCurrent: json["is_current"],
+        date: DateTime.tryParse(json["date"]?.toString() ?? ""),
       );
 
   Map<String, dynamic> toJson() => {
@@ -23,6 +26,8 @@ class DayModel {
         "day_name": dayName,
         "day_number": dayNumber,
         "is_current": isCurrent,
+        if (date case final value?)
+          "date": value.toIso8601String().split("T").first,
       };
 }
 

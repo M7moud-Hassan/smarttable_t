@@ -8,14 +8,14 @@ class LessonAchievementDraft {
   });
 
   final int cellNumber;
-  final DateTime date;
+  final DateTime? date;
   final String achievement;
   final String homework;
   final String notes;
 
   Map<String, dynamic> toJson() => {
         'cell_number': cellNumber,
-        'date': formatLessonAchievementDate(date),
+        if (date case final value?) 'date': formatLessonAchievementDate(value),
         'achievement': achievement.trim(),
         'homework': homework.trim(),
         'notes': notes.trim(),
