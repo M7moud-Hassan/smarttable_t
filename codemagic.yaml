@@ -18,7 +18,7 @@ workflows:
         # provisioning_profiles:
         #   - profile_chat_distrubutes_2
 
-      xcode: 27
+      xcode: latest
       flutter: "3.38.0"
 
     scripts:
